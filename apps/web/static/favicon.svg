@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <style>
+      :root {
+        --sl: #243c5a;
+        --dk: #243c5a;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --sl: #334155;
+          --dk: #f8fafc;
+        }
+      }
+      .sl { fill: var(--sl); }
+      .mg { fill: none; stroke: var(--dk); }
+    </style>
+  </defs>
+  <path class="sl" d="M 60 20 L 25 28 L 25 65 C 25 85 45 95 60 102 Z"/>
+  <path d="M 60 20 L 95 28 L 95 65 C 95 85 75 95 60 102 Z" fill="#2563eb"/>
+  <circle class="mg" cx="56" cy="56" r="16" stroke-width="5"/>
+  <line class="mg" x1="68" y1="68" x2="82" y2="82" stroke-width="8" stroke-linecap="round"/>
+</svg>

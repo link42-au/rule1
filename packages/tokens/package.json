@@ -1,0 +1,14 @@
+{
+  "name": "@link42/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.css",
+    "./tokens": "./src/tokens.css",
+    "./reset": "./src/reset.css"
+  },
+  "files": [
+    "src"
+  ]
+}

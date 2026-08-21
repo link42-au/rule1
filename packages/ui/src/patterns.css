@@ -1,0 +1,340 @@
+/* ── @link42/ui — Shared UI patterns ────────────────────────── */
+/* Loading, error, empty, and toast patterns for the link42 platform. */
+/* Import this file in each app's brand.css or layout. */
+
+/* ── Skeleton shimmer ──────────────────────────────────────── */
+
+@keyframes skeleton-shimmer {
+	0% {
+		background-position: -600px 0;
+	}
+	100% {
+		background-position: 600px 0;
+	}
+}
+
+.skeleton-line {
+	border-radius: 4px;
+	background: linear-gradient(
+		90deg,
+		var(--bg-hover) 25%,
+		var(--bg-active) 50%,
+		var(--bg-hover) 75%
+	);
+	background-size: 1200px 100%;
+	animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+/* ── Spinner ───────────────────────────────────────────────── */
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	color: var(--text-dim);
+	font-size: 13px;
+	padding: 20px 0;
+}
+
+.loading::before {
+	content: "";
+	width: 16px;
+	height: 16px;
+	border: 2px solid var(--border);
+	border-top-color: var(--accent);
+	border-radius: 50%;
+	animation: spin 0.6s linear infinite;
+	flex-shrink: 0;
+}
+
+button[aria-busy="true"] {
+	position: relative;
+	/* biome-ignore lint/complexity/noImportantStyles: must override any button color */
+	color: transparent !important;
+	pointer-events: none;
+}
+
+button[aria-busy="true"]::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 14px;
+	height: 14px;
+	border: 2px solid var(--text-inv);
+	border-top-color: transparent;
+	border-radius: 50%;
+	animation: spin 0.6s linear infinite;
+}
+
+/* ── Error state ───────────────────────────────────────────── */
+
+.error-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	padding: 60px 40px;
+}
+
+.error-state-icon {
+	font-size: 48px;
+	opacity: 0.3;
+	margin-bottom: 16px;
+}
+
+.error-state-title {
+	font-size: 20px;
+	font-weight: 600;
+	color: var(--text);
+	letter-spacing: -0.02em;
+	margin-bottom: 6px;
+}
+
+.error-state-msg {
+	font-size: 14px;
+	color: var(--text-dim);
+	line-height: 1.5;
+	margin-bottom: 16px;
+	max-width: 320px;
+}
+
+.error-state-link {
+	color: var(--accent);
+	text-decoration: underline;
+	font-size: 13px;
+}
+
+/* Inline error banner (for in-page error messages) */
+.error-banner {
+	padding: 12px 16px;
+	background: var(--red-bg);
+	border: 1px solid var(--red-border);
+	border-radius: 8px;
+	color: var(--red);
+	font-size: 13px;
+}
+
+/* ── Empty state ───────────────────────────────────────────── */
+
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 60px 40px;
+	text-align: center;
+}
+
+.empty-icon {
+	width: 48px;
+	height: 48px;
+	background: var(--bg-subtle);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-dim);
+	font-size: 22px;
+	margin-bottom: 4px;
+}
+
+.empty-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--text);
+	letter-spacing: -0.02em;
+}
+
+.empty-sub {
+	font-size: 13px;
+	color: var(--text-dim);
+	max-width: 280px;
+	line-height: 1.5;
+}
+
+.empty-sub a {
+	color: var(--accent);
+	font-weight: 500;
+}
+
+.empty-cta {
+	margin-top: 8px;
+	padding: 8px 20px;
+	background: var(--text);
+	color: var(--text-inv);
+	border-radius: 8px;
+	text-decoration: none;
+	font-size: 13px;
+	font-weight: 500;
+	transition: opacity 0.15s;
+	min-height: 44px;
+	display: inline-flex;
+	align-items: center;
+}
+
+.empty-cta:hover {
+	opacity: 0.85;
+}
+
+/* ── Error page ─────────────────────────────────────────────
+   Uses the same .error-state pattern above.
+   Apply to your +error.svelte with the error-state classes.
+   ──────────────────────────────────────────────────────────── */
+
+/* ── Toast notifications ───────────────────────────────────── */
+
+@keyframes toast-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes toast-out {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+
+.toast-container {
+	position: fixed;
+	bottom: 24px;
+	right: 24px;
+	z-index: 9000;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	pointer-events: none;
+}
+
+.toast {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	max-width: 340px;
+	padding: 12px 14px;
+	background: var(--bg-card);
+	border-radius: 10px;
+	box-shadow: var(--shadow-md, 0 4px 20px rgba(0, 0, 0, 0.12));
+	animation: toast-in 0.2s ease;
+	pointer-events: auto;
+}
+
+.toast.toast-out {
+	animation: toast-out 0.2s ease forwards;
+}
+
+/* Variants */
+.toast--warning {
+	border: 1px solid var(--amber-border);
+}
+
+.toast--error {
+	border: 1px solid var(--red-border);
+}
+
+.toast--success {
+	border: 1px solid var(--green-border);
+}
+
+.toast--info {
+	border: 1px solid var(--border-strong);
+}
+
+.toast-icon {
+	font-size: 16px;
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.toast-body {
+	flex: 1;
+	min-width: 0;
+}
+
+.toast-title {
+	font-size: 12.5px;
+	font-weight: 600;
+	margin-bottom: 2px;
+}
+
+.toast--warning .toast-title {
+	color: var(--amber);
+}
+
+.toast--error .toast-title {
+	color: var(--red);
+}
+
+.toast--success .toast-title {
+	color: var(--green);
+}
+
+.toast--info .toast-title {
+	color: var(--text);
+}
+
+.toast-msg {
+	font-size: 12px;
+	color: var(--text-mid);
+	line-height: 1.45;
+}
+
+.toast-close {
+	flex-shrink: 0;
+	font-size: 14px;
+	color: var(--text-dim);
+	cursor: pointer;
+	padding: 0 2px;
+	line-height: 1;
+	background: none;
+	border: none;
+}
+
+.toast-close:hover {
+	color: var(--text);
+}
+
+@media (max-width: 640px) {
+	.toast-container {
+		left: 16px;
+		right: 16px;
+		bottom: 16px;
+	}
+
+	.toast {
+		max-width: none;
+	}
+}
+
+/* ── Screen-reader only utility ─────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
