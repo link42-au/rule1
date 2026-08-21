@@ -1,0 +1,2295 @@
+{
+  "catalog": {
+    "uuid": "a1f8b2c1-9d3e-4f5a-b6c7-d8e9f0a1b2c3",
+    "metadata": {
+      "title": "NIST Cybersecurity Framework 1.1",
+      "published": "2018-04-16T00:00:00Z",
+      "last-modified": "2018-04-16T00:00:00Z",
+      "version": "1.1.0",
+      "oscal-version": "v1.1.3",
+      "props": [
+        {
+          "name": "framework-identifier",
+          "ns": "https://csrc.nist.gov/ns/cprt",
+          "value": "CSF"
+        },
+        {
+          "name": "framework-version-identifier",
+          "ns": "https://csrc.nist.gov/ns/cprt",
+          "value": "CSF_1_1_0"
+        },
+        {
+          "name": "publication-status",
+          "ns": "https://csrc.nist.gov/ns/cprt",
+          "value": "Final"
+        },
+        {
+          "name": "keywords",
+          "value": "Critical infrastructure, cybersecurity, information security, OSCAL, security functions, security requirements"
+        }
+      ],
+      "roles": [
+        {
+          "id": "publisher",
+          "title": "Document publisher"
+        },
+        {
+          "id": "author",
+          "title": "Document content author"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "8238c306-4ee0-4321-a4fb-503adda3d8c1",
+          "type": "organization",
+          "name": "National Institute of Standards and Technology",
+          "short-name": "NIST"
+        }
+      ],
+      "responsible-parties": [
+        {
+          "role-id": "publisher",
+          "party-uuids": ["8238c306-4ee0-4321-a4fb-503adda3d8c1"]
+        },
+        {
+          "role-id": "author",
+          "party-uuids": ["8238c306-4ee0-4321-a4fb-503adda3d8c1"]
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "ID",
+        "class": "function",
+        "title": "IDENTIFY",
+        "props": [
+          {"name": "sort-id", "value": "00001"},
+          {"name": "label", "value": "IDENTIFY (ID)"}
+        ],
+        "parts": [
+          {
+            "id": "ID_overview",
+            "name": "overview",
+            "prose": "Develop an organizational understanding to manage cybersecurity risk to systems, people, assets, data, and capabilities."
+          }
+        ],
+        "controls": [
+          {
+            "id": "ID.AM",
+            "class": "category",
+            "title": "Asset Management",
+            "props": [
+              {"name": "sort-id", "value": "00001.00001"},
+              {"name": "label", "value": "Asset Management (ID.AM)"}
+            ],
+            "parts": [
+              {
+                "id": "ID.AM_statement",
+                "name": "statement",
+                "prose": "The data, personnel, devices, systems, and facilities that enable the organization to achieve business purposes are identified and managed consistent with their relative importance to organizational objectives and the organization's risk strategy."
+              }
+            ],
+            "controls": [
+              {
+                "id": "ID.AM-1",
+                "class": "subcategory",
+                "title": "ID.AM-1",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00001.00001"},
+                  {"name": "label", "value": "ID.AM-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.AM-1_statement",
+                    "name": "statement",
+                    "prose": "Physical devices and systems within the organization are inventoried"
+                  }
+                ]
+              },
+              {
+                "id": "ID.AM-2",
+                "class": "subcategory",
+                "title": "ID.AM-2",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00001.00002"},
+                  {"name": "label", "value": "ID.AM-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.AM-2_statement",
+                    "name": "statement",
+                    "prose": "Software platforms and applications within the organization are inventoried"
+                  }
+                ]
+              },
+              {
+                "id": "ID.AM-3",
+                "class": "subcategory",
+                "title": "ID.AM-3",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00001.00003"},
+                  {"name": "label", "value": "ID.AM-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.AM-3_statement",
+                    "name": "statement",
+                    "prose": "Organizational communication and data flows are mapped"
+                  }
+                ]
+              },
+              {
+                "id": "ID.AM-4",
+                "class": "subcategory",
+                "title": "ID.AM-4",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00001.00004"},
+                  {"name": "label", "value": "ID.AM-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.AM-4_statement",
+                    "name": "statement",
+                    "prose": "External information systems are catalogued"
+                  }
+                ]
+              },
+              {
+                "id": "ID.AM-5",
+                "class": "subcategory",
+                "title": "ID.AM-5",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00001.00005"},
+                  {"name": "label", "value": "ID.AM-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.AM-5_statement",
+                    "name": "statement",
+                    "prose": "Resources (e.g., hardware, devices, data, time, personnel, and software) are prioritized based on their classification, criticality, and business value"
+                  }
+                ]
+              },
+              {
+                "id": "ID.AM-6",
+                "class": "subcategory",
+                "title": "ID.AM-6",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00001.00006"},
+                  {"name": "label", "value": "ID.AM-6"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.AM-6_statement",
+                    "name": "statement",
+                    "prose": "Cybersecurity roles and responsibilities for the entire workforce and third-party stakeholders (e.g., suppliers, customers, partners) are established"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ID.BE",
+            "class": "category",
+            "title": "Business Environment",
+            "props": [
+              {"name": "sort-id", "value": "00001.00002"},
+              {"name": "label", "value": "Business Environment (ID.BE)"}
+            ],
+            "parts": [
+              {
+                "id": "ID.BE_statement",
+                "name": "statement",
+                "prose": "The organization's mission, objectives, stakeholders, and activities are understood and prioritized; this information is used to inform cybersecurity roles, responsibilities, and risk management decisions."
+              }
+            ],
+            "controls": [
+              {
+                "id": "ID.BE-1",
+                "class": "subcategory",
+                "title": "ID.BE-1",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00002.00001"},
+                  {"name": "label", "value": "ID.BE-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.BE-1_statement",
+                    "name": "statement",
+                    "prose": "The organization's role in the supply chain is identified and communicated"
+                  }
+                ]
+              },
+              {
+                "id": "ID.BE-2",
+                "class": "subcategory",
+                "title": "ID.BE-2",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00002.00002"},
+                  {"name": "label", "value": "ID.BE-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.BE-2_statement",
+                    "name": "statement",
+                    "prose": "The organization's place in critical infrastructure and its industry sector is identified and communicated"
+                  }
+                ]
+              },
+              {
+                "id": "ID.BE-3",
+                "class": "subcategory",
+                "title": "ID.BE-3",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00002.00003"},
+                  {"name": "label", "value": "ID.BE-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.BE-3_statement",
+                    "name": "statement",
+                    "prose": "Priorities for organizational mission, objectives, and activities are established and communicated"
+                  }
+                ]
+              },
+              {
+                "id": "ID.BE-4",
+                "class": "subcategory",
+                "title": "ID.BE-4",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00002.00004"},
+                  {"name": "label", "value": "ID.BE-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.BE-4_statement",
+                    "name": "statement",
+                    "prose": "Dependencies and critical functions for delivery of critical services are established"
+                  }
+                ]
+              },
+              {
+                "id": "ID.BE-5",
+                "class": "subcategory",
+                "title": "ID.BE-5",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00002.00005"},
+                  {"name": "label", "value": "ID.BE-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.BE-5_statement",
+                    "name": "statement",
+                    "prose": "Resilience requirements to support delivery of critical services are established for all operating states (e.g. under duress/attack, during recovery, normal operations)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ID.GV",
+            "class": "category",
+            "title": "Governance",
+            "props": [
+              {"name": "sort-id", "value": "00001.00003"},
+              {"name": "label", "value": "Governance (ID.GV)"}
+            ],
+            "parts": [
+              {
+                "id": "ID.GV_statement",
+                "name": "statement",
+                "prose": "The policies, procedures, and processes to manage and monitor the organization's regulatory, legal, risk, environmental, and operational requirements are understood and inform the management of cybersecurity risk."
+              }
+            ],
+            "controls": [
+              {
+                "id": "ID.GV-1",
+                "class": "subcategory",
+                "title": "ID.GV-1",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00003.00001"},
+                  {"name": "label", "value": "ID.GV-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.GV-1_statement",
+                    "name": "statement",
+                    "prose": "Organizational cybersecurity policy is established and communicated"
+                  }
+                ]
+              },
+              {
+                "id": "ID.GV-2",
+                "class": "subcategory",
+                "title": "ID.GV-2",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00003.00002"},
+                  {"name": "label", "value": "ID.GV-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.GV-2_statement",
+                    "name": "statement",
+                    "prose": "Cybersecurity roles and responsibilities are coordinated and aligned with internal roles and external partners"
+                  }
+                ]
+              },
+              {
+                "id": "ID.GV-3",
+                "class": "subcategory",
+                "title": "ID.GV-3",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00003.00003"},
+                  {"name": "label", "value": "ID.GV-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.GV-3_statement",
+                    "name": "statement",
+                    "prose": "Legal and regulatory requirements regarding cybersecurity, including privacy and civil liberties obligations, are understood and managed"
+                  }
+                ]
+              },
+              {
+                "id": "ID.GV-4",
+                "class": "subcategory",
+                "title": "ID.GV-4",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00003.00004"},
+                  {"name": "label", "value": "ID.GV-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.GV-4_statement",
+                    "name": "statement",
+                    "prose": "Governance and risk management processes address cybersecurity risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ID.RA",
+            "class": "category",
+            "title": "Risk Assessment",
+            "props": [
+              {"name": "sort-id", "value": "00001.00004"},
+              {"name": "label", "value": "Risk Assessment (ID.RA)"}
+            ],
+            "parts": [
+              {
+                "id": "ID.RA_statement",
+                "name": "statement",
+                "prose": "The organization understands the cybersecurity risk to organizational operations (including mission, functions, image, or reputation), organizational assets, and individuals."
+              }
+            ],
+            "controls": [
+              {
+                "id": "ID.RA-1",
+                "class": "subcategory",
+                "title": "ID.RA-1",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00004.00001"},
+                  {"name": "label", "value": "ID.RA-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RA-1_statement",
+                    "name": "statement",
+                    "prose": "Asset vulnerabilities are identified and documented"
+                  }
+                ]
+              },
+              {
+                "id": "ID.RA-2",
+                "class": "subcategory",
+                "title": "ID.RA-2",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00004.00002"},
+                  {"name": "label", "value": "ID.RA-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RA-2_statement",
+                    "name": "statement",
+                    "prose": "Cyber threat intelligence is received from information sharing forums and sources"
+                  }
+                ]
+              },
+              {
+                "id": "ID.RA-3",
+                "class": "subcategory",
+                "title": "ID.RA-3",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00004.00003"},
+                  {"name": "label", "value": "ID.RA-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RA-3_statement",
+                    "name": "statement",
+                    "prose": "Threats, both internal and external, are identified and documented"
+                  }
+                ]
+              },
+              {
+                "id": "ID.RA-4",
+                "class": "subcategory",
+                "title": "ID.RA-4",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00004.00004"},
+                  {"name": "label", "value": "ID.RA-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RA-4_statement",
+                    "name": "statement",
+                    "prose": "Potential business impacts and likelihoods are identified"
+                  }
+                ]
+              },
+              {
+                "id": "ID.RA-5",
+                "class": "subcategory",
+                "title": "ID.RA-5",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00004.00005"},
+                  {"name": "label", "value": "ID.RA-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RA-5_statement",
+                    "name": "statement",
+                    "prose": "Threats, vulnerabilities, likelihoods, and impacts are used to determine risk"
+                  }
+                ]
+              },
+              {
+                "id": "ID.RA-6",
+                "class": "subcategory",
+                "title": "ID.RA-6",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00004.00006"},
+                  {"name": "label", "value": "ID.RA-6"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RA-6_statement",
+                    "name": "statement",
+                    "prose": "Risk responses are identified and prioritized"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ID.RM",
+            "class": "category",
+            "title": "Risk Management Strategy",
+            "props": [
+              {"name": "sort-id", "value": "00001.00005"},
+              {"name": "label", "value": "Risk Management Strategy (ID.RM)"}
+            ],
+            "parts": [
+              {
+                "id": "ID.RM_statement",
+                "name": "statement",
+                "prose": "The organization's priorities, constraints, risk tolerances, and assumptions are established and used to support operational risk decisions."
+              }
+            ],
+            "controls": [
+              {
+                "id": "ID.RM-1",
+                "class": "subcategory",
+                "title": "ID.RM-1",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00005.00001"},
+                  {"name": "label", "value": "ID.RM-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RM-1_statement",
+                    "name": "statement",
+                    "prose": "Risk management processes are established, managed, and agreed to by organizational stakeholders"
+                  }
+                ]
+              },
+              {
+                "id": "ID.RM-2",
+                "class": "subcategory",
+                "title": "ID.RM-2",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00005.00002"},
+                  {"name": "label", "value": "ID.RM-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RM-2_statement",
+                    "name": "statement",
+                    "prose": "Organizational risk tolerance is determined and clearly expressed"
+                  }
+                ]
+              },
+              {
+                "id": "ID.RM-3",
+                "class": "subcategory",
+                "title": "ID.RM-3",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00005.00003"},
+                  {"name": "label", "value": "ID.RM-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.RM-3_statement",
+                    "name": "statement",
+                    "prose": "The organization's determination of risk tolerance is informed by its role in critical infrastructure and sector specific risk analysis"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ID.SC",
+            "class": "category",
+            "title": "Supply Chain Risk Management",
+            "props": [
+              {"name": "sort-id", "value": "00001.00006"},
+              {"name": "label", "value": "Supply Chain Risk Management (ID.SC)"}
+            ],
+            "parts": [
+              {
+                "id": "ID.SC_statement",
+                "name": "statement",
+                "prose": "The organization's priorities, constraints, risk tolerances, and assumptions are established and used to support risk decisions associated with managing supply chain risk. The organization has established and implemented the processes to identify, assess and manage supply chain risks."
+              }
+            ],
+            "controls": [
+              {
+                "id": "ID.SC-1",
+                "class": "subcategory",
+                "title": "ID.SC-1",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00006.00001"},
+                  {"name": "label", "value": "ID.SC-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.SC-1_statement",
+                    "name": "statement",
+                    "prose": "Cyber supply chain risk management processes are identified, established, assessed, managed, and agreed to by organizational stakeholders"
+                  }
+                ]
+              },
+              {
+                "id": "ID.SC-2",
+                "class": "subcategory",
+                "title": "ID.SC-2",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00006.00002"},
+                  {"name": "label", "value": "ID.SC-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.SC-2_statement",
+                    "name": "statement",
+                    "prose": "Suppliers and third party partners of information systems, components, and services are identified, prioritized, and assessed using a cyber supply chain risk assessment process"
+                  }
+                ]
+              },
+              {
+                "id": "ID.SC-3",
+                "class": "subcategory",
+                "title": "ID.SC-3",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00006.00003"},
+                  {"name": "label", "value": "ID.SC-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.SC-3_statement",
+                    "name": "statement",
+                    "prose": "Contracts with suppliers and third-party partners are used to implement appropriate measures designed to meet the objectives of an organization's cybersecurity program and Cyber Supply Chain Risk Management Plan"
+                  }
+                ]
+              },
+              {
+                "id": "ID.SC-4",
+                "class": "subcategory",
+                "title": "ID.SC-4",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00006.00004"},
+                  {"name": "label", "value": "ID.SC-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.SC-4_statement",
+                    "name": "statement",
+                    "prose": "Suppliers and third-party partners are routinely assessed using audits, test results, or other forms of evaluations to confirm they are meeting their contractual obligations"
+                  }
+                ]
+              },
+              {
+                "id": "ID.SC-5",
+                "class": "subcategory",
+                "title": "ID.SC-5",
+                "props": [
+                  {"name": "sort-id", "value": "00001.00006.00005"},
+                  {"name": "label", "value": "ID.SC-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "ID.SC-5_statement",
+                    "name": "statement",
+                    "prose": "Response and recovery planning and testing are conducted with suppliers and third-party providers"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "PR",
+        "class": "function",
+        "title": "PROTECT",
+        "props": [
+          {"name": "sort-id", "value": "00002"},
+          {"name": "label", "value": "PROTECT (PR)"}
+        ],
+        "parts": [
+          {
+            "id": "PR_overview",
+            "name": "overview",
+            "prose": "Develop and implement appropriate safeguards to ensure delivery of critical services."
+          }
+        ],
+        "controls": [
+          {
+            "id": "PR.AC",
+            "class": "category",
+            "title": "Identity Management, Authentication and Access Control",
+            "props": [
+              {"name": "sort-id", "value": "00002.00001"},
+              {"name": "label", "value": "Identity Management, Authentication and Access Control (PR.AC)"}
+            ],
+            "parts": [
+              {
+                "id": "PR.AC_statement",
+                "name": "statement",
+                "prose": "Access to physical and logical assets and associated facilities is limited to authorized users, processes, and devices, and is managed consistent with the assessed risk of unauthorized access to authorized activities and transactions."
+              }
+            ],
+            "controls": [
+              {
+                "id": "PR.AC-1",
+                "class": "subcategory",
+                "title": "PR.AC-1",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00001.00001"},
+                  {"name": "label", "value": "PR.AC-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AC-1_statement",
+                    "name": "statement",
+                    "prose": "Identities and credentials are issued, managed, verified, revoked, and audited for authorized devices, users and processes"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AC-2",
+                "class": "subcategory",
+                "title": "PR.AC-2",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00001.00002"},
+                  {"name": "label", "value": "PR.AC-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AC-2_statement",
+                    "name": "statement",
+                    "prose": "Physical access to assets is managed and protected"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AC-3",
+                "class": "subcategory",
+                "title": "PR.AC-3",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00001.00003"},
+                  {"name": "label", "value": "PR.AC-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AC-3_statement",
+                    "name": "statement",
+                    "prose": "Remote access is managed"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AC-4",
+                "class": "subcategory",
+                "title": "PR.AC-4",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00001.00004"},
+                  {"name": "label", "value": "PR.AC-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AC-4_statement",
+                    "name": "statement",
+                    "prose": "Access permissions and authorizations are managed, incorporating the principles of least privilege and separation of duties"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AC-5",
+                "class": "subcategory",
+                "title": "PR.AC-5",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00001.00005"},
+                  {"name": "label", "value": "PR.AC-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AC-5_statement",
+                    "name": "statement",
+                    "prose": "Network integrity is protected (e.g., network segregation, network segmentation)"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AC-6",
+                "class": "subcategory",
+                "title": "PR.AC-6",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00001.00006"},
+                  {"name": "label", "value": "PR.AC-6"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AC-6_statement",
+                    "name": "statement",
+                    "prose": "Identities are proofed and bound to credentials and asserted in interactions"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AC-7",
+                "class": "subcategory",
+                "title": "PR.AC-7",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00001.00007"},
+                  {"name": "label", "value": "PR.AC-7"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AC-7_statement",
+                    "name": "statement",
+                    "prose": "Users, devices, and other assets are authenticated (e.g., single-factor, multi-factor) commensurate with the risk of the transaction (e.g., individuals' security and privacy risks and other organizational risks)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "PR.AT",
+            "class": "category",
+            "title": "Awareness and Training",
+            "props": [
+              {"name": "sort-id", "value": "00002.00002"},
+              {"name": "label", "value": "Awareness and Training (PR.AT)"}
+            ],
+            "parts": [
+              {
+                "id": "PR.AT_statement",
+                "name": "statement",
+                "prose": "The organization's personnel and partners are provided cybersecurity awareness education and are trained to perform their cybersecurity-related duties and responsibilities consistent with related policies, procedures, and agreements."
+              }
+            ],
+            "controls": [
+              {
+                "id": "PR.AT-1",
+                "class": "subcategory",
+                "title": "PR.AT-1",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00002.00001"},
+                  {"name": "label", "value": "PR.AT-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AT-1_statement",
+                    "name": "statement",
+                    "prose": "All users are informed and trained"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AT-2",
+                "class": "subcategory",
+                "title": "PR.AT-2",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00002.00002"},
+                  {"name": "label", "value": "PR.AT-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AT-2_statement",
+                    "name": "statement",
+                    "prose": "Privileged users understand their roles and responsibilities"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AT-3",
+                "class": "subcategory",
+                "title": "PR.AT-3",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00002.00003"},
+                  {"name": "label", "value": "PR.AT-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AT-3_statement",
+                    "name": "statement",
+                    "prose": "Third-party stakeholders (e.g., suppliers, customers, partners) understand their roles and responsibilities"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AT-4",
+                "class": "subcategory",
+                "title": "PR.AT-4",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00002.00004"},
+                  {"name": "label", "value": "PR.AT-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AT-4_statement",
+                    "name": "statement",
+                    "prose": "Senior executives understand their roles and responsibilities"
+                  }
+                ]
+              },
+              {
+                "id": "PR.AT-5",
+                "class": "subcategory",
+                "title": "PR.AT-5",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00002.00005"},
+                  {"name": "label", "value": "PR.AT-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.AT-5_statement",
+                    "name": "statement",
+                    "prose": "Physical and cybersecurity personnel understand their roles and responsibilities"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "PR.DS",
+            "class": "category",
+            "title": "Data Security",
+            "props": [
+              {"name": "sort-id", "value": "00002.00003"},
+              {"name": "label", "value": "Data Security (PR.DS)"}
+            ],
+            "parts": [
+              {
+                "id": "PR.DS_statement",
+                "name": "statement",
+                "prose": "Information and records (data) are managed consistent with the organization's risk strategy to protect the confidentiality, integrity, and availability of information."
+              }
+            ],
+            "controls": [
+              {
+                "id": "PR.DS-1",
+                "class": "subcategory",
+                "title": "PR.DS-1",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00003.00001"},
+                  {"name": "label", "value": "PR.DS-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.DS-1_statement",
+                    "name": "statement",
+                    "prose": "Data-at-rest is protected"
+                  }
+                ]
+              },
+              {
+                "id": "PR.DS-2",
+                "class": "subcategory",
+                "title": "PR.DS-2",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00003.00002"},
+                  {"name": "label", "value": "PR.DS-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.DS-2_statement",
+                    "name": "statement",
+                    "prose": "Data-in-transit is protected"
+                  }
+                ]
+              },
+              {
+                "id": "PR.DS-3",
+                "class": "subcategory",
+                "title": "PR.DS-3",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00003.00003"},
+                  {"name": "label", "value": "PR.DS-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.DS-3_statement",
+                    "name": "statement",
+                    "prose": "Assets are formally managed throughout removal, transfers, and disposition"
+                  }
+                ]
+              },
+              {
+                "id": "PR.DS-4",
+                "class": "subcategory",
+                "title": "PR.DS-4",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00003.00004"},
+                  {"name": "label", "value": "PR.DS-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.DS-4_statement",
+                    "name": "statement",
+                    "prose": "Adequate capacity to ensure availability is maintained"
+                  }
+                ]
+              },
+              {
+                "id": "PR.DS-5",
+                "class": "subcategory",
+                "title": "PR.DS-5",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00003.00005"},
+                  {"name": "label", "value": "PR.DS-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.DS-5_statement",
+                    "name": "statement",
+                    "prose": "Protections against data leaks are implemented"
+                  }
+                ]
+              },
+              {
+                "id": "PR.DS-6",
+                "class": "subcategory",
+                "title": "PR.DS-6",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00003.00006"},
+                  {"name": "label", "value": "PR.DS-6"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.DS-6_statement",
+                    "name": "statement",
+                    "prose": "Integrity checking mechanisms are used to verify software, firmware, and information integrity"
+                  }
+                ]
+              },
+              {
+                "id": "PR.DS-7",
+                "class": "subcategory",
+                "title": "PR.DS-7",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00003.00007"},
+                  {"name": "label", "value": "PR.DS-7"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.DS-7_statement",
+                    "name": "statement",
+                    "prose": "The development and testing environment(s) are separate from the production environment"
+                  }
+                ]
+              },
+              {
+                "id": "PR.DS-8",
+                "class": "subcategory",
+                "title": "PR.DS-8",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00003.00008"},
+                  {"name": "label", "value": "PR.DS-8"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.DS-8_statement",
+                    "name": "statement",
+                    "prose": "Integrity checking mechanisms are used to verify hardware integrity"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "PR.IP",
+            "class": "category",
+            "title": "Information Protection Processes and Procedures",
+            "props": [
+              {"name": "sort-id", "value": "00002.00004"},
+              {"name": "label", "value": "Information Protection Processes and Procedures (PR.IP)"}
+            ],
+            "parts": [
+              {
+                "id": "PR.IP_statement",
+                "name": "statement",
+                "prose": "Security policies (that address purpose, scope, roles, responsibilities, management commitment, and coordination among organizational entities), processes, and procedures are maintained and used to manage protection of information systems and assets."
+              }
+            ],
+            "controls": [
+              {
+                "id": "PR.IP-1",
+                "class": "subcategory",
+                "title": "PR.IP-1",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00001"},
+                  {"name": "label", "value": "PR.IP-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-1_statement",
+                    "name": "statement",
+                    "prose": "A baseline configuration of information technology/industrial control systems is created and maintained incorporating security principles (e.g. concept of least functionality)"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-2",
+                "class": "subcategory",
+                "title": "PR.IP-2",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00002"},
+                  {"name": "label", "value": "PR.IP-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-2_statement",
+                    "name": "statement",
+                    "prose": "A System Development Life Cycle to manage systems is implemented"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-3",
+                "class": "subcategory",
+                "title": "PR.IP-3",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00003"},
+                  {"name": "label", "value": "PR.IP-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-3_statement",
+                    "name": "statement",
+                    "prose": "Configuration change control processes are in place"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-4",
+                "class": "subcategory",
+                "title": "PR.IP-4",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00004"},
+                  {"name": "label", "value": "PR.IP-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-4_statement",
+                    "name": "statement",
+                    "prose": "Backups of information are conducted, maintained, and tested"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-5",
+                "class": "subcategory",
+                "title": "PR.IP-5",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00005"},
+                  {"name": "label", "value": "PR.IP-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-5_statement",
+                    "name": "statement",
+                    "prose": "Policy and regulations regarding the physical operating environment for organizational assets are met"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-6",
+                "class": "subcategory",
+                "title": "PR.IP-6",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00006"},
+                  {"name": "label", "value": "PR.IP-6"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-6_statement",
+                    "name": "statement",
+                    "prose": "Data is destroyed according to policy"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-7",
+                "class": "subcategory",
+                "title": "PR.IP-7",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00007"},
+                  {"name": "label", "value": "PR.IP-7"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-7_statement",
+                    "name": "statement",
+                    "prose": "Protection processes are improved"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-8",
+                "class": "subcategory",
+                "title": "PR.IP-8",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00008"},
+                  {"name": "label", "value": "PR.IP-8"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-8_statement",
+                    "name": "statement",
+                    "prose": "Effectiveness of protection technologies is shared"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-9",
+                "class": "subcategory",
+                "title": "PR.IP-9",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00009"},
+                  {"name": "label", "value": "PR.IP-9"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-9_statement",
+                    "name": "statement",
+                    "prose": "Response plans (Incident Response and Business Continuity) and recovery plans (Incident Recovery and Disaster Recovery) are in place and managed"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-10",
+                "class": "subcategory",
+                "title": "PR.IP-10",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00010"},
+                  {"name": "label", "value": "PR.IP-10"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-10_statement",
+                    "name": "statement",
+                    "prose": "Response and recovery plans are tested"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-11",
+                "class": "subcategory",
+                "title": "PR.IP-11",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00011"},
+                  {"name": "label", "value": "PR.IP-11"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-11_statement",
+                    "name": "statement",
+                    "prose": "Cybersecurity is included in human resources practices (e.g., deprovisioning, personnel screening)"
+                  }
+                ]
+              },
+              {
+                "id": "PR.IP-12",
+                "class": "subcategory",
+                "title": "PR.IP-12",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00004.00012"},
+                  {"name": "label", "value": "PR.IP-12"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.IP-12_statement",
+                    "name": "statement",
+                    "prose": "A vulnerability management plan is developed and implemented"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "PR.MA",
+            "class": "category",
+            "title": "Maintenance",
+            "props": [
+              {"name": "sort-id", "value": "00002.00005"},
+              {"name": "label", "value": "Maintenance (PR.MA)"}
+            ],
+            "parts": [
+              {
+                "id": "PR.MA_statement",
+                "name": "statement",
+                "prose": "Maintenance and repairs of industrial control and information system components are performed consistent with policies and procedures."
+              }
+            ],
+            "controls": [
+              {
+                "id": "PR.MA-1",
+                "class": "subcategory",
+                "title": "PR.MA-1",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00005.00001"},
+                  {"name": "label", "value": "PR.MA-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.MA-1_statement",
+                    "name": "statement",
+                    "prose": "Maintenance and repair of organizational assets are performed and logged, with approved and controlled tools"
+                  }
+                ]
+              },
+              {
+                "id": "PR.MA-2",
+                "class": "subcategory",
+                "title": "PR.MA-2",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00005.00002"},
+                  {"name": "label", "value": "PR.MA-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.MA-2_statement",
+                    "name": "statement",
+                    "prose": "Remote maintenance of organizational assets is approved, logged, and performed in a manner that prevents unauthorized access"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "PR.PT",
+            "class": "category",
+            "title": "Protective Technology",
+            "props": [
+              {"name": "sort-id", "value": "00002.00006"},
+              {"name": "label", "value": "Protective Technology (PR.PT)"}
+            ],
+            "parts": [
+              {
+                "id": "PR.PT_statement",
+                "name": "statement",
+                "prose": "Technical security solutions are managed to ensure the security and resilience of systems and assets, consistent with related policies, procedures, and agreements."
+              }
+            ],
+            "controls": [
+              {
+                "id": "PR.PT-1",
+                "class": "subcategory",
+                "title": "PR.PT-1",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00006.00001"},
+                  {"name": "label", "value": "PR.PT-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.PT-1_statement",
+                    "name": "statement",
+                    "prose": "Audit/log records are determined, documented, implemented, and reviewed in accordance with policy"
+                  }
+                ]
+              },
+              {
+                "id": "PR.PT-2",
+                "class": "subcategory",
+                "title": "PR.PT-2",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00006.00002"},
+                  {"name": "label", "value": "PR.PT-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.PT-2_statement",
+                    "name": "statement",
+                    "prose": "Removable media is protected and its use restricted according to policy"
+                  }
+                ]
+              },
+              {
+                "id": "PR.PT-3",
+                "class": "subcategory",
+                "title": "PR.PT-3",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00006.00003"},
+                  {"name": "label", "value": "PR.PT-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.PT-3_statement",
+                    "name": "statement",
+                    "prose": "The principle of least functionality is incorporated by configuring systems to provide only essential capabilities"
+                  }
+                ]
+              },
+              {
+                "id": "PR.PT-4",
+                "class": "subcategory",
+                "title": "PR.PT-4",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00006.00004"},
+                  {"name": "label", "value": "PR.PT-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.PT-4_statement",
+                    "name": "statement",
+                    "prose": "Communications and control networks are protected"
+                  }
+                ]
+              },
+              {
+                "id": "PR.PT-5",
+                "class": "subcategory",
+                "title": "PR.PT-5",
+                "props": [
+                  {"name": "sort-id", "value": "00002.00006.00005"},
+                  {"name": "label", "value": "PR.PT-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "PR.PT-5_statement",
+                    "name": "statement",
+                    "prose": "Mechanisms (e.g., failsafe, load balancing, hot swap) are implemented to achieve resilience requirements in normal and adverse situations"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "DE",
+        "class": "function",
+        "title": "DETECT",
+        "props": [
+          {"name": "sort-id", "value": "00003"},
+          {"name": "label", "value": "DETECT (DE)"}
+        ],
+        "parts": [
+          {
+            "id": "DE_overview",
+            "name": "overview",
+            "prose": "Develop and implement appropriate activities to identify the occurrence of a cybersecurity event."
+          }
+        ],
+        "controls": [
+          {
+            "id": "DE.AE",
+            "class": "category",
+            "title": "Anomalies and Events",
+            "props": [
+              {"name": "sort-id", "value": "00003.00001"},
+              {"name": "label", "value": "Anomalies and Events (DE.AE)"}
+            ],
+            "parts": [
+              {
+                "id": "DE.AE_statement",
+                "name": "statement",
+                "prose": "Anomalous activity is detected and the potential impact of events is understood."
+              }
+            ],
+            "controls": [
+              {
+                "id": "DE.AE-1",
+                "class": "subcategory",
+                "title": "DE.AE-1",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00001.00001"},
+                  {"name": "label", "value": "DE.AE-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.AE-1_statement",
+                    "name": "statement",
+                    "prose": "A baseline of network operations and expected data flows for users and systems is established and managed"
+                  }
+                ]
+              },
+              {
+                "id": "DE.AE-2",
+                "class": "subcategory",
+                "title": "DE.AE-2",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00001.00002"},
+                  {"name": "label", "value": "DE.AE-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.AE-2_statement",
+                    "name": "statement",
+                    "prose": "Detected events are analyzed to understand attack targets and methods"
+                  }
+                ]
+              },
+              {
+                "id": "DE.AE-3",
+                "class": "subcategory",
+                "title": "DE.AE-3",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00001.00003"},
+                  {"name": "label", "value": "DE.AE-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.AE-3_statement",
+                    "name": "statement",
+                    "prose": "Event data are collected and correlated from multiple sources and sensors"
+                  }
+                ]
+              },
+              {
+                "id": "DE.AE-4",
+                "class": "subcategory",
+                "title": "DE.AE-4",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00001.00004"},
+                  {"name": "label", "value": "DE.AE-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.AE-4_statement",
+                    "name": "statement",
+                    "prose": "Impact of events is determined"
+                  }
+                ]
+              },
+              {
+                "id": "DE.AE-5",
+                "class": "subcategory",
+                "title": "DE.AE-5",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00001.00005"},
+                  {"name": "label", "value": "DE.AE-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.AE-5_statement",
+                    "name": "statement",
+                    "prose": "Incident alert thresholds are established"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "DE.CM",
+            "class": "category",
+            "title": "Security Continuous Monitoring",
+            "props": [
+              {"name": "sort-id", "value": "00003.00002"},
+              {"name": "label", "value": "Security Continuous Monitoring (DE.CM)"}
+            ],
+            "parts": [
+              {
+                "id": "DE.CM_statement",
+                "name": "statement",
+                "prose": "The information system and assets are monitored to identify cybersecurity events and verify the effectiveness of protective measures."
+              }
+            ],
+            "controls": [
+              {
+                "id": "DE.CM-1",
+                "class": "subcategory",
+                "title": "DE.CM-1",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00002.00001"},
+                  {"name": "label", "value": "DE.CM-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.CM-1_statement",
+                    "name": "statement",
+                    "prose": "The network is monitored to detect potential cybersecurity events"
+                  }
+                ]
+              },
+              {
+                "id": "DE.CM-2",
+                "class": "subcategory",
+                "title": "DE.CM-2",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00002.00002"},
+                  {"name": "label", "value": "DE.CM-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.CM-2_statement",
+                    "name": "statement",
+                    "prose": "The physical environment is monitored to detect potential cybersecurity events"
+                  }
+                ]
+              },
+              {
+                "id": "DE.CM-3",
+                "class": "subcategory",
+                "title": "DE.CM-3",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00002.00003"},
+                  {"name": "label", "value": "DE.CM-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.CM-3_statement",
+                    "name": "statement",
+                    "prose": "Personnel activity is monitored to detect potential cybersecurity events"
+                  }
+                ]
+              },
+              {
+                "id": "DE.CM-4",
+                "class": "subcategory",
+                "title": "DE.CM-4",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00002.00004"},
+                  {"name": "label", "value": "DE.CM-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.CM-4_statement",
+                    "name": "statement",
+                    "prose": "Malicious code is detected"
+                  }
+                ]
+              },
+              {
+                "id": "DE.CM-5",
+                "class": "subcategory",
+                "title": "DE.CM-5",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00002.00005"},
+                  {"name": "label", "value": "DE.CM-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.CM-5_statement",
+                    "name": "statement",
+                    "prose": "Unauthorized mobile code is detected"
+                  }
+                ]
+              },
+              {
+                "id": "DE.CM-6",
+                "class": "subcategory",
+                "title": "DE.CM-6",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00002.00006"},
+                  {"name": "label", "value": "DE.CM-6"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.CM-6_statement",
+                    "name": "statement",
+                    "prose": "External service provider activity is monitored to detect potential cybersecurity events"
+                  }
+                ]
+              },
+              {
+                "id": "DE.CM-7",
+                "class": "subcategory",
+                "title": "DE.CM-7",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00002.00007"},
+                  {"name": "label", "value": "DE.CM-7"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.CM-7_statement",
+                    "name": "statement",
+                    "prose": "Monitoring for unauthorized personnel, connections, devices, and software is performed"
+                  }
+                ]
+              },
+              {
+                "id": "DE.CM-8",
+                "class": "subcategory",
+                "title": "DE.CM-8",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00002.00008"},
+                  {"name": "label", "value": "DE.CM-8"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.CM-8_statement",
+                    "name": "statement",
+                    "prose": "Vulnerability scans are performed"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "DE.DP",
+            "class": "category",
+            "title": "Detection Processes",
+            "props": [
+              {"name": "sort-id", "value": "00003.00003"},
+              {"name": "label", "value": "Detection Processes (DE.DP)"}
+            ],
+            "parts": [
+              {
+                "id": "DE.DP_statement",
+                "name": "statement",
+                "prose": "Detection processes and procedures are maintained and tested to ensure awareness of anomalous events."
+              }
+            ],
+            "controls": [
+              {
+                "id": "DE.DP-1",
+                "class": "subcategory",
+                "title": "DE.DP-1",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00003.00001"},
+                  {"name": "label", "value": "DE.DP-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.DP-1_statement",
+                    "name": "statement",
+                    "prose": "Roles and responsibilities for detection are well defined to ensure accountability"
+                  }
+                ]
+              },
+              {
+                "id": "DE.DP-2",
+                "class": "subcategory",
+                "title": "DE.DP-2",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00003.00002"},
+                  {"name": "label", "value": "DE.DP-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.DP-2_statement",
+                    "name": "statement",
+                    "prose": "Detection activities comply with all applicable requirements"
+                  }
+                ]
+              },
+              {
+                "id": "DE.DP-3",
+                "class": "subcategory",
+                "title": "DE.DP-3",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00003.00003"},
+                  {"name": "label", "value": "DE.DP-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.DP-3_statement",
+                    "name": "statement",
+                    "prose": "Detection processes are tested"
+                  }
+                ]
+              },
+              {
+                "id": "DE.DP-4",
+                "class": "subcategory",
+                "title": "DE.DP-4",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00003.00004"},
+                  {"name": "label", "value": "DE.DP-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.DP-4_statement",
+                    "name": "statement",
+                    "prose": "Event detection information is communicated"
+                  }
+                ]
+              },
+              {
+                "id": "DE.DP-5",
+                "class": "subcategory",
+                "title": "DE.DP-5",
+                "props": [
+                  {"name": "sort-id", "value": "00003.00003.00005"},
+                  {"name": "label", "value": "DE.DP-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "DE.DP-5_statement",
+                    "name": "statement",
+                    "prose": "Detection processes are continuously improved"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "RS",
+        "class": "function",
+        "title": "RESPOND",
+        "props": [
+          {"name": "sort-id", "value": "00004"},
+          {"name": "label", "value": "RESPOND (RS)"}
+        ],
+        "parts": [
+          {
+            "id": "RS_overview",
+            "name": "overview",
+            "prose": "Develop and implement appropriate activities to take action regarding a detected cybersecurity incident."
+          }
+        ],
+        "controls": [
+          {
+            "id": "RS.RP",
+            "class": "category",
+            "title": "Response Planning",
+            "props": [
+              {"name": "sort-id", "value": "00004.00001"},
+              {"name": "label", "value": "Response Planning (RS.RP)"}
+            ],
+            "parts": [
+              {
+                "id": "RS.RP_statement",
+                "name": "statement",
+                "prose": "Response processes and procedures are executed and maintained, to ensure response to detected cybersecurity incidents."
+              }
+            ],
+            "controls": [
+              {
+                "id": "RS.RP-1",
+                "class": "subcategory",
+                "title": "RS.RP-1",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00001.00001"},
+                  {"name": "label", "value": "RS.RP-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.RP-1_statement",
+                    "name": "statement",
+                    "prose": "Response plan is executed during or after an incident"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "RS.CO",
+            "class": "category",
+            "title": "Communications",
+            "props": [
+              {"name": "sort-id", "value": "00004.00002"},
+              {"name": "label", "value": "Communications (RS.CO)"}
+            ],
+            "parts": [
+              {
+                "id": "RS.CO_statement",
+                "name": "statement",
+                "prose": "Response activities are coordinated with internal and external stakeholders (e.g. external support from law enforcement agencies)."
+              }
+            ],
+            "controls": [
+              {
+                "id": "RS.CO-1",
+                "class": "subcategory",
+                "title": "RS.CO-1",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00002.00001"},
+                  {"name": "label", "value": "RS.CO-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.CO-1_statement",
+                    "name": "statement",
+                    "prose": "Personnel know their roles and order of operations when a response is needed"
+                  }
+                ]
+              },
+              {
+                "id": "RS.CO-2",
+                "class": "subcategory",
+                "title": "RS.CO-2",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00002.00002"},
+                  {"name": "label", "value": "RS.CO-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.CO-2_statement",
+                    "name": "statement",
+                    "prose": "Incidents are reported consistent with established criteria"
+                  }
+                ]
+              },
+              {
+                "id": "RS.CO-3",
+                "class": "subcategory",
+                "title": "RS.CO-3",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00002.00003"},
+                  {"name": "label", "value": "RS.CO-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.CO-3_statement",
+                    "name": "statement",
+                    "prose": "Information is shared consistent with response plans"
+                  }
+                ]
+              },
+              {
+                "id": "RS.CO-4",
+                "class": "subcategory",
+                "title": "RS.CO-4",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00002.00004"},
+                  {"name": "label", "value": "RS.CO-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.CO-4_statement",
+                    "name": "statement",
+                    "prose": "Coordination with stakeholders occurs consistent with response plans"
+                  }
+                ]
+              },
+              {
+                "id": "RS.CO-5",
+                "class": "subcategory",
+                "title": "RS.CO-5",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00002.00005"},
+                  {"name": "label", "value": "RS.CO-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.CO-5_statement",
+                    "name": "statement",
+                    "prose": "Voluntary information sharing occurs with external stakeholders to achieve broader cybersecurity situational awareness"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "RS.AN",
+            "class": "category",
+            "title": "Analysis",
+            "props": [
+              {"name": "sort-id", "value": "00004.00003"},
+              {"name": "label", "value": "Analysis (RS.AN)"}
+            ],
+            "parts": [
+              {
+                "id": "RS.AN_statement",
+                "name": "statement",
+                "prose": "Analysis is conducted to ensure effective response and support recovery activities."
+              }
+            ],
+            "controls": [
+              {
+                "id": "RS.AN-1",
+                "class": "subcategory",
+                "title": "RS.AN-1",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00003.00001"},
+                  {"name": "label", "value": "RS.AN-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.AN-1_statement",
+                    "name": "statement",
+                    "prose": "Notifications from detection systems are investigated"
+                  }
+                ]
+              },
+              {
+                "id": "RS.AN-2",
+                "class": "subcategory",
+                "title": "RS.AN-2",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00003.00002"},
+                  {"name": "label", "value": "RS.AN-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.AN-2_statement",
+                    "name": "statement",
+                    "prose": "The impact of the incident is understood"
+                  }
+                ]
+              },
+              {
+                "id": "RS.AN-3",
+                "class": "subcategory",
+                "title": "RS.AN-3",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00003.00003"},
+                  {"name": "label", "value": "RS.AN-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.AN-3_statement",
+                    "name": "statement",
+                    "prose": "Forensics are performed"
+                  }
+                ]
+              },
+              {
+                "id": "RS.AN-4",
+                "class": "subcategory",
+                "title": "RS.AN-4",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00003.00004"},
+                  {"name": "label", "value": "RS.AN-4"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.AN-4_statement",
+                    "name": "statement",
+                    "prose": "Incidents are categorized consistent with response plans"
+                  }
+                ]
+              },
+              {
+                "id": "RS.AN-5",
+                "class": "subcategory",
+                "title": "RS.AN-5",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00003.00005"},
+                  {"name": "label", "value": "RS.AN-5"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.AN-5_statement",
+                    "name": "statement",
+                    "prose": "Processes are established to receive, analyze and respond to vulnerabilities disclosed to the organization from internal and external sources (e.g. internal testing, security bulletins, or security researchers)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "RS.MI",
+            "class": "category",
+            "title": "Mitigation",
+            "props": [
+              {"name": "sort-id", "value": "00004.00004"},
+              {"name": "label", "value": "Mitigation (RS.MI)"}
+            ],
+            "parts": [
+              {
+                "id": "RS.MI_statement",
+                "name": "statement",
+                "prose": "Activities are performed to prevent expansion of an event, mitigate its effects, and resolve the incident."
+              }
+            ],
+            "controls": [
+              {
+                "id": "RS.MI-1",
+                "class": "subcategory",
+                "title": "RS.MI-1",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00004.00001"},
+                  {"name": "label", "value": "RS.MI-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.MI-1_statement",
+                    "name": "statement",
+                    "prose": "Incidents are contained"
+                  }
+                ]
+              },
+              {
+                "id": "RS.MI-2",
+                "class": "subcategory",
+                "title": "RS.MI-2",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00004.00002"},
+                  {"name": "label", "value": "RS.MI-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.MI-2_statement",
+                    "name": "statement",
+                    "prose": "Incidents are mitigated"
+                  }
+                ]
+              },
+              {
+                "id": "RS.MI-3",
+                "class": "subcategory",
+                "title": "RS.MI-3",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00004.00003"},
+                  {"name": "label", "value": "RS.MI-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.MI-3_statement",
+                    "name": "statement",
+                    "prose": "Newly identified vulnerabilities are mitigated or documented as accepted risks"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "RS.IM",
+            "class": "category",
+            "title": "Improvements",
+            "props": [
+              {"name": "sort-id", "value": "00004.00005"},
+              {"name": "label", "value": "Improvements (RS.IM)"}
+            ],
+            "parts": [
+              {
+                "id": "RS.IM_statement",
+                "name": "statement",
+                "prose": "Organizational response activities are improved by incorporating lessons learned from current and previous detection/response activities."
+              }
+            ],
+            "controls": [
+              {
+                "id": "RS.IM-1",
+                "class": "subcategory",
+                "title": "RS.IM-1",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00005.00001"},
+                  {"name": "label", "value": "RS.IM-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.IM-1_statement",
+                    "name": "statement",
+                    "prose": "Response plans incorporate lessons learned"
+                  }
+                ]
+              },
+              {
+                "id": "RS.IM-2",
+                "class": "subcategory",
+                "title": "RS.IM-2",
+                "props": [
+                  {"name": "sort-id", "value": "00004.00005.00002"},
+                  {"name": "label", "value": "RS.IM-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "RS.IM-2_statement",
+                    "name": "statement",
+                    "prose": "Response strategies are updated"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "RC",
+        "class": "function",
+        "title": "RECOVER",
+        "props": [
+          {"name": "sort-id", "value": "00005"},
+          {"name": "label", "value": "RECOVER (RC)"}
+        ],
+        "parts": [
+          {
+            "id": "RC_overview",
+            "name": "overview",
+            "prose": "Develop and implement appropriate activities to maintain plans for resilience and to restore any capabilities or services that were impaired due to a cybersecurity incident."
+          }
+        ],
+        "controls": [
+          {
+            "id": "RC.RP",
+            "class": "category",
+            "title": "Recovery Planning",
+            "props": [
+              {"name": "sort-id", "value": "00005.00001"},
+              {"name": "label", "value": "Recovery Planning (RC.RP)"}
+            ],
+            "parts": [
+              {
+                "id": "RC.RP_statement",
+                "name": "statement",
+                "prose": "Recovery processes and procedures are executed and maintained to ensure restoration of systems or assets affected by cybersecurity incidents."
+              }
+            ],
+            "controls": [
+              {
+                "id": "RC.RP-1",
+                "class": "subcategory",
+                "title": "RC.RP-1",
+                "props": [
+                  {"name": "sort-id", "value": "00005.00001.00001"},
+                  {"name": "label", "value": "RC.RP-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "RC.RP-1_statement",
+                    "name": "statement",
+                    "prose": "Recovery plan is executed during or after a cybersecurity incident"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "RC.IM",
+            "class": "category",
+            "title": "Improvements",
+            "props": [
+              {"name": "sort-id", "value": "00005.00002"},
+              {"name": "label", "value": "Improvements (RC.IM)"}
+            ],
+            "parts": [
+              {
+                "id": "RC.IM_statement",
+                "name": "statement",
+                "prose": "Recovery planning and processes are improved by incorporating lessons learned into future activities."
+              }
+            ],
+            "controls": [
+              {
+                "id": "RC.IM-1",
+                "class": "subcategory",
+                "title": "RC.IM-1",
+                "props": [
+                  {"name": "sort-id", "value": "00005.00002.00001"},
+                  {"name": "label", "value": "RC.IM-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "RC.IM-1_statement",
+                    "name": "statement",
+                    "prose": "Recovery plans incorporate lessons learned"
+                  }
+                ]
+              },
+              {
+                "id": "RC.IM-2",
+                "class": "subcategory",
+                "title": "RC.IM-2",
+                "props": [
+                  {"name": "sort-id", "value": "00005.00002.00002"},
+                  {"name": "label", "value": "RC.IM-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "RC.IM-2_statement",
+                    "name": "statement",
+                    "prose": "Recovery strategies are updated"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "RC.CO",
+            "class": "category",
+            "title": "Communications",
+            "props": [
+              {"name": "sort-id", "value": "00005.00003"},
+              {"name": "label", "value": "Communications (RC.CO)"}
+            ],
+            "parts": [
+              {
+                "id": "RC.CO_statement",
+                "name": "statement",
+                "prose": "Restoration activities are coordinated with internal and external parties (e.g. coordinating centers, Internet Service Providers, owners of attacking systems, victims, other CSIRTs, and vendors)."
+              }
+            ],
+            "controls": [
+              {
+                "id": "RC.CO-1",
+                "class": "subcategory",
+                "title": "RC.CO-1",
+                "props": [
+                  {"name": "sort-id", "value": "00005.00003.00001"},
+                  {"name": "label", "value": "RC.CO-1"}
+                ],
+                "parts": [
+                  {
+                    "id": "RC.CO-1_statement",
+                    "name": "statement",
+                    "prose": "Public relations are managed"
+                  }
+                ]
+              },
+              {
+                "id": "RC.CO-2",
+                "class": "subcategory",
+                "title": "RC.CO-2",
+                "props": [
+                  {"name": "sort-id", "value": "00005.00003.00002"},
+                  {"name": "label", "value": "RC.CO-2"}
+                ],
+                "parts": [
+                  {
+                    "id": "RC.CO-2_statement",
+                    "name": "statement",
+                    "prose": "Reputation is repaired after an incident"
+                  }
+                ]
+              },
+              {
+                "id": "RC.CO-3",
+                "class": "subcategory",
+                "title": "RC.CO-3",
+                "props": [
+                  {"name": "sort-id", "value": "00005.00003.00003"},
+                  {"name": "label", "value": "RC.CO-3"}
+                ],
+                "parts": [
+                  {
+                    "id": "RC.CO-3_statement",
+                    "name": "statement",
+                    "prose": "Recovery activities are communicated to internal and external stakeholders as well as executive and management teams"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

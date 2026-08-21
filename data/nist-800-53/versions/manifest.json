@@ -1,0 +1,6 @@
+[
+  {"file": "rev4.json", "version": "800-53-Rev-4", "date": "2015-01-22"},
+  {"file": "rev5-v5.0.json", "version": "800-53-Rev-5", "date": "2020-09-23"},
+  {"file": "rev5-v5.1.json", "version": "800-53-Rev-5.1.1", "date": "2024-02-15"},
+  {"file": "rev5-v5.2.json", "version": "800-53-Rev-5.2.0", "date": "2025-08-01"}
+]

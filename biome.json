@@ -30,7 +30,7 @@
     }
   },
   "files": {
-    "includes": ["**", "!node_modules", "!build", "!.svelte-kit", "!**/*.svelte"]
+    "includes": ["**", "!node_modules", "!build", "!.svelte-kit", "!data", "!**/*.svelte"]
   },
   "overrides": [
     {
