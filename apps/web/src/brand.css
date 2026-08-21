@@ -1,0 +1,61 @@
+/* Rule1's original blue-accent visual language, retained for the standalone port. */
+[data-theme="light"] {
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-bg: #eff6ff;
+  --accent-border: #bfdbfe;
+}
+
+[data-theme="dark"] {
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-bg: #1e2e4a;
+  --accent-border: #1d4ed8;
+}
+
+body {
+  min-width: 960px;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+.cl-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 148px);
+  padding: 40px 24px;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text-mid);
+  text-align: center;
+}
+
+.error-state-icon {
+  color: var(--accent);
+  font-size: 28px;
+}
+
+.error-state-title {
+  margin-top: 8px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.error-state-msg {
+  margin: 4px 0 18px;
+}
+
+.error-state-link {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}

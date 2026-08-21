@@ -1,38 +1,43 @@
-/** Shared reactive theme state — synced to `[data-theme]` on `<html>` and cookie on `.link42.app`. */
-let current = $state("light");
+/** Browser-local theme state shared by the standalone Rule1 shell. */
+export type Theme = "light" | "dark";
 
-function setThemeCookie(t: string) {
-  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not yet supported in all browsers
-  document.cookie = `theme=${t};path=/;domain=.link42.app;max-age=${60 * 60 * 24 * 365};SameSite=Lax`;
+const STORAGE_KEY = "theme";
+let current = $state<Theme>("light");
+
+function readStoredTheme(): Theme | null {
+  try {
+    const value = localStorage.getItem(STORAGE_KEY);
+    return value === "light" || value === "dark" ? value : null;
+  } catch {
+    return null;
+  }
 }
 
-function getThemeCookie(): string | null {
-  const match = document.cookie.match(/(?:^|;\s*)theme=(light|dark)/);
-  return match ? match[1] : null;
+function applyTheme(value: Theme, persist: boolean): void {
+  current = value;
+  document.documentElement.setAttribute("data-theme", value);
+  if (!persist) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, value);
+  } catch {
+    // The visible theme still works when browser storage is unavailable.
+  }
 }
 
 export const theme = {
-  get value() {
+  get value(): Theme {
     return current;
   },
-  set value(v: string) {
-    current = v;
-    if (typeof document !== "undefined") {
-      document.documentElement.setAttribute("data-theme", v);
-      setThemeCookie(v);
-    }
+  set value(value: Theme) {
+    if (typeof document !== "undefined") applyTheme(value, true);
+    else current = value;
   },
-  toggle() {
+  toggle(): void {
     this.value = current === "dark" ? "light" : "dark";
   },
-  init(serverTheme?: string) {
-    if (typeof document !== "undefined") {
-      current =
-        serverTheme ??
-        getThemeCookie() ??
-        document.documentElement.getAttribute("data-theme") ??
-        (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      document.documentElement.setAttribute("data-theme", current);
-    }
+  init(): void {
+    if (typeof document === "undefined") return;
+    const systemTheme = window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    applyTheme(readStoredTheme() ?? systemTheme, false);
   },
 };

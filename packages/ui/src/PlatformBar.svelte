@@ -23,6 +23,7 @@ interface Props {
 	hideAuth?: boolean;
 	theme?: "light" | "dark";
 	onToggleTheme?: () => void;
+	currentAppHref?: string;
 }
 
 const APPS = [
@@ -57,6 +58,7 @@ let {
 	hideAuth = false,
 	theme = "light",
 	onToggleTheme,
+	currentAppHref = "/",
 }: Props = $props();
 
 let dropdownOpen = $state(false);
@@ -121,7 +123,7 @@ function handleWindowKeydown(e: KeyboardEvent) {
   <nav class="pb-nav" aria-label="Platform navigation">
     {#each APPS as app}
       <a
-        href={app.id === currentApp ? "/" : app.href}
+        href={app.id === currentApp ? currentAppHref : app.href}
         class="pb-app"
         class:pb-app--active={app.id === currentApp}
         aria-current={app.id === currentApp ? "page" : undefined}

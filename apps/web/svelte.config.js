@@ -6,6 +6,7 @@ const config = {
     paths: {
       base: "/rule1",
     },
+    prerender: { crawl: false },
   },
 };
 
