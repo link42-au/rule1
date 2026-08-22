@@ -31,8 +31,15 @@ export function readExplorerUrl(url: URL, availableFrameworks: readonly string[]
   const applicability = APPLICABILITY.includes(requestedApplicability as Exclude<Applicability, "">)
     ? (requestedApplicability as Exclude<Applicability, "">)
     : "";
+  const explicitSearch = url.searchParams.has("search");
   let search = url.searchParams.get("search")?.trim() ?? "";
   let selectedId = url.searchParams.get("id")?.trim() || null;
+  const legacyQuery = url.searchParams.get("q")?.trim() ?? "";
+
+  if (!selectedId && !explicitSearch && legacyQuery) {
+    if (/^([a-z0-9]+-)*\d+$/i.test(legacyQuery)) selectedId = legacyQuery;
+    else search = legacyQuery;
+  }
 
   if (!selectedId && /^([a-z0-9]+-)*\d+$/i.test(search)) {
     selectedId = search;
@@ -54,6 +61,7 @@ export function writeExplorerUrl(url: URL, state: ExplorerUrlState): URL {
   setOrDelete("applicability", state.applicability);
   setOrDelete("search", state.search.trim());
   setOrDelete("id", state.selectedId ?? "");
+  next.searchParams.delete("q");
   return next;
 }
 

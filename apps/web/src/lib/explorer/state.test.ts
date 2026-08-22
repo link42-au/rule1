@@ -60,6 +60,41 @@ describe("explorer URL state", () => {
     expect(state.selectedId).toBe("ISM-1749");
   });
 
+  it("opens an exact control from a legacy q link", () => {
+    const state = readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?q=ism-0009"), FRAMEWORK_IDS);
+    expect(state.search).toBe("");
+    expect(state.selectedId).toBe("ism-0009");
+  });
+
+  it("uses a free-text legacy q value as the explorer search", () => {
+    const state = readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?q=patch+management"), FRAMEWORK_IDS);
+    expect(state.search).toBe("patch management");
+    expect(state.selectedId).toBeNull();
+  });
+
+  it("gives explicit modern id and search parameters precedence over legacy q", () => {
+    expect(
+      readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?id=ISM-2116&q=ism-0009"), FRAMEWORK_IDS),
+    ).toMatchObject({ selectedId: "ISM-2116", search: "" });
+    expect(
+      readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?search=patching&q=ism-0009"), FRAMEWORK_IDS),
+    ).toMatchObject({ selectedId: null, search: "patching" });
+  });
+
+  it("removes legacy q when writing canonical explorer state", () => {
+    const initial = new URL("https://wan0.net/rule1/explorer/?q=ism-0009&tab=context");
+    const result = writeExplorerUrl(initial, {
+      framework: "ism",
+      filter: "all",
+      applicability: "",
+      search: "",
+      selectedId: "ism-0009",
+    });
+    expect(result.searchParams.has("q")).toBe(false);
+    expect(result.searchParams.get("id")).toBe("ism-0009");
+    expect(result.searchParams.get("tab")).toBe("context");
+  });
+
   it("removes cleared selection, search, and default state from the URL", () => {
     const initial = new URL(
       "https://wan0.net/rule1/explorer/?framework=nzism&id=NZISM-1&search=old&filter=new&tab=context",
