@@ -26,7 +26,6 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).toContain("Controls list");
     expect(explorerSource).toContain("Section overview");
     expect(treeSource).toContain("ctrl-group-header");
-    expect(explorerSource).not.toContain("Favourites");
   });
 
   it("auto-opens only the selected control's ancestor groups", () => {
@@ -95,6 +94,18 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).toContain('url.searchParams.set("tab", activeTab)');
     expect(explorerSource).not.toContain("CompareResponse");
     expect(explorerSource).not.toContain("GlossaryTerm");
-    expect(explorerSource).not.toContain("Favourites");
+  });
+
+  it("keeps favourites, imports, and control exports browser-local", () => {
+    expect(explorerSource).toContain("loadFavourites(favouriteStorage)");
+    expect(explorerSource).toContain("saveFavourites(favouriteStorage, next)");
+    expect(explorerSource).toContain("importFavourites(favourites, await file.text())");
+    expect(explorerSource).toContain('downloadControl("json")');
+    expect(explorerSource).toContain('downloadControl("csv")');
+    expect(explorerSource).toContain('downloadControl("md")');
+    expect(explorerSource).toContain("Favourite updated for this session, but browser storage is unavailable.");
+    expect(explorerSource).not.toMatch(/\bfetch\s*\(/);
+    expect(explorerSource).not.toContain("login2");
+    expect(explorerSource).not.toContain("community");
   });
 });

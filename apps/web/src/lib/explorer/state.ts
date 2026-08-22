@@ -1,7 +1,7 @@
 import type { Control, Group } from "@rule1/shared";
 import { canonicalFrameworkId, type FrameworkId } from "$lib/db/contracts";
 
-export const FILTERS = ["all", "e8", "ml1", "ml2", "ml3", "changed", "new", "withdrawn"] as const;
+export const FILTERS = ["all", "favourites", "e8", "ml1", "ml2", "ml3", "changed", "new", "withdrawn"] as const;
 export type ExplorerFilter = (typeof FILTERS)[number];
 
 export const APPLICABILITY = ["NC", "OS", "P", "C", "S", "TS"] as const;
@@ -62,10 +62,12 @@ export function filterControls(
   filter: ExplorerFilter,
   applicability: Applicability,
   search: string,
+  favourites: ReadonlySet<string> = new Set(),
 ): Control[] {
   let result = [...controls];
   if (filter === "all") result = result.filter((control) => control.change_type !== "withdrawn");
   else if (filter === "e8") result = result.filter((control) => (control.e8_levels?.length ?? 0) > 0);
+  else if (filter === "favourites") result = result.filter((control) => favourites.has(control.id));
   else if (filter.startsWith("ml")) {
     result = result.filter((control) => control.e8_levels?.includes(filter.toUpperCase()) ?? false);
   } else {

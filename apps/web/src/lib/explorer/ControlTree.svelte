@@ -7,13 +7,17 @@
     groups,
     bySection,
     selectedId,
+    favourites,
     onSelect,
+    onToggleFavourite,
     depth = 0,
   }: {
     groups: Group[];
     bySection: Map<string, Control[]>;
     selectedId: string | null;
+    favourites: Set<string>;
     onSelect: (id: string) => void;
+    onToggleFavourite: (id: string) => void;
     depth?: number;
   } = $props();
 
@@ -48,24 +52,46 @@
 
       {#if groupIsOpen(group)}
         {#if group.children.length > 0}
-          <ControlTree groups={group.children} {bySection} {selectedId} {onSelect} depth={depth + 1} />
+          <ControlTree
+            groups={group.children}
+            {bySection}
+            {selectedId}
+            {favourites}
+            {onSelect}
+            {onToggleFavourite}
+            depth={depth + 1}
+          />
         {/if}
 
         {#each bySection.get(group.id) ?? [] as control (control.id)}
-          <button
-            type="button"
+          <div
             class="ctrl-row"
             class:active={selectedId === control.id}
             class:withdrawn={control.change_type === "withdrawn"}
             data-id={control.id}
+            role="button"
+            tabindex="0"
             onclick={() => onSelect(control.id)}
+            onkeydown={(event) => (event.key === "Enter" || event.key === " ") && onSelect(control.id)}
           >
-            <span class="ctrl-row-id">{control.display_id}</span>
-            {#if control.title && !control.title.startsWith("Control: ")}
-              <span class="ctrl-row-title">{control.title}</span>
-            {/if}
-            <span class="ctrl-row-name">{control.statement ?? control.label ?? "No description available."}</span>
-          </button>
+            <span class="ctrl-row-content">
+              <span class="ctrl-row-id">{control.display_id}</span>
+              {#if control.title && !control.title.startsWith("Control: ")}
+                <span class="ctrl-row-title">{control.title}</span>
+              {/if}
+              <span class="ctrl-row-name">{control.statement ?? control.label ?? "No description available."}</span>
+            </span>
+            <button
+              type="button"
+              class="favourite"
+              class:active={favourites.has(control.id)}
+              aria-label={favourites.has(control.id) ? `Remove ${control.display_id} from favourites` : `Add ${control.display_id} to favourites`}
+              onclick={(event) => {
+                event.stopPropagation();
+                onToggleFavourite(control.id);
+              }}
+            >★</button>
+          </div>
         {/each}
       {/if}
     </details>
@@ -128,6 +154,9 @@
   }
 
   .ctrl-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
     width: calc(100% - 12px);
     margin: 1px 6px;
     padding: 8px;
@@ -153,6 +182,31 @@
   .ctrl-row-title,
   .ctrl-row-name {
     display: block;
+  }
+
+  .ctrl-row-content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .favourite {
+    padding: 2px;
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 13px;
+    opacity: 0;
+  }
+
+  .ctrl-row:hover .favourite,
+  .favourite.active,
+  .favourite:focus-visible {
+    opacity: 1;
+  }
+
+  .favourite.active {
+    color: var(--amber);
   }
 
   .ctrl-row-id {

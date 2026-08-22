@@ -2,6 +2,7 @@
   import { base } from "$app/paths";
   import { afterNavigate } from "$app/navigation";
   import type { Control, ControlDetail, Framework, GraphData, Group, Revision } from "@rule1/shared";
+  import { showToast } from "@link42/ui";
   import { onMount } from "svelte";
   import type { E8Mapping, Rule1DataClient } from "$lib/db/contracts";
   import { openRule1DataClient } from "$lib/db/rpc";
@@ -9,6 +10,16 @@
   import ContextPanel from "$lib/explorer/ContextPanel.svelte";
   import HistoryPanel from "$lib/explorer/HistoryPanel.svelte";
   import MappingPanel from "$lib/explorer/MappingPanel.svelte";
+  import {
+    controlCsv,
+    controlJson,
+    controlMarkdown,
+    exportFavourites,
+    importFavourites,
+    loadFavourites,
+    saveFavourites,
+    type StorageLike,
+  } from "$lib/local-user";
   import {
     APPLICABILITY,
     LatestRequest,
@@ -46,6 +57,9 @@
   let mappingLevels = $state<string[]>([]);
   let mappingVersion = $state<string | null>(null);
   let mappingStatus = $state<RelatedStatus>("idle");
+  let favourites = $state(new Set<string>());
+  let favouriteStorage: StorageLike | undefined;
+  let favouriteInput: HTMLInputElement | undefined = $state();
   let client: Rule1DataClient | null = null;
 
   const listRequests = new LatestRequest();
@@ -53,7 +67,7 @@
   const historyRequests = new LatestRequest();
   const graphRequests = new LatestRequest();
   const mappingRequests = new LatestRequest();
-  let filtered = $derived(filterControls(controls, filter, applicability, search));
+  let filtered = $derived(filterControls(controls, filter, applicability, search, favourites));
   let bySection = $derived(controlsBySection(filtered));
   let isISM = $derived(framework === "ism");
 
@@ -155,6 +169,65 @@
     syncUrl();
     if (tab === "changelog") void loadHistory();
     if (tab === "context") void loadGraph();
+  }
+
+  function toggleFavourite(id: string): void {
+    const next = new Set(favourites);
+    const added = !next.has(id);
+    if (added) next.add(id);
+    else next.delete(id);
+    favourites = next;
+    if (!saveFavourites(favouriteStorage, next)) {
+      showToast("warning", "Favourite updated for this session, but browser storage is unavailable.");
+    } else {
+      showToast("success", added ? "Added to favourites." : "Removed from favourites.");
+    }
+  }
+
+  function downloadText(filename: string, content: string, type: string): void {
+    const objectUrl = URL.createObjectURL(new Blob([content], { type }));
+    const anchor = Object.assign(document.createElement("a"), { href: objectUrl, download: filename });
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  function downloadFavourites(): void {
+    downloadText("rule1-favourites.json", exportFavourites(favourites), "application/json;charset=utf-8");
+    showToast("success", `Exported ${favourites.size} favourite${favourites.size === 1 ? "" : "s"}.`);
+  }
+
+  async function handleFavouriteImport(event: Event): Promise<void> {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    if (file.size > 2_000_000) {
+      showToast("error", "Favourites were not changed: the selected file is too large.");
+      return;
+    }
+    try {
+      const merged = importFavourites(favourites, await file.text());
+      const added = merged.size - favourites.size;
+      favourites = merged;
+      const persisted = saveFavourites(favouriteStorage, merged);
+      showToast(
+        persisted ? "success" : "warning",
+        persisted
+          ? `Imported ${added} new favourite${added === 1 ? "" : "s"}.`
+          : "Import succeeded for this session, but browser storage is unavailable.",
+      );
+    } catch {
+      showToast("error", "Favourites were not changed: the selected file is not a valid Rule1 export.");
+    }
+  }
+
+  function downloadControl(format: "json" | "csv" | "md"): void {
+    if (!detail) return;
+    const stem = detail.display_id.toLowerCase();
+    if (format === "json") downloadText(`${stem}.json`, controlJson(detail), "application/json;charset=utf-8");
+    else if (format === "csv") downloadText(`${stem}.csv`, controlCsv(detail), "text/csv;charset=utf-8");
+    else downloadText(`${stem}.md`, controlMarkdown(detail), "text/markdown;charset=utf-8");
+    showToast("success", `Exported ${detail.display_id} as ${format.toUpperCase()}.`);
   }
 
   function normalizeControlId(value: string): string | null {
@@ -295,6 +368,16 @@
 
     void (async () => {
       try {
+        try {
+          favouriteStorage = window.localStorage;
+        } catch {
+          favouriteStorage = undefined;
+        }
+        const stored = loadFavourites(favouriteStorage);
+        favourites = stored.favourites;
+        if (stored.recovered) {
+          showToast("warning", "Saved favourites could not be read; favourites will continue in this session.");
+        }
         const opened = await openRule1DataClient(base, window.location.href);
         if (!mounted) {
           await opened.close();
@@ -370,6 +453,7 @@
       <div class="filter-row">
         {#each [
           { value: "all", label: "All" },
+          { value: "favourites", label: "★ Favourites" },
           { value: "changed", label: "Changed" },
           { value: "new", label: "New" },
           { value: "withdrawn", label: "Withdrawn" },
@@ -381,6 +465,11 @@
             onclick={() => changeFilter(item.value as ExplorerFilter)}
           >{item.label}</button>
         {/each}
+      </div>
+      <div class="favourite-actions">
+        <button type="button" onclick={downloadFavourites}>Export favourites</button>
+        <button type="button" onclick={() => favouriteInput?.click()}>Import favourites</button>
+        <input bind:this={favouriteInput} type="file" accept="application/json,.json" onchange={(event) => void handleFavouriteImport(event)} />
       </div>
 
       {#if isISM}
@@ -420,7 +509,14 @@
       {:else if filtered.length === 0}
         <p class="list-state">No controls match the current search and filters.</p>
       {:else}
-        <ControlTree {groups} {bySection} {selectedId} onSelect={(id) => void selectControl(id)} />
+        <ControlTree
+          {groups}
+          {bySection}
+          {selectedId}
+          {favourites}
+          onSelect={(id) => void selectControl(id)}
+          onToggleFavourite={toggleFavourite}
+        />
         {#each bySection.get("__none__") ?? [] as control (control.id)}
           <button
             type="button"
@@ -459,7 +555,18 @@
               <div class="control-id">{detail.display_id}</div>
             {/if}
           </div>
-          <span class="framework-badge">{frameworkLabel(framework)}</span>
+          <div class="detail-actions">
+            <span class="framework-badge">{frameworkLabel(framework)}</span>
+            <button
+              type="button"
+              class="detail-favourite"
+              class:active={favourites.has(detail.id)}
+              onclick={() => toggleFavourite(detail!.id)}
+            >★ {favourites.has(detail.id) ? "Favourited" : "Favourite"}</button>
+            <button type="button" onclick={() => downloadControl("json")}>JSON</button>
+            <button type="button" onclick={() => downloadControl("csv")}>CSV</button>
+            <button type="button" onclick={() => downloadControl("md")}>Markdown</button>
+          </div>
         </div>
         <div class="tags">
           {#if detail.latest.change_type && detail.latest.change_type !== "unchanged"}
@@ -601,6 +708,33 @@
     border-color: var(--text);
     background: var(--text);
     color: var(--text-inv);
+  }
+
+  .favourite-actions {
+    display: flex;
+    gap: 5px;
+    margin-top: 7px;
+  }
+
+  .favourite-actions button,
+  .detail-actions button {
+    padding: 3px 7px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 10px;
+  }
+
+  .favourite-actions button:hover,
+  .detail-actions button:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+
+  .favourite-actions input {
+    display: none;
   }
 
   .framework-pill.active {
@@ -745,6 +879,21 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 24px;
+  }
+
+  .detail-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-width: 330px;
+  }
+
+  .detail-actions .detail-favourite.active {
+    border-color: var(--amber-border);
+    background: var(--amber-bg);
+    color: var(--amber);
   }
 
   .control-heading h1 {

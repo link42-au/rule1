@@ -89,6 +89,9 @@ describe("explorer filters and hierarchy", () => {
     expect(filterControls(controls, "ml2", "", "").map((item) => item.id)).toEqual(["ism-1"]);
     expect(filterControls(controls, "all", "S", "").map((item) => item.id)).toEqual(["ism-2"]);
     expect(filterControls(controls, "all", "", "PATCH").map((item) => item.id)).toEqual(["ism-1"]);
+    expect(filterControls(controls, "favourites", "", "", new Set(["ism-2"])).map((item) => item.id)).toEqual([
+      "ism-2",
+    ]);
   });
 
   it("counts controls through nested framework hierarchy", () => {
