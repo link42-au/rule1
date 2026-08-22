@@ -1,0 +1,482 @@
+{
+  "application_id": 1381321777,
+  "format_version": 1,
+  "framework_versions": {
+    "cyber-essentials": ["CE-3.1", "CE-3.2", "CE-3.3"],
+    "ism": [
+      "ISM-PDF-2010-11",
+      "ISM-PDF-2011-08",
+      "ISM-PDF-2012-03",
+      "ISM-PDF-2012-09",
+      "ISM-PDF-2013-04",
+      "ISM-PDF-2013-08",
+      "ISM-PDF-2014-02",
+      "ISM-PDF-2015-04",
+      "ISM-PDF-2016-05",
+      "ISM-PDF-2017-09",
+      "ISM-PDF-2018-05",
+      "ISM-PDF-2018-11",
+      "ISM-PDF-2018-12",
+      "ISM-PDF-2019-01",
+      "ISM-PDF-2019-02",
+      "ISM-PDF-2019-03",
+      "ISM-PDF-2019-04",
+      "ISM-PDF-2019-05",
+      "ISM-PDF-2019-06",
+      "ISM-PDF-2019-07",
+      "ISM-PDF-2019-08",
+      "ISM-PDF-2019-09",
+      "ISM-PDF-2019-10",
+      "ISM-PDF-2019-11",
+      "ISM-PDF-2019-12",
+      "ISM-PDF-2020-01",
+      "ISM-PDF-2020-02",
+      "ISM-PDF-2020-03",
+      "ISM-PDF-2020-04",
+      "ISM-PDF-2020-05",
+      "ISM-PDF-2020-06",
+      "ISM-PDF-2020-07",
+      "ISM-PDF-2020-08",
+      "ISM-PDF-2020-09",
+      "ISM-PDF-2020-10",
+      "ISM-PDF-2020-11",
+      "ISM-PDF-2020-12",
+      "ISM-PDF-2021-01",
+      "ISM-PDF-2021-02",
+      "ISM-PDF-2021-03",
+      "ISM-PDF-2021-04",
+      "ISM-PDF-2021-06",
+      "ISM-PDF-2021-09",
+      "ISM-PDF-2021-12",
+      "ISM-PDF-2022-03",
+      "ISM-PDF-2022-06",
+      "ISM-PDF-2022-09",
+      "ISM-PDF-2022-12",
+      "ISM-PDF-2023-03",
+      "ISM-PDF-2023-09",
+      "ISM-PDF-2023-12",
+      "ISM-PDF-2024-03",
+      "ISM-PDF-2024-06",
+      "ISM-PDF-2024-09",
+      "ISM-PDF-2024-12",
+      "ISM-PDF-2025-06",
+      "ISM-PDF-2025-09",
+      "ISM-PDF-2025-12"
+    ],
+    "nist-800-53": ["800-53-Rev-4", "800-53-Rev-5", "800-53-Rev-5.1.1", "800-53-Rev-5.2.0"],
+    "nist-csf": ["NIST-CSF-1.1", "NIST-CSF-2.0"],
+    "nzism": ["NZISM-3.2", "NZISM-3.3", "NZISM-3.4", "NZISM-3.5", "NZISM-3.6", "NZISM-3.7", "NZISM-3.8", "NZISM-3.9"]
+  },
+  "page_size": 4096,
+  "row_counts": {
+    "catalog_versions": 75,
+    "control_groups": 3530,
+    "control_history": 64305,
+    "e8_mappings": 2325,
+    "frameworks": 5,
+    "source_files": 77,
+    "term_history": 0
+  },
+  "schema_sha256": "4553b9115d826aebb646bc8fcef05328f01fdbc09eada31433cf50a8da40c073",
+  "source_ledger_sha256": "f19ae2d4da980784cf678c42ac70d8a94394044b6de995a3884460429e7e44d5",
+  "sqlite_version": "3.50.4",
+  "tables": [
+    "build_counts",
+    "build_metadata",
+    "catalog_versions",
+    "control_groups",
+    "control_history",
+    "e8_mappings",
+    "frameworks",
+    "source_files",
+    "term_history"
+  ],
+  "user_version": 1,
+  "version_row_counts": {
+    "cyber-essentials": {
+      "CE-3.1": {
+        "control_groups": 13,
+        "control_history": 33,
+        "term_history": 0
+      },
+      "CE-3.2": {
+        "control_groups": 13,
+        "control_history": 33,
+        "term_history": 0
+      },
+      "CE-3.3": {
+        "control_groups": 14,
+        "control_history": 33,
+        "term_history": 0
+      }
+    },
+    "ism": {
+      "ISM-PDF-2010-11": {
+        "control_groups": 20,
+        "control_history": 903,
+        "term_history": 0
+      },
+      "ISM-PDF-2011-08": {
+        "control_groups": 20,
+        "control_history": 905,
+        "term_history": 0
+      },
+      "ISM-PDF-2012-03": {
+        "control_groups": 73,
+        "control_history": 943,
+        "term_history": 0
+      },
+      "ISM-PDF-2012-09": {
+        "control_groups": 23,
+        "control_history": 937,
+        "term_history": 0
+      },
+      "ISM-PDF-2013-04": {
+        "control_groups": 24,
+        "control_history": 908,
+        "term_history": 0
+      },
+      "ISM-PDF-2013-08": {
+        "control_groups": 24,
+        "control_history": 906,
+        "term_history": 0
+      },
+      "ISM-PDF-2014-02": {
+        "control_groups": 25,
+        "control_history": 938,
+        "term_history": 0
+      },
+      "ISM-PDF-2015-04": {
+        "control_groups": 24,
+        "control_history": 1008,
+        "term_history": 0
+      },
+      "ISM-PDF-2016-05": {
+        "control_groups": 25,
+        "control_history": 933,
+        "term_history": 0
+      },
+      "ISM-PDF-2017-09": {
+        "control_groups": 24,
+        "control_history": 946,
+        "term_history": 0
+      },
+      "ISM-PDF-2018-05": {
+        "control_groups": 25,
+        "control_history": 945,
+        "term_history": 0
+      },
+      "ISM-PDF-2018-11": {
+        "control_groups": 24,
+        "control_history": 1008,
+        "term_history": 0
+      },
+      "ISM-PDF-2018-12": {
+        "control_groups": 24,
+        "control_history": 750,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-01": {
+        "control_groups": 24,
+        "control_history": 752,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-02": {
+        "control_groups": 24,
+        "control_history": 752,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-03": {
+        "control_groups": 23,
+        "control_history": 752,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-04": {
+        "control_groups": 23,
+        "control_history": 744,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-05": {
+        "control_groups": 23,
+        "control_history": 742,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-06": {
+        "control_groups": 23,
+        "control_history": 740,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-07": {
+        "control_groups": 22,
+        "control_history": 741,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-08": {
+        "control_groups": 23,
+        "control_history": 742,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-09": {
+        "control_groups": 23,
+        "control_history": 736,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-10": {
+        "control_groups": 23,
+        "control_history": 745,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-11": {
+        "control_groups": 23,
+        "control_history": 706,
+        "term_history": 0
+      },
+      "ISM-PDF-2019-12": {
+        "control_groups": 23,
+        "control_history": 707,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-01": {
+        "control_groups": 23,
+        "control_history": 701,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-02": {
+        "control_groups": 23,
+        "control_history": 700,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-03": {
+        "control_groups": 23,
+        "control_history": 700,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-04": {
+        "control_groups": 23,
+        "control_history": 699,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-05": {
+        "control_groups": 23,
+        "control_history": 700,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-06": {
+        "control_groups": 22,
+        "control_history": 702,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-07": {
+        "control_groups": 22,
+        "control_history": 716,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-08": {
+        "control_groups": 22,
+        "control_history": 752,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-09": {
+        "control_groups": 22,
+        "control_history": 750,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-10": {
+        "control_groups": 22,
+        "control_history": 765,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-11": {
+        "control_groups": 22,
+        "control_history": 769,
+        "term_history": 0
+      },
+      "ISM-PDF-2020-12": {
+        "control_groups": 22,
+        "control_history": 774,
+        "term_history": 0
+      },
+      "ISM-PDF-2021-01": {
+        "control_groups": 22,
+        "control_history": 779,
+        "term_history": 0
+      },
+      "ISM-PDF-2021-02": {
+        "control_groups": 22,
+        "control_history": 779,
+        "term_history": 0
+      },
+      "ISM-PDF-2021-03": {
+        "control_groups": 22,
+        "control_history": 782,
+        "term_history": 0
+      },
+      "ISM-PDF-2021-04": {
+        "control_groups": 22,
+        "control_history": 773,
+        "term_history": 0
+      },
+      "ISM-PDF-2021-06": {
+        "control_groups": 22,
+        "control_history": 776,
+        "term_history": 0
+      },
+      "ISM-PDF-2021-09": {
+        "control_groups": 22,
+        "control_history": 843,
+        "term_history": 0
+      },
+      "ISM-PDF-2021-12": {
+        "control_groups": 22,
+        "control_history": 838,
+        "term_history": 0
+      },
+      "ISM-PDF-2022-03": {
+        "control_groups": 22,
+        "control_history": 851,
+        "term_history": 0
+      },
+      "ISM-PDF-2022-06": {
+        "control_groups": 22,
+        "control_history": 823,
+        "term_history": 0
+      },
+      "ISM-PDF-2022-09": {
+        "control_groups": 22,
+        "control_history": 839,
+        "term_history": 0
+      },
+      "ISM-PDF-2022-12": {
+        "control_groups": 22,
+        "control_history": 853,
+        "term_history": 0
+      },
+      "ISM-PDF-2023-03": {
+        "control_groups": 22,
+        "control_history": 883,
+        "term_history": 0
+      },
+      "ISM-PDF-2023-09": {
+        "control_groups": 22,
+        "control_history": 954,
+        "term_history": 0
+      },
+      "ISM-PDF-2023-12": {
+        "control_groups": 22,
+        "control_history": 1002,
+        "term_history": 0
+      },
+      "ISM-PDF-2024-03": {
+        "control_groups": 22,
+        "control_history": 909,
+        "term_history": 0
+      },
+      "ISM-PDF-2024-06": {
+        "control_groups": 23,
+        "control_history": 913,
+        "term_history": 0
+      },
+      "ISM-PDF-2024-09": {
+        "control_groups": 23,
+        "control_history": 953,
+        "term_history": 0
+      },
+      "ISM-PDF-2024-12": {
+        "control_groups": 23,
+        "control_history": 984,
+        "term_history": 0
+      },
+      "ISM-PDF-2025-06": {
+        "control_groups": 23,
+        "control_history": 1055,
+        "term_history": 0
+      },
+      "ISM-PDF-2025-09": {
+        "control_groups": 22,
+        "control_history": 1058,
+        "term_history": 0
+      },
+      "ISM-PDF-2025-12": {
+        "control_groups": 22,
+        "control_history": 1079,
+        "term_history": 0
+      }
+    },
+    "nist-800-53": {
+      "800-53-Rev-4": {
+        "control_groups": 18,
+        "control_history": 922,
+        "term_history": 0
+      },
+      "800-53-Rev-5": {
+        "control_groups": 20,
+        "control_history": 1189,
+        "term_history": 0
+      },
+      "800-53-Rev-5.1.1": {
+        "control_groups": 20,
+        "control_history": 1193,
+        "term_history": 0
+      },
+      "800-53-Rev-5.2.0": {
+        "control_groups": 20,
+        "control_history": 1196,
+        "term_history": 0
+      }
+    },
+    "nist-csf": {
+      "NIST-CSF-1.1": {
+        "control_groups": 5,
+        "control_history": 131,
+        "term_history": 0
+      },
+      "NIST-CSF-2.0": {
+        "control_groups": 6,
+        "control_history": 324,
+        "term_history": 0
+      }
+    },
+    "nzism": {
+      "NZISM-3.2": {
+        "control_groups": 242,
+        "control_history": 1306,
+        "term_history": 0
+      },
+      "NZISM-3.3": {
+        "control_groups": 242,
+        "control_history": 1311,
+        "term_history": 0
+      },
+      "NZISM-3.4": {
+        "control_groups": 246,
+        "control_history": 1328,
+        "term_history": 0
+      },
+      "NZISM-3.5": {
+        "control_groups": 248,
+        "control_history": 1347,
+        "term_history": 0
+      },
+      "NZISM-3.6": {
+        "control_groups": 263,
+        "control_history": 1385,
+        "term_history": 0
+      },
+      "NZISM-3.7": {
+        "control_groups": 263,
+        "control_history": 1390,
+        "term_history": 0
+      },
+      "NZISM-3.8": {
+        "control_groups": 265,
+        "control_history": 1405,
+        "term_history": 0
+      },
+      "NZISM-3.9": {
+        "control_groups": 265,
+        "control_history": 1436,
+        "term_history": 0
+      }
+    }
+  }
+}
