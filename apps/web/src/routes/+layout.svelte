@@ -49,7 +49,7 @@
 
 <main id="main-content">{@render children()}</main>
 
-<Footer appName="rule1" excludeApps={["login2", "threat10", "patch8", "peer6"]} />
+<Footer appName="rule1" excludeApps={["rule1", "login2", "threat10", "patch8", "peer6"]} />
 <Toast />
 
 <style>

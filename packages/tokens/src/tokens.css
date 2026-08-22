@@ -8,8 +8,6 @@
  *   rule1:  blue    (#2563eb light, #3b82f6 dark)
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500&display=swap');
-
 /* ── Light theme ── */
 [data-theme="light"] {
   --bg: #ffffff;
