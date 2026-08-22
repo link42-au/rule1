@@ -4,11 +4,11 @@ Date: 22 August 2026
 
 Reviewed baseline: `link42-rule1` at `aaa140cdd753d6576f0a2bf3292b31518b88fbcc`
 
-Standalone candidate: private repository, GitHub Pages disabled
+Standalone candidate: private repository; publication workflow prepared, GitHub Pages activation pending
 
 ## Status and scope
 
-The standalone application is source-complete and produces a static `/rule1/` build. Publication is deliberately not part of this release-candidate review: the repository remains private, the only workflow builds SQLite, and no Pages deployment workflow is present. Feature 13 remains blocked on separate publication approval.
+The standalone application is source-complete and produces a static `/rule1/` build. Publication was approved on 22 August 2026 and Feature 13 is in progress. The existing SQLite workflow now has a guarded Pages publication path for `main` pushes and manually dispatched runs; pull requests still build and test without uploading or deploying a Pages artifact. The repository remains private and GitHub Pages has not yet been activated, so this document does not claim a live deployment.
 
 Parity is assessed against the reviewed old desktop product and the route/capability dispositions in [REVIEW.md](REVIEW.md). Mobile-specific and accessibility work were explicitly excluded from this port.
 
@@ -78,7 +78,7 @@ These are provenance/data differences, not UI defects. Framework decisions shoul
 - Web tests: 11 files and 74 tests passed.
 - Database validation: provenance, checksums, expected schema, 77 catalogue versions, 79 source files, recorded row counts, and `PRAGMA integrity_check` passed.
 - Static production build: 11 routes plus `404.html` generated beneath `/rule1/`; no rendered root-path escape or retired operated-host link was found.
-- Workflow audit: `.github/workflows/build-sqlite.yml` is the only workflow and has no Pages permission, environment, upload, or deployment step.
+- Workflow audit: `.github/workflows/build-sqlite.yml` remains the only workflow. Its Pages artifact and deployment steps are restricted to `main` pushes and manually dispatched runs; the separate deployment job alone receives `pages: write` and `id-token: write` permissions.
 
 Canonical local database SHA-256:
 
@@ -95,5 +95,5 @@ The old landing, explorer, and long comparison references remain in `docs/refere
 
 ## Remaining release gates
 
-- Publication, repository visibility, GitHub Pages enablement, and the `wan0.net/rule1` deployment require separate explicit approval under Feature 13.
+- Publication approval has been received. Repository visibility, GitHub Pages enablement, deployment at `wan0.net/rule1`, and live site/database verification remain to complete Feature 13.
 - `rule1.link42.app` is not changed by this work.
