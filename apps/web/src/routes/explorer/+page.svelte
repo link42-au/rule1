@@ -70,8 +70,49 @@
   let filtered = $derived(filterControls(controls, filter, applicability, search, favourites));
   let bySection = $derived(controlsBySection(filtered));
   let isISM = $derived(framework === "ism");
+  let changeCount = $derived(detail?.history.filter((revision) => revision.change_type === "modified").length ?? 0);
+  let relatedCount = $derived(graph?.nodes.filter((node) => node.data.role === "neighbor").length ?? 0);
+  let detailBreadcrumb = $derived.by(() => {
+    if (!detail) return [];
+    const sectionId = controls.find((control) => control.id === detail?.id)?.section_id ?? detail.section_id;
+    return sectionId ? groupAncestors(groups, sectionId) : [];
+  });
+  let reportHref = $derived.by(() => {
+    if (!detail) return "#";
+    const subject = `[rule1] ${detail.display_id}: report an issue`;
+    const body = [
+      "Hi,",
+      "",
+      `I'm reporting an issue with ${detail.display_id}.`,
+      `Catalogue version: ${detail.latest.catalog_version ?? "unknown"}`,
+      `Page: ${window.location.href}`,
+      "",
+      "Issue:",
+      "[Please describe the issue here]",
+    ].join("\n");
+    return `mailto:icd@wan0.net?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
 
   const frameworkLabel = (id: string): string => frameworks.find((item) => item.id === id)?.short_name ?? id;
+
+  const applicabilityLabels: Record<string, string> = {
+    NC: "Not Classified",
+    OS: "OFFICIAL:Sensitive",
+    P: "PROTECTED",
+    C: "CONFIDENTIAL",
+    S: "SECRET",
+    TS: "TOP SECRET",
+  };
+
+  function groupAncestors(tree: Group[], target: string, path: Group[] = []): Group[] {
+    for (const group of tree) {
+      const next = [...path, group];
+      if (group.id === target) return next;
+      const nested = groupAncestors(group.children, target, next);
+      if (nested.length > 0) return nested;
+    }
+    return [];
+  }
 
   function currentUrlState(): ExplorerUrlState {
     return { framework, filter, applicability, search, selectedId };
@@ -277,8 +318,9 @@
       } else {
         mappingStatus = "ready";
       }
+      // Related-control counts are part of the overview, so load the local graph with the detail.
+      void loadGraph();
       if (activeTab === "changelog") void loadHistory();
-      if (activeTab === "context") void loadGraph();
     } catch {
       if (detailRequests.isCurrent(request) && selectedId === normalized && framework === requestFramework) {
         detail = null;
@@ -545,36 +587,63 @@
       </div>
     {:else if detail}
       <article class="control-detail">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <span>{detail.section ?? "Controls"}</span><span>›</span><span aria-current="page">{detail.display_id}</span>
-        </nav>
-        <div class="control-heading">
-          <div>
-            <h1>{detail.title && !detail.title.startsWith("Control: ") ? detail.title : detail.display_id}</h1>
-            {#if detail.title && !detail.title.startsWith("Control: ")}
-              <div class="control-id">{detail.display_id}</div>
+        <header class="control-header">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            {#if detailBreadcrumb.length > 0}
+              {#each detailBreadcrumb as group}
+                <span>{group.title}</span><span class="breadcrumb-separator">›</span>
+              {/each}
+            {:else if detail.section}
+              <span>{detail.section}</span><span class="breadcrumb-separator">›</span>
+            {/if}
+            <span aria-current="page">{detail.display_id}</span>
+          </nav>
+          <div class="control-heading">
+            <div class="control-title">
+              {#if detail.title && !detail.title.startsWith("Control: ")}
+                <h1>{detail.title}</h1>
+                <div class="control-id">{detail.display_id}</div>
+              {:else}
+                <h1>{detail.latest.statement ?? detail.display_id}</h1>
+              {/if}
+            </div>
+            <div class="detail-actions">
+              <button
+                type="button"
+                class="detail-favourite"
+                class:active={favourites.has(detail.id)}
+                aria-label={favourites.has(detail.id)
+                  ? `Remove ${detail.display_id} from favourites`
+                  : `Add ${detail.display_id} to favourites`}
+                title={favourites.has(detail.id) ? "Remove from favourites" : "Add to favourites"}
+                onclick={() => toggleFavourite(detail!.id)}
+              >★</button>
+              <a class="report-issue" href={reportHref} aria-label="Report an issue with this control">
+                <span aria-hidden="true">ⓘ</span> Report an issue
+              </a>
+            </div>
+          </div>
+          <div class="tags">
+            {#each detail.latest.applicability ?? [] as value}
+              <span class="classification-chip" data-classification={value}>{applicabilityLabels[value] ?? value}</span>
+            {/each}
+            {#if (detail.latest.e8_levels?.length ?? 0) > 0}
+              <span class="tag-break" aria-hidden="true"></span>
+              <span class="tag tag-neutral">Essential 8</span>
+              {#each detail.latest.e8_levels ?? [] as value}<span class="tag tag-e8">{value}</span>{/each}
+            {/if}
+            {#if (detail.latest.change_type && detail.latest.change_type !== "unchanged") || (changeCount > 0 && detail.latest.change_type !== "new")}
+              <span class="tag-break" aria-hidden="true"></span>
+              {#if detail.latest.change_type && detail.latest.change_type !== "unchanged"}
+                <span class="tag tag-change" data-change={detail.latest.change_type}>{detail.latest.change_type}</span>
+              {/if}
+              {#if changeCount > 0 && detail.latest.change_type !== "new"}
+                <span class="tag tag-count">{changeCount} change{changeCount === 1 ? "" : "s"}</span>
+              {/if}
             {/if}
           </div>
-          <div class="detail-actions">
-            <span class="framework-badge">{frameworkLabel(framework)}</span>
-            <button
-              type="button"
-              class="detail-favourite"
-              class:active={favourites.has(detail.id)}
-              onclick={() => toggleFavourite(detail!.id)}
-            >★ {favourites.has(detail.id) ? "Favourited" : "Favourite"}</button>
-            <button type="button" onclick={() => downloadControl("json")}>JSON</button>
-            <button type="button" onclick={() => downloadControl("csv")}>CSV</button>
-            <button type="button" onclick={() => downloadControl("md")}>Markdown</button>
-          </div>
-        </div>
-        <div class="tags">
-          {#if detail.latest.change_type && detail.latest.change_type !== "unchanged"}
-            <span class="tag tag-change">{detail.latest.change_type}</span>
-          {/if}
-          {#each detail.latest.applicability ?? [] as value}<span class="tag">{value}</span>{/each}
-          {#each detail.latest.e8_levels ?? [] as value}<span class="tag tag-e8">{value}</span>{/each}
-        </div>
+        </header>
+
         <div class="tabs" role="tablist" aria-label="Control detail views">
           {#each [
             { value: "overview", label: "Overview" },
@@ -612,6 +681,30 @@
               currentVersion={detail.latest.catalog_version ?? null}
               status={mappingStatus}
             />
+            {#if detail.latest.change_type && detail.latest.change_type !== "unchanged"}
+              <section class="latest-change-section">
+                <h2>Latest change</h2>
+                <div class="latest-change-card">
+                  <span class="tag tag-change" data-change={detail.latest.change_type}>{detail.latest.change_type}</span>
+                  <span>{detail.latest.catalog_version ?? "Latest catalogue"}</span>
+                </div>
+              </section>
+            {/if}
+            <section class="overview-stats" aria-label="Control stats">
+              <h2>Control stats</h2>
+              <div class="stats-grid">
+                <div class="stat"><strong>{detail.history.length}</strong><span>Versions</span></div>
+                <div class="stat change-stat"><strong>{changeCount}</strong><span>Changes</span></div>
+                <div class="stat"><strong>{graphStatus === "loading" ? "…" : relatedCount}</strong><span>Related</span></div>
+                <div class="stat e8-stat"><strong>{(detail.latest.e8_levels?.length ?? 0) > 0 ? "E8" : "—"}</strong><span>Essential 8</span></div>
+              </div>
+            </section>
+            <div class="control-exports" aria-label="Export control">
+              <span>Export control</span>
+              <button type="button" onclick={() => downloadControl("json")}>JSON</button>
+              <button type="button" onclick={() => downloadControl("csv")}>CSV</button>
+              <button type="button" onclick={() => downloadControl("md")}>Markdown</button>
+            </div>
           {:else if activeTab === "changelog"}
             <HistoryPanel history={controlHistory} status={historyStatus} />
           {:else}
@@ -861,17 +954,36 @@
   }
 
   .control-detail {
-    max-width: 920px;
-    margin: 0 auto;
-    padding: 30px 42px 60px;
+    min-height: 100%;
+    padding-bottom: 60px;
+  }
+
+  .control-header {
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    padding: 24px 28px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
   }
 
   .breadcrumb {
     display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 7px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     color: var(--text-dim);
-    font-size: 11px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .breadcrumb [aria-current="page"] {
+    color: var(--text);
+  }
+
+  .breadcrumb-separator {
+    opacity: 0.5;
   }
 
   .control-heading {
@@ -885,22 +997,58 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 5px;
-    max-width: 330px;
+    gap: 7px;
+    flex-shrink: 0;
   }
 
-  .detail-actions .detail-favourite.active {
+  .detail-favourite {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-subtle);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .detail-favourite:hover,
+  .detail-favourite.active {
     border-color: var(--amber-border);
     background: var(--amber-bg);
     color: var(--amber);
   }
 
+  .report-issue {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-subtle);
+    color: var(--text-dim);
+    font-size: 11.5px;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .report-issue:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+
   .control-heading h1 {
     margin: 0;
     color: var(--text);
-    font-size: 21px;
-    line-height: 1.35;
+    font-size: 22px;
+    letter-spacing: -0.03em;
+    line-height: 1.25;
+  }
+
+  .control-title {
+    min-width: 0;
+    flex: 1;
   }
 
   .control-id {
@@ -910,21 +1058,12 @@
     font-size: 12px;
   }
 
-  .framework-badge,
   .tag {
     padding: 3px 7px;
-    border: 1px solid var(--border);
+    border: 1px solid;
     border-radius: 5px;
-    background: var(--bg-subtle);
-    color: var(--text-mid);
-    font-size: 10px;
-    font-weight: 600;
-  }
-
-  .framework-badge {
-    flex-shrink: 0;
-    color: var(--accent);
-    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
   }
 
   .tags {
@@ -934,22 +1073,51 @@
     margin-top: 15px;
   }
 
+  .tag-break {
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .tag-neutral {
+    border-color: var(--border);
+    background: var(--bg-subtle);
+    color: var(--text-mid);
+  }
+
+  .classification-chip {
+    display: inline-flex;
+    padding: 3px 8px;
+    border: 1px solid #c8c8c8;
+    border-radius: 5px;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .classification-chip[data-classification="OS"] { border-color: #4b5563; background: #6b7280; color: #fff; }
+  .classification-chip[data-classification="P"] { border-color: #1e40af; background: #1d4ed8; color: #fff; }
+  .classification-chip[data-classification="C"] { border-color: #15803d; background: #16a34a; color: #fff; }
+  .classification-chip[data-classification="S"] { border-color: #be185d; background: #db2777; color: #fff; }
+  .classification-chip[data-classification="TS"] { border-color: #b91c1c; background: #dc2626; color: #fff; }
+
   .tabs {
     display: flex;
-    gap: 2px;
-    margin-top: 22px;
+    gap: 0;
+    padding: 16px 28px 0;
     border-bottom: 1px solid var(--border);
   }
 
   .tabs button {
     position: relative;
-    padding: 9px 13px;
+    padding: 8px 14px;
     border: 0;
     background: transparent;
     color: var(--text-dim);
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 550;
+    font-size: 13px;
+    font-weight: 500;
   }
 
   .tabs button:hover {
@@ -957,21 +1125,23 @@
   }
 
   .tabs button.active {
-    color: var(--accent);
+    color: var(--text);
   }
 
   .tabs button.active::after {
     position: absolute;
-    right: 8px;
+    right: 0;
     bottom: -1px;
-    left: 8px;
+    left: 0;
     height: 2px;
-    background: var(--accent);
+    background: var(--text);
     content: "";
   }
 
   .tab-panel {
-    padding-top: 20px;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 24px 28px 0;
   }
 
   .tag-change {
@@ -979,6 +1149,24 @@
     background: var(--amber-bg);
     color: var(--amber);
     text-transform: capitalize;
+  }
+
+  .tag-change[data-change="new"] {
+    border-color: var(--green-border);
+    background: var(--green-bg);
+    color: var(--green);
+  }
+
+  .tag-change[data-change="withdrawn"] {
+    border-color: var(--red-border);
+    background: var(--red-bg);
+    color: var(--red);
+  }
+
+  .tag-count {
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+    color: var(--accent);
   }
 
   .tag-e8 {
@@ -1037,5 +1225,109 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     background: var(--bg-subtle);
+  }
+
+  .overview-stats {
+    margin-top: 24px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-subtle);
+  }
+
+  .latest-change-section {
+    margin-top: 24px;
+  }
+
+  .latest-change-section h2 {
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .latest-change-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-card);
+    color: var(--text-mid);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .overview-stats h2,
+  .control-exports > span {
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .stat {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+  }
+
+  .stat strong,
+  .stat span {
+    display: block;
+  }
+
+  .stat strong {
+    margin-bottom: 2px;
+    color: var(--text);
+    font-size: 22px;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .stat span {
+    color: var(--text-dim);
+    font-size: 11px;
+  }
+
+  .change-stat strong { color: var(--amber); }
+  .e8-stat strong { color: var(--accent); }
+
+  .control-exports {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 24px;
+  }
+
+  .control-exports > span {
+    margin: 0 4px 0 0;
+  }
+
+  .control-exports button {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 10px;
+  }
+
+  .control-exports button:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
   }
 </style>
