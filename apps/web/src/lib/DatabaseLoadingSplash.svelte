@@ -1,14 +1,44 @@
 <script lang="ts">
   import { databaseLoading, formatBytes } from "./db/loading";
 
+  let {
+    initiallyVisible = false,
+    routeKey = "",
+  }: {
+    initiallyVisible?: boolean;
+    routeKey?: string;
+  } = $props();
+
+  const initialVisibility = (): boolean => initiallyVisible;
+  const initialRouteKey = (): string => routeKey;
+
+  let bootstrapVisible = $state(initialVisibility());
+  let lifecycleStarted = $state(false);
+  let previousRouteKey = $state(initialRouteKey());
+
+  $effect(() => {
+    if (routeKey !== previousRouteKey) {
+      previousRouteKey = routeKey;
+      bootstrapVisible = initiallyVisible;
+      lifecycleStarted = false;
+    }
+
+    if ($databaseLoading.visible) {
+      lifecycleStarted = true;
+    } else if (lifecycleStarted) {
+      bootstrapVisible = false;
+    }
+  });
+
+  let visible = $derived(bootstrapVisible || $databaseLoading.visible);
   const percentage = (received: number, total: number): number => Math.min(100, Math.round((received / total) * 100));
 </script>
 
-{#if $databaseLoading.visible}
+{#if visible}
   <div class="database-splash" aria-live="polite" aria-busy="true">
     <section class="database-card">
       <div class="database-mark">R1</div>
-      {#if $databaseLoading.stage === "downloading"}
+      {#if $databaseLoading.visible && $databaseLoading.stage === "downloading"}
         <p class="eyebrow">Preparing local catalogue</p>
         <h1>Downloading Rule1 data</h1>
         {#if $databaseLoading.totalBytes !== null}
@@ -21,7 +51,7 @@
           <progress max="1"></progress>
           <p class="progress-copy">{formatBytes($databaseLoading.receivedBytes)} downloaded <span>Total size unavailable</span></p>
         {/if}
-      {:else if $databaseLoading.stage === "verifying"}
+      {:else if $databaseLoading.visible && $databaseLoading.stage === "verifying"}
         <p class="eyebrow">Preparing local catalogue</p>
         <h1>Verifying catalogue integrity</h1>
         <progress max="1"></progress>
