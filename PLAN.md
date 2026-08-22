@@ -1,8 +1,8 @@
 # Rule1 standalone port plan
 
-Status: **Approved for implementation**
+Status: **Complete**
 
-Repository: `wan0net/rule1` (**private; publication approved, visibility change pending**)
+Repository: [`wan0net/rule1`](https://github.com/wan0net/rule1) (**public**)
 Reference source: `/Users/icd/Workspace/link42-rule1/rule1`
 
 ## Goal
@@ -22,7 +22,7 @@ The application will query a browser-local SQLite database generated from source
 - Do not add signing, attestations, evidence bundles, release policy engines, or other publication machinery.
 - Desktop verification is required. Mobile-specific and accessibility work are out of scope.
 - Known static-hosting gaps: authentication, cloud-synchronised favourites, community writes/voting, bypass tokens, and maintenance polling. Browser-local favourites remain in scope.
-- Keep the repository private and GitHub Pages disabled until explicit publication approval. Approval was received on 22 August 2026; the visibility and Pages changes remain part of Feature 13.
+- Publication was approved and completed on 22 August 2026 at [`wan0.net/rule1`](https://wan0.net/rule1/).
 
 ## Ordered features
 
@@ -41,7 +41,7 @@ The application will query a browser-local SQLite database generated from source
 | 11 | Local user features and exports | Port browser-local favourites, import/export, control exports, and local preference persistence. Omit cloud sync and write-oriented community/auth flows. | 8 | Tests cover favourites persistence, compatible import/export round trips, malformed imports, exports, and operation without authentication or network APIs. | done |
 | 12 | Parity and release candidate | Run the complete desktop regression suite, compare the reviewed port with the old product, and document fixed bugs, intentional differences, known gaps, and remaining issues. | 6, 9, 10, 11 | Type-check, unit, ingestion, build, and desktop browser tests pass; all routes work at `/rule1/`; the built app makes no backend calls; differences are explained and approved. | done |
 | 12a | Current Australian ISM | Archive and ingest the authoritative March and June 2026 Australian ISM OSCAL catalogs, refresh the validation contract, and close the December 2025 currency and principles gaps without changing the application or publication state. | 12 | Source checksums, parser and database tests, deterministic build validation, and regressions for 1,101 current controls, 49 principles, and Essential Eight mappings pass. | done |
-| 13 | Publication | After a separate explicit approval, make the repository public, enable GitHub Pages, publish at `wan0.net/rule1`, and verify the deployed site and database. Do not change `rule1.link42.app` without separate approval. | 12a, publication approval | Live routes, assets, SQLite checksum, representative queries, and absence of backend calls are verified. | in progress |
+| 13 | Publication | After a separate explicit approval, make the repository public, enable GitHub Pages, publish at `wan0.net/rule1`, and verify the deployed site and database. Do not change `rule1.link42.app` without separate approval. | 12a, publication approval | Live routes, assets, SQLite checksum, representative queries, and absence of backend calls are verified. | done |
 
 ## Working rules
 
