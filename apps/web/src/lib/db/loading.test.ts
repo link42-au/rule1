@@ -1,5 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
+import { render } from "svelte/server";
+import DatabaseLoadingSplash from "../DatabaseLoadingSplash.svelte";
 import { formatBytes } from "./loading";
 
 const splashSource = await readFile(new URL("../DatabaseLoadingSplash.svelte", import.meta.url), "utf8");
@@ -18,5 +20,22 @@ describe("database loading splash", () => {
     expect(splashSource).toContain("Opening the local catalogue");
     expect(splashSource).toContain("retains the checked copy locally");
     expect(splashSource).not.toMatch(/setTimeout|setInterval/);
+  });
+
+  it("renders the opening cover into initial server HTML when requested", () => {
+    const { body } = render(DatabaseLoadingSplash, {
+      props: { initiallyVisible: true, routeKey: "/rule1/explorer/" },
+    });
+
+    expect(body).toMatch(/class="database-splash(?:\s|")/);
+    expect(body).toContain("Opening the local catalogue");
+  });
+
+  it("does not render a cover into initial server HTML for informational routes", () => {
+    const { body } = render(DatabaseLoadingSplash, {
+      props: { initiallyVisible: false, routeKey: "/rule1/guide/" },
+    });
+
+    expect(body).not.toMatch(/class="database-splash(?:\s|")/);
   });
 });

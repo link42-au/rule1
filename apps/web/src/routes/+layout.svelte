@@ -19,6 +19,8 @@
     { href: appPath("/glossary/"), label: "Glossary" },
     { href: appPath("/guide/"), label: "Guide" },
   ];
+  const catalogueRouteIds = new Set(["/", "/explorer", "/compare", "/glossary"]);
+  const catalogueBackedRoute = $derived(page.route.id !== null && catalogueRouteIds.has(page.route.id));
 
   function searchControls(query: string): void {
     const params = page.url.pathname === appPath("/explorer/") ? new URLSearchParams(page.url.searchParams) : new URLSearchParams();
@@ -52,7 +54,7 @@
 
 <Footer appName="rule1" excludeApps={["rule1", "login2", "threat10", "patch8", "peer6"]} />
 <Toast />
-<DatabaseLoadingSplash />
+<DatabaseLoadingSplash initiallyVisible={catalogueBackedRoute} routeKey={page.route.id ?? page.url.pathname} />
 
 <style>
   .skip-link {

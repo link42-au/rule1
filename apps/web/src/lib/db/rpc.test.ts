@@ -40,6 +40,8 @@ describe("Rule1 worker RPC", () => {
     const rpc = new Rule1WorkerRpc(worker as unknown as Worker);
     const pending = rpc.initialize({ moduleUrl: "/module", manifestUrl: "/manifest", databaseUrl: "/database" });
 
+    expect(get(databaseLoading)).toEqual({ visible: true, stage: "opening" });
+
     worker.reply({ id: 1, type: "progress", progress: { stage: "downloading", receivedBytes: 10, totalBytes: 100 } });
     expect(get(databaseLoading)).toEqual({
       visible: true,
@@ -50,6 +52,40 @@ describe("Rule1 worker RPC", () => {
 
     worker.reply({ id: 1, ok: true, result: { storage: "opfs", sqliteVersion: "3.53.0" } });
     await expect(pending).resolves.toMatchObject({ storage: "opfs" });
+    expect(get(databaseLoading)).toEqual({ visible: false });
+  });
+
+  it("covers worker startup and cache opening even when no download progress is reported", async () => {
+    const worker = new FakeWorker();
+    const rpc = new Rule1WorkerRpc(worker as unknown as Worker);
+    const pending = rpc.initialize({ moduleUrl: "/module", manifestUrl: "/manifest", databaseUrl: "/database" });
+
+    expect(get(databaseLoading)).toEqual({ visible: true, stage: "opening" });
+    worker.reply({ id: 1, ok: true, result: { storage: "opfs", sqliteVersion: "3.53.0" } });
+    await expect(pending).resolves.toMatchObject({ storage: "opfs" });
+    expect(get(databaseLoading)).toEqual({ visible: false });
+  });
+
+  it("does not let an older route initialization clear a newer route's cover", async () => {
+    const oldWorker = new FakeWorker();
+    const newWorker = new FakeWorker();
+    const oldPending = new Rule1WorkerRpc(oldWorker as unknown as Worker).initialize({
+      moduleUrl: "/module",
+      manifestUrl: "/manifest",
+      databaseUrl: "/database",
+    });
+    const newPending = new Rule1WorkerRpc(newWorker as unknown as Worker).initialize({
+      moduleUrl: "/module",
+      manifestUrl: "/manifest",
+      databaseUrl: "/database",
+    });
+
+    oldWorker.reply({ id: 1, ok: true, result: { storage: "opfs", sqliteVersion: "3.53.0" } });
+    await oldPending;
+    expect(get(databaseLoading)).toEqual({ visible: true, stage: "opening" });
+
+    newWorker.reply({ id: 1, ok: true, result: { storage: "opfs", sqliteVersion: "3.53.0" } });
+    await newPending;
     expect(get(databaseLoading)).toEqual({ visible: false });
   });
 

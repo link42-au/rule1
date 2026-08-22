@@ -4,11 +4,21 @@ import type { DatabaseLoadProgress } from "./runtime";
 export type DatabaseLoadingState = { visible: false } | ({ visible: true } & DatabaseLoadProgress);
 
 const state = writable<DatabaseLoadingState>({ visible: false });
+let activeGeneration = 0;
 
 export const databaseLoading = {
   subscribe: state.subscribe,
-  report: (progress: DatabaseLoadProgress): void => state.set({ visible: true, ...progress }),
-  finish: (): void => state.set({ visible: false }),
+  begin: (): number => {
+    activeGeneration += 1;
+    state.set({ visible: true, stage: "opening" });
+    return activeGeneration;
+  },
+  report: (generation: number, progress: DatabaseLoadProgress): void => {
+    if (generation === activeGeneration) state.set({ visible: true, ...progress });
+  },
+  finish: (generation: number): void => {
+    if (generation === activeGeneration) state.set({ visible: false });
+  },
 };
 
 export const formatBytes = (bytes: number): string => {
