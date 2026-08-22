@@ -24,8 +24,7 @@ test("SQLite is the only workflow and publishes its verified build to Pages", ()
   assert.match(buildJob, /path: apps\/web\/build/);
   assert.doesNotMatch(buildJob, /pages:\s*write|id-token:\s*write/);
 
-  const publicationCondition =
-    /if: github\.ref == 'refs\/heads\/main' && github\.event_name != 'pull_request'/g;
+  const publicationCondition = /if: github\.ref == 'refs\/heads\/main' && github\.event_name != 'pull_request'/g;
   assert.equal([...workflow.matchAll(publicationCondition)].length, 3);
   assert.match(deployJob, /needs: build-sqlite/);
   assert.match(deployJob, /pages:\s*write/);

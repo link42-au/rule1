@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { createRule1DataClient, Rule1WorkerRpc, type WorkerRequest, type WorkerResponse } from "./rpc";
+import { get } from "svelte/store";
+import { databaseLoading } from "./loading";
+import { createRule1DataClient, Rule1WorkerRpc, type WorkerMessage, type WorkerRequest } from "./rpc";
 
 class FakeWorker extends EventTarget {
   postMessage = vi.fn();
   terminate = vi.fn();
 
-  reply(response: WorkerResponse): void {
+  reply(response: WorkerMessage): void {
     this.dispatchEvent(new MessageEvent("message", { data: response }));
   }
 }
@@ -31,6 +33,24 @@ describe("Rule1 worker RPC", () => {
     expect(request).toMatchObject({ type: "query", method: "stats", params: { framework: "ce" } });
     worker.reply({ id: 1, ok: true, result: { framework: "cyber-essentials", controls: 33 } });
     await expect(pending).resolves.toMatchObject({ framework: "cyber-essentials", controls: 33 });
+  });
+
+  it("forwards database progress and clears it when initialization finishes", async () => {
+    const worker = new FakeWorker();
+    const rpc = new Rule1WorkerRpc(worker as unknown as Worker);
+    const pending = rpc.initialize({ moduleUrl: "/module", manifestUrl: "/manifest", databaseUrl: "/database" });
+
+    worker.reply({ id: 1, type: "progress", progress: { stage: "downloading", receivedBytes: 10, totalBytes: 100 } });
+    expect(get(databaseLoading)).toEqual({
+      visible: true,
+      stage: "downloading",
+      receivedBytes: 10,
+      totalBytes: 100,
+    });
+
+    worker.reply({ id: 1, ok: true, result: { storage: "opfs", sqliteVersion: "3.53.0" } });
+    await expect(pending).resolves.toMatchObject({ storage: "opfs" });
+    expect(get(databaseLoading)).toEqual({ visible: false });
   });
 
   it("rejects worker-reported failures and terminates after close", async () => {
