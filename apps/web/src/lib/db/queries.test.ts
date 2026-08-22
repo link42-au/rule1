@@ -205,6 +205,32 @@ describe("Rule1 query dispatcher", () => {
     expect(executor.calls.find((call) => call.name === "e8-mappings")?.bind).toEqual(["ism", "v2", "ism-1"]);
   });
 
+  it("does not query Essential Eight mappings for non-ISM control details", async () => {
+    const executor = new FixtureExecutor({
+      control: [
+        {
+          control_id: "nzism-1",
+          display_id: "NZISM-1",
+          catalog_version: "v2",
+          statement: "Current",
+          applicability: "[]",
+          e8_levels: "[]",
+          metadata: "{}",
+        },
+      ],
+      "control-history-summary": [],
+      "e8-mappings": [{ level: "ML1", strategy: "Must not be requested" }],
+    });
+
+    await expect(dispatchRule1Query(executor, "control", { framework: "nzism", id: "NZISM-1" })).resolves.toMatchObject(
+      {
+        framework: "nzism",
+        latest: { e8_strategies: [] },
+      },
+    );
+    expect(executor.calls.some((call) => call.name === "e8-mappings")).toBe(false);
+  });
+
   it("validates compare versions and returns term history", async () => {
     const executor = new FixtureExecutor({
       versions: [

@@ -65,6 +65,30 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).not.toMatch(/\bfetch\s*\(/);
   });
 
+  it("does not request Essential Eight mappings outside the ISM framework", () => {
+    const mappingLoader = explorerSource.slice(
+      explorerSource.indexOf("async function loadMappings"),
+      explorerSource.indexOf("async function loadHistory"),
+    );
+    const frameworkGate = mappingLoader.indexOf('if (!client || requestFramework !== "ism") return;');
+    const mappingRequest = mappingLoader.indexOf("client.e8Mappings");
+    expect(frameworkGate).toBeGreaterThanOrEqual(0);
+    expect(mappingRequest).toBeGreaterThan(frameworkGate);
+    expect(explorerSource).toContain('const retainedMapping = requestFramework === "ism" && result');
+  });
+
+  it("renders Essential Eight detail content only for ISM controls", () => {
+    expect(explorerSource).toContain("{#if isISM && (detail.latest.e8_levels?.length ?? 0) > 0}");
+    expect(explorerSource).toContain("{#if isISM}\n              <MappingPanel");
+    expect(explorerSource).toContain('{#if isISM}\n                  <div class="stat e8-stat"');
+  });
+
+  it("uses a three-column stats layout for non-ISM controls", () => {
+    expect(explorerSource).toContain('class="stats-grid" class:three-stats={!isISM}');
+    expect(explorerSource).toContain(".stats-grid.three-stats");
+    expect(explorerSource).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
+  });
+
   it("protects every asynchronous relationship load from stale selection and framework responses", () => {
     expect(explorerSource).toContain("const historyRequests = new LatestRequest()");
     expect(explorerSource).toContain("const graphRequests = new LatestRequest()");
