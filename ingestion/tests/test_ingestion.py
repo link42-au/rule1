@@ -24,9 +24,9 @@ class ParserTests(unittest.TestCase):
         }
 
     def test_all_retained_versions_have_stable_unique_controls(self) -> None:
-        expected = {"cyber-essentials": 3, "ism": 58, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
+        expected = {"cyber-essentials": 3, "ism": 60, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
         self.assertEqual({key: len(value) for key, value in self.by_framework.items()}, expected)
-        self.assertEqual(len(self.snapshots), 75)
+        self.assertEqual(len(self.snapshots), 77)
         for snapshot in self.snapshots:
             controls = snapshot["controls"]
             self.assertTrue(controls, snapshot["catalog_version"])
@@ -48,8 +48,8 @@ class ParserTests(unittest.TestCase):
 
     def test_reviewed_parser_regressions(self) -> None:
         ism = self.by_framework["ism"]
-        self.assertEqual(sum(len(item["controls"]) for item in ism), 48_343)
-        self.assertEqual(len(ism[-1]["controls"]), 1_079)
+        self.assertEqual(sum(len(item["controls"]) for item in ism), 50_624)
+        self.assertEqual(len(ism[-1]["controls"]), 1_150)
         self.assertTrue(any(item["groups"] for item in ism))
         self.assertLessEqual(max(len(control["statement"]) for item in ism for control in item["controls"].values()), 2_000)
         self.assertTrue(any("C" in (control.get("applicability") or []) for item in ism for control in item["controls"].values()))
@@ -58,6 +58,35 @@ class ParserTests(unittest.TestCase):
         fallback = self.by_framework["nist-800-53"][0]["controls"].get("nist-800-53-ac-2.1")
         if fallback:
             self.assertEqual(fallback["display_id"], "AC-2(1)")
+
+    def test_june_2026_is_the_current_complete_ism(self) -> None:
+        current = self.by_framework["ism"][-1]
+        self.assertEqual(current["catalog_version"], "ISM-OSCAL-2026.06.18")
+        active = [control for control in current["controls"].values() if control["change_type"] != "withdrawn"]
+        self.assertEqual(sum(control["control_class"] == "ISM-control" for control in active), 1_101)
+        self.assertEqual(sum(control["control_class"] == "ISM-principle" for control in active), 49)
+        self.assertEqual(current["controls"]["ism-2116"]["source"], "oscal")
+        self.assertIn("ism-2118", current["controls"])
+        self.assertEqual(current["controls"]["ism-principle-gov-01"]["display_id"], "GOV-01")
+        self.assertEqual(current["controls"]["ism-0123"]["e8_levels"], ["ML2", "ML3"])
+
+    def test_pdf_to_oscal_boundary_records_real_changes(self) -> None:
+        march = self.by_framework["ism"][-2]
+        controls = list(march["controls"].values())
+        self.assertEqual(sum(control["change_type"] == "modified" for control in controls), 17)
+        self.assertEqual(sum(control["change_type"] == "new" and control["control_class"] == "ISM-control"
+                             for control in controls), 9)
+        self.assertEqual(sum(control["change_type"] == "new" and control["control_class"] == "ISM-principle"
+                             for control in controls), 49)
+        self.assertEqual(sum(control["change_type"] == "withdrawn" for control in controls), 1)
+        self.assertEqual(march["controls"]["ism-1906"]["change_type"], "unchanged")
+
+    def test_official_ism_oscal_metadata_versions(self) -> None:
+        expected = {"2026-03": "2026.03.24", "2026-06": "2026.06.18"}
+        for directory, version in expected.items():
+            path = ROOT / "data/ism-oscal" / directory / "ISM_catalog.json"
+            catalog = json.loads(path.read_text(encoding="utf-8"))["catalog"]
+            self.assertEqual(catalog["metadata"]["version"], version)
 
     def test_duplicate_source_control_ids_fail(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -95,8 +124,11 @@ class DatabaseTests(unittest.TestCase):
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
                 sqlite3.sqlite_version,
             )
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 75)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 77)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 77)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 79)
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-OSCAL-2026.06.18'"
+            ).fetchone()[0], 256)
         with tempfile.TemporaryDirectory() as directory:
             generated_contract = Path(directory) / "validation-contract.json"
             write_contract(ROOT, database, generated_contract)

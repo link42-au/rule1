@@ -61,7 +61,9 @@
       "ISM-PDF-2024-12",
       "ISM-PDF-2025-06",
       "ISM-PDF-2025-09",
-      "ISM-PDF-2025-12"
+      "ISM-PDF-2025-12",
+      "ISM-OSCAL-2026.03.24",
+      "ISM-OSCAL-2026.06.18"
     ],
     "nist-800-53": ["800-53-Rev-4", "800-53-Rev-5", "800-53-Rev-5.1.1", "800-53-Rev-5.2.0"],
     "nist-csf": ["NIST-CSF-1.1", "NIST-CSF-2.0"],
@@ -69,16 +71,16 @@
   },
   "page_size": 4096,
   "row_counts": {
-    "catalog_versions": 75,
-    "control_groups": 3530,
-    "control_history": 64305,
-    "e8_mappings": 2325,
+    "catalog_versions": 77,
+    "control_groups": 4664,
+    "control_history": 66586,
+    "e8_mappings": 2837,
     "frameworks": 5,
-    "source_files": 77,
+    "source_files": 79,
     "term_history": 0
   },
   "schema_sha256": "4553b9115d826aebb646bc8fcef05328f01fdbc09eada31433cf50a8da40c073",
-  "source_ledger_sha256": "f19ae2d4da980784cf678c42ac70d8a94394044b6de995a3884460429e7e44d5",
+  "source_ledger_sha256": "9a51f5d066afec54fab7cbe7071d8abecde334d3d0a044bad7145cff0621145b",
   "tables": [
     "build_counts",
     "build_metadata",
@@ -110,6 +112,16 @@
       }
     },
     "ism": {
+      "ISM-OSCAL-2026.03.24": {
+        "control_groups": 564,
+        "control_history": 1131,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2026.06.18": {
+        "control_groups": 570,
+        "control_history": 1150,
+        "term_history": 0
+      },
       "ISM-PDF-2010-11": {
         "control_groups": 20,
         "control_history": 903,

@@ -22,11 +22,25 @@ def _text(value: object) -> str:
 def _changed(current: dict[str, Any], previous: dict[str, Any] | None) -> str:
     if previous is None:
         return "new"
+    pdf_to_oscal = previous.get("source") == "pdf" and current.get("source") == "oscal"
+    if pdf_to_oscal:
+        # At the single source-format boundary, OSCAL repairs fields the PDF
+        # parser could not represent. Revision remains the publisher's signal
+        # for whether a common control changed semantically in that release.
+        boundary_visible = ("display_id", "label", "title", "compliance", "revision", "control_class")
+        return "modified" if any(current.get(key) != previous.get(key) for key in boundary_visible) else "unchanged"
     visible = (
         "display_id", "label", "title", "statement", "section_id", "section_title",
         "applicability", "applicability_raw", "compliance", "revision", "metadata",
+        "control_class", "e8_levels",
     )
-    return "modified" if any(current.get(k) != previous.get(k) for k in visible) else "unchanged"
+    for key in visible:
+        current_value, previous_value = current.get(key), previous.get(key)
+        if key == "statement":
+            current_value, previous_value = _text(current_value), _text(previous_value)
+        if current_value != previous_value:
+            return "modified"
+    return "unchanged"
 
 
 def _history(framework: str, parsed: list[tuple[dict[str, str], Snapshot]]) -> list[Snapshot]:
@@ -300,6 +314,74 @@ def _parse_ism(path: Path) -> Snapshot:
     return {"groups": groups, "controls": controls}
 
 
+def _parse_ism_oscal(path: Path) -> Snapshot:
+    """Parse the publisher's current OSCAL catalog, including principles."""
+    catalog = json.loads(path.read_text(encoding="utf-8"))["catalog"]
+    groups: list[dict[str, Any]] = []
+    controls: dict[str, dict[str, Any]] = {}
+
+    def values(props: list[dict[str, Any]], name: str) -> list[str]:
+        return [str(prop["value"]) for prop in props if prop.get("name") == name and prop.get("value")]
+
+    def group_id(group: dict[str, Any], path_parts: tuple[int, ...], title: str) -> str:
+        if len(path_parts) == 1:
+            return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+        sort_id = _prop(group.get("props", []), "sort-id")
+        identity = sort_id or "group-" + "-".join(str(part) for part in path_parts)
+        return re.sub(r"[^a-z0-9]+", "-", identity.lower()).strip("-")
+
+    def walk(items: list[dict[str, Any]], parent_id: str | None = None,
+             path_parts: tuple[int, ...] = (), chapter_id: str = "", chapter_title: str = "") -> None:
+        for ordinal, group in enumerate(items, start=1):
+            current_path = (*path_parts, ordinal)
+            title = _text(group.get("title"))
+            if len(current_path) == 1 and title.lower().startswith("guidelines for "):
+                title = title[len("Guidelines for "):].rstrip(".").title()
+            current_id = group_id(group, current_path, title)
+            current_chapter_id = current_id if len(current_path) == 1 else chapter_id
+            current_chapter_title = title if len(current_path) == 1 else chapter_title
+            groups.append({
+                "id": current_id,
+                "title": title,
+                "overview": _part_prose(group.get("parts", []), "overview") or None,
+                "parent_id": parent_id,
+            })
+            for item in group.get("controls", []):
+                raw_id = str(item.get("id", "")).lower()
+                if not raw_id or raw_id in controls:
+                    raise ValueError(f"duplicate or empty ISM OSCAL control id in {path}: {raw_id!r}")
+                props = item.get("props", [])
+                applicability = values(props, "applicability")
+                e8_levels = values(props, "essential-eight-applicability")
+                control_class = str(item.get("class") or "ISM-control")
+                is_principle = control_class == "ISM-principle"
+                display_id = _prop(props, "label") if is_principle else raw_id.upper()
+                controls[raw_id] = {
+                    "id": raw_id,
+                    "display_id": display_id or raw_id.upper(),
+                    "label": display_id or raw_id.upper(),
+                    "title": (_text(item.get("title")) or None) if is_principle else None,
+                    "statement": _text(_part_prose(item.get("parts", []), "statement")),
+                    "section_id": current_chapter_id,
+                    "section_title": current_chapter_title,
+                    "control_class": control_class,
+                    "source": "oscal",
+                    "applicability": applicability,
+                    "applicability_raw": applicability,
+                    "revision": _prop(props, "revision") or "0",
+                    "updated": _prop(props, "updated") or "",
+                    "guideline": current_chapter_title,
+                    "e8_levels": e8_levels,
+                    "metadata": {"authority": None},
+                }
+            walk(group.get("groups", []), current_id, current_path, current_chapter_id, current_chapter_title)
+
+    walk(catalog.get("groups", []))
+    if not controls:
+        raise ValueError(f"no ISM controls parsed from {path}")
+    return {"groups": groups, "controls": controls}
+
+
 def build_all_histories(root: Path) -> list[Snapshot]:
     """Parse every ingestible ledger version in ledger order."""
     root = root.resolve()
@@ -323,6 +405,10 @@ def build_all_histories(root: Path) -> list[Snapshot]:
     snapshots: list[Snapshot] = []
     for framework in sorted(by_framework):
         sources = sorted(by_framework[framework], key=lambda value: (value["date"], value["version"]))
-        parsed = [(source, parsers[framework](root / source["path"])) for source in sources]
+        parsed = []
+        for source in sources:
+            path = root / source["path"]
+            parser = _parse_ism_oscal if framework == "ism" and path.suffix == ".json" else parsers[framework]
+            parsed.append((source, parser(path)))
         snapshots.extend(_history(framework, parsed))
     return snapshots

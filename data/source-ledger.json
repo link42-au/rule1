@@ -505,6 +505,22 @@
       "sha256": "d0652dd0565e0f101ce84428b310fa12b2c24430fc654cafc2f83aa6a8798802"
     },
     {
+      "framework": "ism",
+      "version": "ISM-OSCAL-2026.03.24",
+      "date": "2026-03-24",
+      "path": "data/ism-oscal/2026-03/ISM_catalog.json",
+      "origin": "https://www.cyber.gov.au/ism/oscal/v2026.03.24/artifacts/ISM_catalog.json",
+      "sha256": "54629fa7f6d1be9bee887250091a2c47ee4816d7f758e16bd605091a98e28695"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-OSCAL-2026.06.18",
+      "date": "2026-06-18",
+      "path": "data/ism-oscal/2026-06/ISM_catalog.json",
+      "origin": "https://www.cyber.gov.au/ism/oscal/v2026.06.18/artifacts/ISM_catalog.json",
+      "sha256": "f3e4512bc31eb3157001c4a9312d80840b3a3c485f1e87d6b5519b2b0dcc56cc"
+    },
+    {
       "framework": "nist-800-53",
       "version": "800-53-Rev-4",
       "date": "2015-01-22",
