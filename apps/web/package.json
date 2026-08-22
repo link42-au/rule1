@@ -6,6 +6,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite dev",
+    "prebuild": "node ../../scripts/copy-sqlite-wasm-assets.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
@@ -14,6 +15,7 @@
     "@link42/tokens": "workspace:*",
     "@link42/ui": "workspace:*",
     "@rule1/shared": "workspace:*",
+    "@sqlite.org/sqlite-wasm": "3.53.0-build1",
     "@sveltejs/kit": "2.58.0",
     "svelte": "5.56.8"
   },

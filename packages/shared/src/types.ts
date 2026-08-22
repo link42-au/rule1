@@ -34,6 +34,19 @@ export interface Group {
   children: Group[];
 }
 
+export interface Guideline {
+  guideline: string;
+  control_count: number;
+}
+
+export interface Section {
+  id: string;
+  title: string;
+  overview: string | null;
+  guideline: string | null;
+  control_count: number;
+}
+
 export interface Revision {
   statement?: string;
   applicability?: string[];
@@ -47,6 +60,7 @@ export interface Revision {
   guideline?: string;
   source?: string;
   compliance?: string;
+  revision?: string;
   change_complexity?: string | null;
   metadata?: Record<string, unknown>;
 }
@@ -85,7 +99,23 @@ export interface GraphNode {
 }
 
 export interface GraphData {
-  nodes?: GraphNode[];
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  group: GraphGroup | null;
+}
+
+export interface GraphEdge {
+  data: {
+    id: string;
+    source: string;
+    target: string;
+    group: string | null;
+  };
+}
+
+export interface GraphGroup {
+  id: string;
+  title: string | null;
 }
 
 // ── Compare types ────────────────────────────────────────────────────────────
@@ -124,6 +154,18 @@ export interface GlossaryTerm {
   id: string;
   term: string;
   meaning: string;
+}
+
+export interface TermRevision extends GlossaryTerm {
+  catalog_version: string;
+  commit_date: string;
+  change_type: string;
+}
+
+export interface TermDetail {
+  id: string;
+  term: string;
+  history: TermRevision[];
 }
 
 // ── Stats ────────────────────────────────────────────────────────────────────

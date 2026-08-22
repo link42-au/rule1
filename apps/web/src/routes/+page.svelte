@@ -3,6 +3,10 @@
   import { base } from "$app/paths";
   import type { Framework } from "@rule1/shared";
   import { theme } from "@link42/ui";
+  import { onMount } from "svelte";
+  import type { Rule1DataClient } from "$lib/db/contracts";
+  import { canonicalFrameworkId } from "$lib/db/contracts";
+  import { openRule1DataClient } from "$lib/db/rpc";
 
   type CatalogueState =
     | { status: "loading" }
@@ -11,19 +15,62 @@
 
   const siteName = "rule1";
 
-  // Feature 7 replaces this explicit boundary with the browser-local SQLite client.
   let catalogue = $state<CatalogueState>({
-    status: "unavailable",
-    message: "The local security controls catalogue is not available in this build yet.",
+    status: "loading",
   });
   let searchValue = $state("");
   let curFramework = $state("ism");
+  let dataClient: Rule1DataClient | null = null;
 
   let logoSrc = $derived(`${base}/${theme.value === "dark" ? "logo-dark.svg" : "logo-light.svg"}`);
   let frameworks = $derived(catalogue.status === "ready" ? catalogue.frameworks : []);
   let controlCount = $derived(catalogue.status === "ready" ? catalogue.controlCount : null);
   let catalogueAvailable = $derived(catalogue.status === "ready");
   let isISM = $derived(curFramework === "ism");
+
+  onMount(() => {
+    let mounted = true;
+    let closeClient: (() => Promise<void>) | null = null;
+
+    void (async () => {
+      try {
+        const opened = await openRule1DataClient(base, window.location.href);
+        if (!mounted) {
+          await opened.close();
+          return;
+        }
+
+        dataClient = opened.client;
+        closeClient = opened.close;
+        const availableFrameworks = await opened.client.frameworks();
+        const initialFramework = availableFrameworks.some((framework) => framework.id === "ism")
+          ? "ism"
+          : availableFrameworks[0]?.id;
+        if (!initialFramework) throw new Error("The local catalogue contains no frameworks.");
+
+        const framework = canonicalFrameworkId(initialFramework);
+        const stats = await opened.client.stats({ framework });
+        if (!mounted) return;
+
+        curFramework = framework;
+        catalogue = { status: "ready", frameworks: availableFrameworks, controlCount: stats.controls };
+      } catch {
+        if (mounted) {
+          dataClient = null;
+          catalogue = {
+            status: "unavailable",
+            message: "Could not load the local catalogue. Reload to try again.",
+          };
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      dataClient = null;
+      if (closeClient) void closeClient();
+    };
+  });
 
   function appHref(path: string): string {
     return `${base}${path}`;
@@ -33,9 +80,27 @@
     return framework === "ism" ? "" : `&framework=${framework}`;
   }
 
-  function selectFramework(framework: string): void {
-    if (catalogue.status !== "ready") return;
+  async function selectFramework(frameworkId: string): Promise<void> {
+    if (catalogue.status !== "ready" || !dataClient) return;
+
+    const framework = canonicalFrameworkId(frameworkId);
+    const availableFrameworks = catalogue.frameworks;
     curFramework = framework;
+    catalogue = { status: "ready", frameworks: availableFrameworks, controlCount: null };
+
+    try {
+      const stats = await dataClient.stats({ framework });
+      if (curFramework === framework && catalogue.status === "ready") {
+        catalogue = { status: "ready", frameworks: availableFrameworks, controlCount: stats.controls };
+      }
+    } catch {
+      if (curFramework === framework) {
+        catalogue = {
+          status: "unavailable",
+          message: "Could not load the selected framework. Reload to try again.",
+        };
+      }
+    }
   }
 
   function handleSearch(event: SubmitEvent): void {
@@ -98,7 +163,7 @@
         <button
           class="landing-fw-pill"
           class:active={curFramework === framework.id}
-          onclick={() => selectFramework(framework.id)}
+          onclick={() => void selectFramework(framework.id)}
           title={framework.name}
         >
           {framework.short_name}

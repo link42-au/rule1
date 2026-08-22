@@ -22,12 +22,22 @@ describe("reviewed Rule1 landing page", () => {
     expect(landingSource).not.toMatch(/(?:src|href)=["']\/(?!\/)/);
   });
 
-  it("reports the absent local catalogue instead of fetching or inventing data", () => {
-    expect(landingSource).toContain('status: "unavailable"');
-    expect(landingSource).toContain("The local security controls catalogue is not available in this build yet.");
+  it("loads the local SQLite catalogue before enabling discovery", () => {
+    expect(landingSource).toContain('import { openRule1DataClient } from "$lib/db/rpc"');
+    expect(landingSource).toContain('status: "loading"');
+    expect(landingSource).toContain("openRule1DataClient(base, window.location.href)");
+    expect(landingSource).toContain("await opened.client.frameworks()");
+    expect(landingSource).toContain("await opened.client.stats({ framework })");
+    expect(landingSource).toContain('status: "ready", frameworks: availableFrameworks, controlCount: stats.controls');
     expect(landingSource).toContain("disabled={!catalogueAvailable}");
-    expect(landingSource).not.toMatch(/\bfetch(?:Frameworks|Stats)?\s*\(/);
-    expect(landingSource).not.toContain("onMount");
+    expect(landingSource).not.toMatch(/\bfetch\s*\(/);
+  });
+
+  it("keeps loading and failure states honest and closes the browser client", () => {
+    expect(landingSource).toContain("Loading local catalogue…");
+    expect(landingSource).toContain("Could not load the local catalogue. Reload to try again.");
+    expect(landingSource).toContain("Could not load the selected framework. Reload to try again.");
+    expect(landingSource).toContain("if (closeClient) void closeClient()");
   });
 
   it("keeps tall landing content in flow above the production footer", () => {
