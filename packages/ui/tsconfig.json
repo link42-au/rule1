@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src/**/*.svelte", "src/**/*.ts"]
+}

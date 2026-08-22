@@ -1,0 +1,22 @@
+{
+  "name": "rule1",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.15.1",
+  "scripts": {
+    "build": "pnpm --filter @rule1/web build",
+    "build:database": "PYTHONPATH=ingestion uv run --python 3.12.13 python -m rule1_ingest.build --root . --output build/rule1.sqlite3",
+    "check": "biome check .",
+    "test": "node --test scripts/*.test.mjs && PYTHONPATH=ingestion uv run --python 3.12.13 python -m unittest discover -s ingestion/tests -v && pnpm --filter @rule1/web test",
+    "validate:database": "PYTHONPATH=ingestion uv run --python 3.12.13 python -m rule1_ingest.validate --root . --database build/rule1.sqlite3",
+    "validate:sources": "node scripts/validate-sources.mjs",
+    "typecheck": "pnpm --filter @rule1/web typecheck",
+    "verify": "pnpm check && pnpm typecheck && pnpm test && pnpm build:database && pnpm validate:database && pnpm build && node scripts/verify-static.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.6",
+    "@types/node": "22.15.3",
+    "typescript": "5.9.3"
+  }
+}

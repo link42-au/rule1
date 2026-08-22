@@ -1,0 +1,29 @@
+{
+  "name": "@rule1/web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev",
+    "prebuild": "node ../../scripts/copy-sqlite-wasm-assets.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@link42/tokens": "workspace:*",
+    "@link42/ui": "workspace:*",
+    "@rule1/shared": "workspace:*",
+    "@sqlite.org/sqlite-wasm": "3.53.0-build1",
+    "@sveltejs/kit": "2.58.0",
+    "svelte": "5.56.8"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "3.0.10",
+    "@sveltejs/vite-plugin-svelte": "5.1.1",
+    "svelte-check": "4.3.4",
+    "vite": "6.4.2",
+    "vitest": "4.1.5"
+  }
+}

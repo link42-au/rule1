@@ -1,0 +1,72 @@
+name: Build SQLite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-sqlite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.1
+          cache: pnpm
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: 0.11.32
+          python-version: 3.12.13
+          enable-cache: false
+
+      - name: Install locked dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          uv sync --frozen --python 3.12.13
+
+      - name: Validate committed sources
+        run: pnpm validate:sources
+
+      - name: Build and validate SQLite twice
+        run: |
+          PYTHONPATH=ingestion uv run --frozen --python 3.12.13 python -m rule1_ingest.build --root . --output build/rule1.sqlite3
+          PYTHONPATH=ingestion uv run --frozen --python 3.12.13 python -m rule1_ingest.validate --root . --database build/rule1.sqlite3
+          PYTHONPATH=ingestion uv run --frozen --python 3.12.13 python -m rule1_ingest.build --root . --output build/rule1-repeat.sqlite3
+          PYTHONPATH=ingestion uv run --frozen --python 3.12.13 python -m rule1_ingest.validate --root . --database build/rule1-repeat.sqlite3
+          cmp --silent build/rule1.sqlite3 build/rule1-repeat.sqlite3
+
+      - name: Place database in the static site
+        run: |
+          mkdir -p apps/web/static/data
+          cp build/rule1.sqlite3 apps/web/static/data/rule1.sqlite3
+          node scripts/write-artifact-manifest.mjs apps/web/static/data/rule1.sqlite3 ingestion/validation-contract.json apps/web/static/data/rule1-artifact-manifest.json
+          pnpm build
+          cmp --silent build/rule1.sqlite3 apps/web/build/data/rule1.sqlite3
+          cmp --silent apps/web/static/data/rule1-artifact-manifest.json apps/web/build/data/rule1-artifact-manifest.json
+
+      - name: Upload verified database
+        uses: actions/upload-artifact@v4
+        with:
+          name: rule1-sqlite
+          path: |
+            apps/web/build/data/rule1.sqlite3
+            apps/web/build/data/rule1-artifact-manifest.json
+            ingestion/validation-contract.json
+          if-no-files-found: error
+          retention-days: 14

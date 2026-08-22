@@ -1,0 +1,485 @@
+{
+  "version": "CE-3.2",
+  "date": "2025-04-28",
+  "source": "NCSC Cyber Essentials Requirements for IT Infrastructure v3.2",
+  "licence": "Open Government Licence v3.0",
+  "groups": [
+    {"id": "scope", "title": "Scope", "parent_id": null, "overview": "Your assessment and certification should cover the whole of the IT infrastructure used to carry out your organisation's business."},
+    {"id": "scope/byod", "title": "Bring your own device (BYOD)", "parent_id": "scope", "overview": null},
+    {"id": "scope/home-working", "title": "Home and remote working", "parent_id": "scope", "overview": null},
+    {"id": "scope/wireless", "title": "Wireless devices", "parent_id": "scope", "overview": null},
+    {"id": "scope/cloud", "title": "Cloud services", "parent_id": "scope", "overview": null},
+    {"id": "scope/third-parties", "title": "Accounts used by third parties and managed infrastructure", "parent_id": "scope", "overview": null},
+    {"id": "scope/devices-third-parties", "title": "Devices used by third parties", "parent_id": "scope", "overview": null},
+    {"id": "technical-controls", "title": "Technical Controls", "parent_id": null, "overview": null},
+    {"id": "technical-controls/firewalls", "title": "Firewalls", "parent_id": "technical-controls", "overview": "To make sure that only secure and necessary network services can be accessed from the internet."},
+    {"id": "technical-controls/secure-configuration", "title": "Secure configuration", "parent_id": "technical-controls", "overview": "Ensure that computers and network devices are properly configured to reduce vulnerabilities and provide only the services required to fulfil their role."},
+    {"id": "technical-controls/security-update-management", "title": "Security update management", "parent_id": "technical-controls", "overview": "Ensure that devices and software are not vulnerable to known security issues for which fixes are available."},
+    {"id": "technical-controls/user-access-control", "title": "User access control", "parent_id": "technical-controls", "overview": "Ensure that user accounts are assigned to authorised individuals only and provide access to only those applications, computers and networks the user needs to carry out their role."},
+    {"id": "technical-controls/malware-protection", "title": "Malware protection", "parent_id": "technical-controls", "overview": "To restrict execution of known malware and untrusted software, from causing damage or accessing data."}
+  ],
+  "controls": [
+    {
+      "id": "ce-d1",
+      "display_id": "CE-D1",
+      "label": "Firewalls",
+      "statement": "You must protect every device in scope with a correctly configured firewall (or network device with firewall functionality).",
+      "section_id": "technical-controls/firewalls",
+      "section_title": "Firewalls",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Firewalls",
+        "applies_to": ["boundary firewalls", "desktop computers", "laptops", "routers", "servers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d1-1",
+      "display_id": "CE-D1.1",
+      "label": "Change default administrative passwords",
+      "statement": "Change default administrative passwords to a strong and unique password, or disable remote administrative access entirely.",
+      "section_id": "technical-controls/firewalls",
+      "section_title": "Firewalls",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Firewalls",
+        "applies_to": ["boundary firewalls", "desktop computers", "laptops", "routers", "servers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d1-2",
+      "display_id": "CE-D1.2",
+      "label": "Prevent internet access to administrative interface",
+      "statement": "Prevent access to the administrative interface from the internet, unless there is a clear and documented business need and the interface is protected by multi-factor authentication or an IP allow list.",
+      "section_id": "technical-controls/firewalls",
+      "section_title": "Firewalls",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Firewalls",
+        "applies_to": ["boundary firewalls", "desktop computers", "laptops", "routers", "servers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d1-3",
+      "display_id": "CE-D1.3",
+      "label": "Block unauthenticated inbound connections",
+      "statement": "Block unauthenticated inbound connections by default.",
+      "section_id": "technical-controls/firewalls",
+      "section_title": "Firewalls",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Firewalls",
+        "applies_to": ["boundary firewalls", "desktop computers", "laptops", "routers", "servers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d1-4",
+      "display_id": "CE-D1.4",
+      "label": "Approve and document inbound firewall rules",
+      "statement": "Ensure inbound firewall rules are approved and documented by an authorised person, including the business need.",
+      "section_id": "technical-controls/firewalls",
+      "section_title": "Firewalls",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Firewalls",
+        "applies_to": ["boundary firewalls", "desktop computers", "laptops", "routers", "servers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d1-5",
+      "display_id": "CE-D1.5",
+      "label": "Remove unnecessary firewall rules",
+      "statement": "Remove or disable unnecessary firewall rules when they are no longer needed.",
+      "section_id": "technical-controls/firewalls",
+      "section_title": "Firewalls",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Firewalls",
+        "applies_to": ["boundary firewalls", "desktop computers", "laptops", "routers", "servers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d1-6",
+      "display_id": "CE-D1.6",
+      "label": "Software firewall on untrusted networks",
+      "statement": "Use a software firewall on devices which are used on untrusted networks, such as public wifi hotspots.",
+      "section_id": "technical-controls/firewalls",
+      "section_title": "Firewalls",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Firewalls",
+        "applies_to": ["boundary firewalls", "desktop computers", "laptops", "routers", "servers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d2",
+      "display_id": "CE-D2",
+      "label": "Secure configuration",
+      "statement": "Your organisation must proactively manage your computers and network devices to ensure they are securely configured.",
+      "section_id": "technical-controls/secure-configuration",
+      "section_title": "Secure configuration",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Secure configuration",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "thin clients", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d2-1",
+      "display_id": "CE-D2.1",
+      "label": "Remove unnecessary user accounts",
+      "statement": "Remove and disable unnecessary user accounts, such as guest accounts and administrative accounts that will not be used.",
+      "section_id": "technical-controls/secure-configuration",
+      "section_title": "Secure configuration",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Secure configuration",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "thin clients", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d2-2",
+      "display_id": "CE-D2.2",
+      "label": "Change default or guessable passwords",
+      "statement": "Change any default or guessable account passwords.",
+      "section_id": "technical-controls/secure-configuration",
+      "section_title": "Secure configuration",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Secure configuration",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "thin clients", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d2-3",
+      "display_id": "CE-D2.3",
+      "label": "Remove unnecessary software",
+      "statement": "Remove or disable unnecessary software, including applications, system utilities and network services.",
+      "section_id": "technical-controls/secure-configuration",
+      "section_title": "Secure configuration",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Secure configuration",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "thin clients", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d2-4",
+      "display_id": "CE-D2.4",
+      "label": "Disable auto-run features",
+      "statement": "Disable any auto-run feature which allows file execution without user authorisation.",
+      "section_id": "technical-controls/secure-configuration",
+      "section_title": "Secure configuration",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Secure configuration",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "thin clients", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d2-5",
+      "display_id": "CE-D2.5",
+      "label": "Authenticate users before access",
+      "statement": "Ensure users are authenticated before allowing them access to organisational data or services.",
+      "section_id": "technical-controls/secure-configuration",
+      "section_title": "Secure configuration",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Secure configuration",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "thin clients", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d2-6",
+      "display_id": "CE-D2.6",
+      "label": "Device locking controls",
+      "statement": "Ensure appropriate device locking controls for users that are physically present.",
+      "section_id": "technical-controls/secure-configuration",
+      "section_title": "Secure configuration",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Secure configuration",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "thin clients", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d2-7",
+      "display_id": "CE-D2.7",
+      "label": "Protect against brute-force attacks",
+      "statement": "Protect device unlocking credentials against brute-force attacks using throttling (no more than 10 guesses in 5 minutes) or lockout after 10 unsuccessful attempts.",
+      "section_id": "technical-controls/secure-configuration",
+      "section_title": "Secure configuration",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Secure configuration",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "thin clients", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d3",
+      "display_id": "CE-D3",
+      "label": "Security update management",
+      "statement": "You must make sure that all software in scope is kept up to date.",
+      "section_id": "technical-controls/security-update-management",
+      "section_title": "Security update management",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Security update management",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "firewalls", "routers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d3-1",
+      "display_id": "CE-D3.1",
+      "label": "Licensed and supported software",
+      "statement": "All software on in-scope devices must be licensed and supported.",
+      "section_id": "technical-controls/security-update-management",
+      "section_title": "Security update management",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Security update management",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "firewalls", "routers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d3-2",
+      "display_id": "CE-D3.2",
+      "label": "Remove unsupported software",
+      "statement": "Remove unsupported software from devices or remove from scope by using a defined sub-set that prevents all traffic to/from the internet.",
+      "section_id": "technical-controls/security-update-management",
+      "section_title": "Security update management",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Security update management",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "firewalls", "routers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d3-3",
+      "display_id": "CE-D3.3",
+      "label": "Enable automatic updates",
+      "statement": "Have automatic updates enabled where possible.",
+      "section_id": "technical-controls/security-update-management",
+      "section_title": "Security update management",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Security update management",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "firewalls", "routers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d3-4",
+      "display_id": "CE-D3.4",
+      "label": "Apply critical vulnerability patches within 14 days",
+      "statement": "Apply updates that fix critical or high-risk vulnerabilities (CVSS v3 score of 7 or above) within 14 days of release.",
+      "section_id": "technical-controls/security-update-management",
+      "section_title": "Security update management",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Security update management",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "firewalls", "routers", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4",
+      "display_id": "CE-D4",
+      "label": "User access control",
+      "statement": "Your organisation must be in control of your user accounts and the access privileges that allow access to your organisational data and services.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-1",
+      "display_id": "CE-D4.1",
+      "label": "Process to create and approve user accounts",
+      "statement": "Have in place a process to create and approve user accounts.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-2",
+      "display_id": "CE-D4.2",
+      "label": "Authenticate with unique credentials",
+      "statement": "Authenticate users with unique credentials before granting access to applications or devices.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-3",
+      "display_id": "CE-D4.3",
+      "label": "Remove inactive user accounts",
+      "statement": "Remove or disable user accounts when they are no longer required, for example when a user leaves the organisation or after a defined period of account inactivity.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-4",
+      "display_id": "CE-D4.4",
+      "label": "Implement multi-factor authentication",
+      "statement": "Implement multi-factor authentication where available. Authentication to cloud services must always use MFA.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-5",
+      "display_id": "CE-D4.5",
+      "label": "Separate administrative accounts",
+      "statement": "Use separate accounts to perform administrative activities only, with no emailing, web browsing or other standard user activities.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-6",
+      "display_id": "CE-D4.6",
+      "label": "Remove unnecessary special access privileges",
+      "statement": "Remove or disable special access privileges when no longer required.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-7",
+      "display_id": "CE-D4.7",
+      "label": "Protect passwords against brute-force guessing",
+      "statement": "Protect passwords against brute-force guessing using MFA, throttling (no more than 10 guesses in 5 minutes), or lockout after 10 unsuccessful attempts.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-8",
+      "display_id": "CE-D4.8",
+      "label": "Technical controls for password quality",
+      "statement": "Use technical controls to manage password quality: MFA, minimum 12 characters with no max, or minimum 8 characters with no max plus automatic blocking of common passwords.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d4-9",
+      "display_id": "CE-D4.9",
+      "label": "MFA for administrative and internet-accessible accounts",
+      "statement": "Use multi-factor authentication to give administrative accounts extra security, and accounts that are accessible from the internet.",
+      "section_id": "technical-controls/user-access-control",
+      "section_title": "User access control",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "User access control",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d5",
+      "display_id": "CE-D5",
+      "label": "Malware protection",
+      "statement": "You must make sure that a malware protection mechanism is active on all devices in scope, using at least one of the following options.",
+      "section_id": "technical-controls/malware-protection",
+      "section_title": "Malware protection",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Malware protection",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d5-1",
+      "display_id": "CE-D5.1",
+      "label": "Anti-malware software configuration",
+      "statement": "Anti-malware software must be configured to be updated in line with vendor recommendations, prevent malware from running, prevent execution of malicious code, and prevent connections to malicious websites.",
+      "section_id": "technical-controls/malware-protection",
+      "section_title": "Malware protection",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Malware protection",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    },
+    {
+      "id": "ce-d5-2",
+      "display_id": "CE-D5.2",
+      "label": "Application allow listing",
+      "statement": "Application allow listing: only approved applications restricted by code signing are allowed to execute. Maintain a current list of approved applications; users must not be able to install unsigned or invalid-signature applications.",
+      "section_id": "technical-controls/malware-protection",
+      "section_title": "Malware protection",
+      "control_class": "control",
+      "source": "json",
+      "metadata": {
+        "control_area": "Malware protection",
+        "applies_to": ["servers", "desktop computers", "laptops", "tablets", "mobile phones", "IaaS", "PaaS", "SaaS"]
+      }
+    }
+  ]
+}

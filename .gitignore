@@ -1,0 +1,13 @@
+node_modules/
+.pnpm-store/
+.svelte-kit/
+build/
+coverage/
+.venv/
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+__pycache__/
+*.py[cod]
+apps/web/static/data/rule1-artifact-manifest.json
+apps/web/static/vendor/sqlite/

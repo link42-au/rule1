@@ -1,0 +1,11 @@
+[project]
+name = "rule1-ingestion"
+version = "0.1.0"
+requires-python = "==3.12.13"
+dependencies = ["PyMuPDF==1.26.4"]
+
+[dependency-groups]
+dev = []
+
+[tool.uv]
+package = false

@@ -1,0 +1,636 @@
+{
+  "sources": [
+    {
+      "framework": "cyber-essentials",
+      "version": "CE-3.1",
+      "date": "2023-04-24",
+      "path": "data/ce/CE-3.1.json",
+      "origin": "https://www.ncsc.gov.uk/cyberessentials/overview",
+      "sha256": "8cc19d31330bba386c0b77076f82f1c21ec75d4cb771f783fda7c550e795c60c"
+    },
+    {
+      "framework": "cyber-essentials",
+      "version": "CE-3.2",
+      "date": "2025-04-28",
+      "path": "data/ce/CE-3.2.json",
+      "origin": "https://www.ncsc.gov.uk/cyberessentials/overview",
+      "sha256": "34adb63de204ba594ebf421d0ee2e1f9b167143403320abaf5bd2be4c4eb3e44"
+    },
+    {
+      "framework": "cyber-essentials",
+      "version": "CE-3.3",
+      "date": "2026-04-27",
+      "path": "data/ce/CE-3.3.json",
+      "origin": "https://www.ncsc.gov.uk/cyberessentials/overview",
+      "sha256": "f3d867b9de2eb2b160b6bbd4a7993618dfc3e44697419c199b06aa76a7df1ded"
+    },
+    {
+      "framework": "cyber-essentials",
+      "version": "CE-3.1",
+      "date": "2023-04-24",
+      "path": "data/ce/v3.1.pdf",
+      "origin": "https://www.ncsc.gov.uk/cyberessentials/overview",
+      "sha256": "7c3acc925f576b35e4cf3d58432cd32d13a0d7a37d6ae8a1de9c74febc17df24"
+    },
+    {
+      "framework": "cyber-essentials",
+      "version": "CE-3.3",
+      "date": "2026-04-27",
+      "path": "data/ce/v3.3.pdf",
+      "origin": "https://www.ncsc.gov.uk/cyberessentials/overview",
+      "sha256": "e5a857de99cba9e1c0e3d2c9ac5d626edf7215e1c5b906fc18b4ef1a34684923"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2010-11",
+      "date": "2010-11-01",
+      "path": "data/ism-pdf/2010-11_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "110d7fe76e0471e9e4860e8dceb7b315504a2f2b034e83006bfbf2a901d3de47"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2011-08",
+      "date": "2011-08-01",
+      "path": "data/ism-pdf/2011-08_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "f922a92962bbb14f0df1f07356bd96880c692dc7711fc8243631f9dcc288a14a"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2012-03",
+      "date": "2012-03-01",
+      "path": "data/ism-pdf/2012-03_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "e3fddf91d31cb381ccf66c5c44d94f226e86f56029d676869d88bba3a604d0ca"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2012-09",
+      "date": "2012-09-01",
+      "path": "data/ism-pdf/2012-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "fcc6b6bbe20b36d50a827bf1443dad321b993f4e3627e602fff28d7befcc8374"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2013-04",
+      "date": "2013-04-01",
+      "path": "data/ism-pdf/2013-04_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "9362705815736fc95effc9e94b67d984f820e78a7d3b07c28b8f9c3e74d57ab7"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2013-08",
+      "date": "2013-08-01",
+      "path": "data/ism-pdf/2013-08_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "467a06783c895cb7d7acde52d8ef44f042b107f29bfd1c47d9703e0fb853711c"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2014-02",
+      "date": "2014-02-01",
+      "path": "data/ism-pdf/2014-02_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "c9007374e9ac4dcf9cb0405b3882c3d10eb3fbcf82606ed8694bedf1ff9146e2"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2015-04",
+      "date": "2015-04-01",
+      "path": "data/ism-pdf/2015-04_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "5555c2dd3cfc9e2bd3cb708446248b9b5dfb6dde2598015b8ed54beaa22ee0f7"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2016-05",
+      "date": "2016-05-01",
+      "path": "data/ism-pdf/2016-05_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "4f7bc8a3a53bfea53b50f80584cf652c4d99bb100f1ffbf335e4e91aad963ac9"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2017-09",
+      "date": "2017-09-01",
+      "path": "data/ism-pdf/2017-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "3342be1aff068aed1c1c69eaf46ba7a477664f9a2e6a1bc153deabab7298fdcf"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2018-05",
+      "date": "2018-05-01",
+      "path": "data/ism-pdf/2018-05_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "52f75450ef7e039459fec8fff273726b7951b01d6d2a8c786e6a0cf5e64dcc61"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2018-11",
+      "date": "2018-11-01",
+      "path": "data/ism-pdf/2018-11_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "f6bef82efc6414df4460087e8e4430c2020068da5013ec92d3031485f242af05"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2018-12",
+      "date": "2018-12-01",
+      "path": "data/ism-pdf/2018-12_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "b4a6b68d40eb7ff93399ec124fb2f7f44a3ea22f1704e7ad851ab9fd69699cad"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-01",
+      "date": "2019-01-01",
+      "path": "data/ism-pdf/2019-01_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "0177f951ec32941c90d855328acf78589889a3770d0a00cc2dfff9d455f6b414"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-02",
+      "date": "2019-02-01",
+      "path": "data/ism-pdf/2019-02_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "17c714bb4cd98c833a284dc2174cb30c3374e43ce36179716a7fd765f993c07c"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-03",
+      "date": "2019-03-01",
+      "path": "data/ism-pdf/2019-03_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "0ba55ef3f8621876c0b2be6da851bc5f13b67be74979cbd61eff9bf4857ee0a2"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-04",
+      "date": "2019-04-01",
+      "path": "data/ism-pdf/2019-04_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "f2dde263f41365183d13803be321c9a3bd87423f278c26647cf97ade3b79eb76"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-05",
+      "date": "2019-05-01",
+      "path": "data/ism-pdf/2019-05_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "3b3e8040e5772f9519f45df335b2e139d79d75e98ff795df79ac2ec09838a5f2"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-06",
+      "date": "2019-06-01",
+      "path": "data/ism-pdf/2019-06_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "4ea8a995b1e96dbe92d53eefe9578501cee9c7af57fe218661be952822bd6817"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-07",
+      "date": "2019-07-01",
+      "path": "data/ism-pdf/2019-07_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "f23e8ec0e7155acb4130556f947990824f029e575034c2c86fceeb9b543f4f16"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-08",
+      "date": "2019-08-01",
+      "path": "data/ism-pdf/2019-08_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "16ec6a1f91c00957d5e8789dcfa59bf386f84102988242ef196c83904eaf74eb"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-09",
+      "date": "2019-09-01",
+      "path": "data/ism-pdf/2019-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "faf82ec38e63d5fdd9bf97cdc6280cd3438466e1791c6182a3840c30d93964ce"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-10",
+      "date": "2019-10-01",
+      "path": "data/ism-pdf/2019-10_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "257c446d83f596a02ee867e540cadd641dd8993f36a6d0b96dff9337d679393a"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-11",
+      "date": "2019-11-01",
+      "path": "data/ism-pdf/2019-11_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "1c04b7ce1bd11aaf8560cab73162213347ccdbc68fe5ce6d2e8c2fb14bfeb7b5"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2019-12",
+      "date": "2019-12-01",
+      "path": "data/ism-pdf/2019-12_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "d051c1f00ac3c9654762968e7bb93478d882440ed0bfc8ebdd14f7c66db29a8d"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-01",
+      "date": "2020-01-01",
+      "path": "data/ism-pdf/2020-01_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "cdcb36707e092465c0c5dc83e4361c717b2844dd0bf792c701729508b93ae99e"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-02",
+      "date": "2020-02-01",
+      "path": "data/ism-pdf/2020-02_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "0ac44a5a9a41647a9e39fe5697bc90a1511411152045c7519e69ee5f7ba777ca"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-03",
+      "date": "2020-03-01",
+      "path": "data/ism-pdf/2020-03_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "b9acc1c381ad273a111d4eaafec090e6784dfa7528e8f037d8ce33587f770614"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-04",
+      "date": "2020-04-01",
+      "path": "data/ism-pdf/2020-04_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "97f52d6b050915fd1d53f6762ea86703ae3ccd3214986d1eb396174271ede3ac"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-05",
+      "date": "2020-05-01",
+      "path": "data/ism-pdf/2020-05_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "79cbe7a00d35203e5dd3e9dbbe38bf1ca8022db72f914e5d1c466c896ee1b9b7"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-06",
+      "date": "2020-06-01",
+      "path": "data/ism-pdf/2020-06_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "5a176e2c1bfdb61e578a93e9f5678a15a3dbf062090fee2ff80aeea6ba1b0563"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-07",
+      "date": "2020-07-01",
+      "path": "data/ism-pdf/2020-07_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "0b491e7c23e24c09e1597e53ad49792c25de36be1e544acb7098d4a6ee7de053"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-08",
+      "date": "2020-08-01",
+      "path": "data/ism-pdf/2020-08_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "dca4284947e2c5714b096c665254c9e4269146733c89fc5301a9c5efd13fec43"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-09",
+      "date": "2020-09-01",
+      "path": "data/ism-pdf/2020-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "3c6a80f82c7ef56896a7e28faa002d5b1cf8cca79a9144ae75d97802301e567f"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-10",
+      "date": "2020-10-01",
+      "path": "data/ism-pdf/2020-10_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "15bea9e3ae6a99967ae0bfaf30701a52088d63b387b9fcbcabe18120c54b2a3f"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-11",
+      "date": "2020-11-01",
+      "path": "data/ism-pdf/2020-11_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "3854fb26a4186386364258b1a2900e9fc08f7a68e3c49a44e5cdb0152d6f6cdc"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2020-12",
+      "date": "2020-12-01",
+      "path": "data/ism-pdf/2020-12_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "fe07dd78d7bc841d3d618732d06d9e2bc3d185e4b5338cd65e8dcd9185b5b875"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2021-01",
+      "date": "2021-01-01",
+      "path": "data/ism-pdf/2021-01_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "0a30d77c8cf75ca7e89f0c692ed5723b4d500239060b78c3118ee45ab4bbbff7"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2021-02",
+      "date": "2021-02-01",
+      "path": "data/ism-pdf/2021-02_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "9c99e8c4fdc3b7d02419d7d669f887d891040c9cb56778fefe25ea3fc46c0346"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2021-03",
+      "date": "2021-03-01",
+      "path": "data/ism-pdf/2021-03_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "24afea0f7ee71d840387f781fdfaabea1bea3e2d9613eb756ef948d88a63d741"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2021-04",
+      "date": "2021-04-01",
+      "path": "data/ism-pdf/2021-04_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "6510da48d26c34f9334cd6eaae4733574bcc8bda51035ac220dd48ba370e4542"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2021-06",
+      "date": "2021-06-01",
+      "path": "data/ism-pdf/2021-06_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "163a70f52b3eedf31f272249ed871a09084c418072e2afe406796d6097887e8a"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2021-09",
+      "date": "2021-09-01",
+      "path": "data/ism-pdf/2021-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "5692c703d24575d926450b5d96f0f30886f7589d301902c294958888c00a1f7d"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2021-12",
+      "date": "2021-12-01",
+      "path": "data/ism-pdf/2021-12_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "5a86d7c7f672f03e530c899ed6c4f8744781f56cbea881aecd6f04001cf890de"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2022-03",
+      "date": "2022-03-01",
+      "path": "data/ism-pdf/2022-03_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "e2762f58062c5a327fa7d41f1b5d7cdc0f3aacbd27df575f97f8efb6055eda04"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2022-06",
+      "date": "2022-06-01",
+      "path": "data/ism-pdf/2022-06_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "6185211443f7c355e57ae89ee7ae0560146b23db43a3c1a6f1befd5ee7b65142"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2022-09",
+      "date": "2022-09-01",
+      "path": "data/ism-pdf/2022-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "f5d413123c502fb16bfb7b67c60e2bbcb1bd86f14fe8dc38ecb57d32d6104164"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2022-12",
+      "date": "2022-12-01",
+      "path": "data/ism-pdf/2022-12_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "ed429990c996c6c9022017013030594fbbb69cf324f433fd483047d3f9d6a284"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2023-03",
+      "date": "2023-03-01",
+      "path": "data/ism-pdf/2023-03_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "fcab9b3c2c20940712b424192e525ed0cbfb4c06ff2fb1b108d1aa4323a12c76"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2023-09",
+      "date": "2023-09-01",
+      "path": "data/ism-pdf/2023-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "5692c703d24575d926450b5d96f0f30886f7589d301902c294958888c00a1f7d"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2023-12",
+      "date": "2023-12-01",
+      "path": "data/ism-pdf/2023-12_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "c28610f4262e5f49818a82b0bf12314dfd89c17d207e128046e57716a97dcd37"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2024-03",
+      "date": "2024-03-01",
+      "path": "data/ism-pdf/2024-03_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "05eb8b5211e4f76b073951a5503f957da54d14a45911621bd54392b5f71a82f8"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2024-06",
+      "date": "2024-06-01",
+      "path": "data/ism-pdf/2024-06_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "f3dbbda1f57aac416068ad8fee8faf4f890de8b4881660e48b6c06af73d491a5"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2024-09",
+      "date": "2024-09-01",
+      "path": "data/ism-pdf/2024-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "81416879523b1e2be751cfccc2bfd65266d8368da87a1e210f4ad8a81e3d45c2"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2024-12",
+      "date": "2024-12-01",
+      "path": "data/ism-pdf/2024-12_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "f0395d1e0f0fad33192b39943cac9c4bc777085ed608998317969e4c2c30d550"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2025-06",
+      "date": "2025-06-01",
+      "path": "data/ism-pdf/2025-06_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "1f2740a4b7b1dc87cc73cdfd3e1e3d95481829df61f2c20c28b9caf1071259df"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2025-09",
+      "date": "2025-09-01",
+      "path": "data/ism-pdf/2025-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "0eda6196f9c12bdfbd8cc85c877a4ec926df102e707064632ac32c7e44c0f7bd"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-PDF-2025-12",
+      "date": "2025-12-01",
+      "path": "data/ism-pdf/2025-12_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism",
+      "sha256": "d0652dd0565e0f101ce84428b310fa12b2c24430fc654cafc2f83aa6a8798802"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-OSCAL-2026.03.24",
+      "date": "2026-03-24",
+      "path": "data/ism-oscal/2026-03/ISM_catalog.json",
+      "origin": "https://www.cyber.gov.au/ism/oscal/v2026.03.24/artifacts/ISM_catalog.json",
+      "sha256": "54629fa7f6d1be9bee887250091a2c47ee4816d7f758e16bd605091a98e28695"
+    },
+    {
+      "framework": "ism",
+      "version": "ISM-OSCAL-2026.06.18",
+      "date": "2026-06-18",
+      "path": "data/ism-oscal/2026-06/ISM_catalog.json",
+      "origin": "https://www.cyber.gov.au/ism/oscal/v2026.06.18/artifacts/ISM_catalog.json",
+      "sha256": "f3e4512bc31eb3157001c4a9312d80840b3a3c485f1e87d6b5519b2b0dcc56cc"
+    },
+    {
+      "framework": "nist-800-53",
+      "version": "800-53-Rev-4",
+      "date": "2015-01-22",
+      "path": "data/nist-800-53/versions/rev4.json",
+      "origin": "https://raw.githubusercontent.com/usnistgov/oscal-content/e355e38d27ec34e4fe13e2f9ac43ed9df9915624/nist.gov/SP800-53/rev4/json/NIST_SP-800-53_rev4_catalog.json",
+      "sha256": "26428a1a79b526b04115103a6c1f33621e74aeaa8b4745d8f847fa50c19d1f67"
+    },
+    {
+      "framework": "nist-800-53",
+      "version": "800-53-Rev-5",
+      "date": "2020-09-23",
+      "path": "data/nist-800-53/versions/rev5-v5.0.json",
+      "origin": "https://raw.githubusercontent.com/usnistgov/oscal-content/ca734934c52ba7f7436e1f636a280ca02e00b1ea/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+      "sha256": "4f8f477f1c0d03b7df27035da3ddbe28d9cbfa48f0529c7d8e03898cf36c3ee7"
+    },
+    {
+      "framework": "nist-800-53",
+      "version": "800-53-Rev-5.1.1",
+      "date": "2024-02-15",
+      "path": "data/nist-800-53/versions/rev5-v5.1.json",
+      "origin": "https://raw.githubusercontent.com/usnistgov/oscal-content/941c978d14c57379fbf6f7fb388f675067d5bff7/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+      "sha256": "81cf2de45ede9aef3de7ce09d65ea9d32f662c483bbf916f6e346292b22f7763"
+    },
+    {
+      "framework": "nist-800-53",
+      "version": "800-53-Rev-5.2.0",
+      "date": "2025-08-01",
+      "path": "data/nist-800-53/versions/rev5-v5.2.json",
+      "origin": "https://raw.githubusercontent.com/usnistgov/oscal-content/bc8a528770033611df899b3d52703fb3dc91a20d/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+      "sha256": "1645df6a370dcb931db2e2d5d70c2f77bc89c38499a416c23a70eb2c0e595bcc"
+    },
+    {
+      "framework": "nist-csf",
+      "version": "NIST-CSF-1.1",
+      "date": "2018-04-16",
+      "path": "data/nist-csf/versions/CSF_v1.1_catalog.json",
+      "origin": "https://www.nist.gov/cyberframework",
+      "sha256": "99ac4a201b96e503f3d02c17bf09ad35c2830c90e5622b22d8ac460acd12ac74"
+    },
+    {
+      "framework": "nist-csf",
+      "version": "NIST-CSF-2.0",
+      "date": "2024-02-26",
+      "path": "data/nist-csf/versions/NIST_CSF_v2.0_catalog.json",
+      "origin": "https://www.nist.gov/cyberframework",
+      "sha256": "e3edb5ef6b059f42becd446ddead36ce5189cd9f8631e3ee1789dc613b6ae936"
+    },
+    {
+      "framework": "nzism",
+      "version": "NZISM-3.2",
+      "date": "2019-01-01",
+      "path": "data/nzism/NZISM-FullDocV.3.2-Jan-2019.csv",
+      "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-FullDocV.3.2-Jan-2019.csv",
+      "sha256": "956c681aec9585343a3e372dc34acfb653a5096225e33d9a8da5ff1b13972f6f"
+    },
+    {
+      "framework": "nzism",
+      "version": "NZISM-3.3",
+      "date": "2020-02-01",
+      "path": "data/nzism/NZISM-FullDocV.3.3-February 2020.csv",
+      "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-FullDocV.3.3-February%202020.csv",
+      "sha256": "703dc660e1e7d0c03d9cc65e76c288a1b4e5db8f395b079c9f834d6866971843"
+    },
+    {
+      "framework": "nzism",
+      "version": "NZISM-3.4",
+      "date": "2020-09-01",
+      "path": "data/nzism/NZISM-FullDocV.3.4-September 2020.csv",
+      "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-FullDocV.3.4-September%202020.csv",
+      "sha256": "7e3132a5f6872179389e5466f92bf2da0a82f90d098288cb57a321845c4855bb"
+    },
+    {
+      "framework": "nzism",
+      "version": "NZISM-3.5",
+      "date": "2022-01-01",
+      "path": "data/nzism/NZISM-FullDocV.3.5-January-2022.csv",
+      "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-FullDocV.3.5-January-2022.csv",
+      "sha256": "c9fba8b3c1fb29190ca9fa14a2b1b1bab9edce2c05ded4ed9e441bfc025b7e89"
+    },
+    {
+      "framework": "nzism",
+      "version": "NZISM-3.6",
+      "date": "2022-09-01",
+      "path": "data/nzism/NZISM-FullDocV.3.6-September-2022.csv",
+      "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-FullDocV.3.6-September-2022.csv",
+      "sha256": "fc58171ee517b28d29721dc5e7b3a5dca70400a2b8d7a41e84fc5a179b14f8d3"
+    },
+    {
+      "framework": "nzism",
+      "version": "NZISM-3.8",
+      "date": "2024-09-01",
+      "path": "data/nzism/NZISM-ISM Document-V.-3.8-September-2024.csv",
+      "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-ISM%20Document-V.-3.8-September-2024.csv",
+      "sha256": "f773bf07eeda71bf1e025715bb86a87e2459c87afd0ad0d20936931fa0677381"
+    },
+    {
+      "framework": "nzism",
+      "version": "NZISM-3.9",
+      "date": "2025-05-01",
+      "path": "data/nzism/NZISM-ISM Document-V.-3.9-April-2025.csv",
+      "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-ISM%20Document-V.-3.9-April-2025.csv",
+      "sha256": "6a970cc8d18543fb7b4a61c75fce87bfe985e1e0d31b27178fc4229825662e66"
+    },
+    {
+      "framework": "nzism",
+      "version": "NZISM-3.7",
+      "date": "2024-02-01",
+      "path": "data/nzism/NZISM-V.-3.7-February-2024.csv",
+      "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-V.-3.7-February-2024.csv",
+      "sha256": "2d97beb505579bffc1cbc1a8882a7192954eaa6f5dfdd6248fe03d1c3f3475b3"
+    }
+  ]
+}
