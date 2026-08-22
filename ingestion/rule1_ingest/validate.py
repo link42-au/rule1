@@ -53,7 +53,6 @@ def _database_contract(connection: sqlite3.Connection, ledger_sha: str) -> dict[
         "application_id": connection.execute("PRAGMA application_id").fetchone()[0],
         "user_version": connection.execute("PRAGMA user_version").fetchone()[0],
         "page_size": connection.execute("PRAGMA page_size").fetchone()[0],
-        "sqlite_version": connection.execute("SELECT sqlite_version()").fetchone()[0],
         "source_ledger_sha256": ledger_sha,
         "schema_sha256": _schema_fingerprint(connection),
         "tables": list(TABLES),

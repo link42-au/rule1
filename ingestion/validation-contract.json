@@ -79,7 +79,6 @@
   },
   "schema_sha256": "4553b9115d826aebb646bc8fcef05328f01fdbc09eada31433cf50a8da40c073",
   "source_ledger_sha256": "f19ae2d4da980784cf678c42ac70d8a94394044b6de995a3884460429e7e44d5",
-  "sqlite_version": "3.50.4",
   "tables": [
     "build_counts",
     "build_metadata",

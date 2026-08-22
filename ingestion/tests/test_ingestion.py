@@ -9,7 +9,7 @@ from pathlib import Path
 
 from rule1_ingest.build import build_database
 from rule1_ingest.parsers import _parse_ce, build_all_histories
-from rule1_ingest.validate import validate_database
+from rule1_ingest.validate import validate_database, write_contract
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -91,8 +91,17 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(connection.execute("PRAGMA application_id").fetchone()[0], 1_381_321_777)
             self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 1)
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchall(), [("ok",)])
+            self.assertEqual(
+                dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
+                sqlite3.sqlite_version,
+            )
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 75)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 77)
+        with tempfile.TemporaryDirectory() as directory:
+            generated_contract = Path(directory) / "validation-contract.json"
+            write_contract(ROOT, database, generated_contract)
+            contract = json.loads(generated_contract.read_text(encoding="utf-8"))
+            self.assertNotIn("sqlite_version", contract)
 
 
 if __name__ == "__main__":
