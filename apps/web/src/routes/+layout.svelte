@@ -22,6 +22,8 @@
   function searchControls(query: string): void {
     const params = page.url.pathname === appPath("/explorer/") ? new URLSearchParams(page.url.searchParams) : new URLSearchParams();
     params.delete("search");
+    params.delete("id");
+    params.delete("tab");
     if (query) params.set("search", query);
     goto(`${appPath("/explorer/")}${params.size > 0 ? `?${params}` : ""}`);
   }
