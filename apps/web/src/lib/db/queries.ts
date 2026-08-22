@@ -341,7 +341,9 @@ async function control(executor: QueryExecutor, params: ControlParams): Promise<
       WHERE h.framework = ? AND h.control_id = ? ORDER BY v.ordinal DESC`,
       [framework, id],
     ),
-    e8Mappings(executor, { framework, id, catalogVersion: text(latestRow.catalog_version) }),
+    framework === "ism"
+      ? e8Mappings(executor, { framework, id, catalogVersion: text(latestRow.catalog_version) })
+      : Promise.resolve([]),
   ]);
   const latest = decodeRevision(latestRow, true);
   latest.e8_strategies = mappings;

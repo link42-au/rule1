@@ -154,7 +154,7 @@
   }
 
   async function loadMappings(requestFramework: ExplorerUrlState["framework"], id: string, version: string): Promise<void> {
-    if (!client) return;
+    if (!client || requestFramework !== "ism") return;
     const request = mappingRequests.begin();
     mappingStatus = "loading";
     try {
@@ -306,7 +306,7 @@
       if (!detailRequests.isCurrent(request) || selectedId !== normalized || framework !== requestFramework) return;
       detail = result;
       detailStatus = result ? "ready" : "empty";
-      const retainedMapping = result
+      const retainedMapping = requestFramework === "ism" && result
         ? [result.latest, ...result.history].find(
             (revision) => (revision.e8_levels?.length ?? 0) > 0 && revision.catalog_version,
           )
@@ -627,7 +627,7 @@
             {#each detail.latest.applicability ?? [] as value}
               <span class="classification-chip" data-classification={value}>{applicabilityLabels[value] ?? value}</span>
             {/each}
-            {#if (detail.latest.e8_levels?.length ?? 0) > 0}
+            {#if isISM && (detail.latest.e8_levels?.length ?? 0) > 0}
               <span class="tag-break" aria-hidden="true"></span>
               <span class="tag tag-neutral">Essential 8</span>
               {#each detail.latest.e8_levels ?? [] as value}<span class="tag tag-e8">{value}</span>{/each}
@@ -674,13 +674,15 @@
                 <p>{detail.section_overview}</p>
               </section>
             {/if}
-            <MappingPanel
-              levels={mappingLevels}
-              {mappings}
-              version={mappingVersion}
-              currentVersion={detail.latest.catalog_version ?? null}
-              status={mappingStatus}
-            />
+            {#if isISM}
+              <MappingPanel
+                levels={mappingLevels}
+                {mappings}
+                version={mappingVersion}
+                currentVersion={detail.latest.catalog_version ?? null}
+                status={mappingStatus}
+              />
+            {/if}
             {#if detail.latest.change_type && detail.latest.change_type !== "unchanged"}
               <section class="latest-change-section">
                 <h2>Latest change</h2>
@@ -692,11 +694,13 @@
             {/if}
             <section class="overview-stats" aria-label="Control stats">
               <h2>Control stats</h2>
-              <div class="stats-grid">
+              <div class="stats-grid" class:three-stats={!isISM}>
                 <div class="stat"><strong>{detail.history.length}</strong><span>Versions</span></div>
                 <div class="stat change-stat"><strong>{changeCount}</strong><span>Changes</span></div>
                 <div class="stat"><strong>{graphStatus === "loading" ? "…" : relatedCount}</strong><span>Related</span></div>
-                <div class="stat e8-stat"><strong>{(detail.latest.e8_levels?.length ?? 0) > 0 ? "E8" : "—"}</strong><span>Essential 8</span></div>
+                {#if isISM}
+                  <div class="stat e8-stat"><strong>{(detail.latest.e8_levels?.length ?? 0) > 0 ? "E8" : "—"}</strong><span>Essential 8</span></div>
+                {/if}
               </div>
             </section>
             <div class="control-exports" aria-label="Export control">
@@ -1275,6 +1279,10 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
+  }
+
+  .stats-grid.three-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .stat {
