@@ -113,6 +113,13 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).not.toContain("AI Summary");
   });
 
+  it("passes catalogue identity into the structured changelog presentation", () => {
+    expect(explorerSource).toContain("frameworkLabel={frameworkLabel(framework)}");
+    expect(historySource).toContain("buildHistoryEntries(history)");
+    expect(historySource).toContain("removed from the {frameworkLabel} catalogue");
+    expect(historySource).not.toContain("{@html");
+  });
+
   it("restores relationship tabs from deep links without pulling unrelated features into scope", () => {
     expect(explorerSource).toContain('candidate === "changelog" || candidate === "context"');
     expect(explorerSource).toContain('url.searchParams.set("tab", activeTab)');

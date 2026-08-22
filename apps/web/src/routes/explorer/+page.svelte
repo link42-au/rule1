@@ -710,7 +710,7 @@
               <button type="button" onclick={() => downloadControl("md")}>Markdown</button>
             </div>
           {:else if activeTab === "changelog"}
-            <HistoryPanel history={controlHistory} status={historyStatus} />
+            <HistoryPanel history={controlHistory} status={historyStatus} frameworkLabel={frameworkLabel(framework)} />
           {:else}
             <ContextPanel {graph} status={graphStatus} onSelect={(id) => void selectControl(id)} />
           {/if}
