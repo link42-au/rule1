@@ -1,11 +1,14 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { afterNavigate } from "$app/navigation";
-  import type { Control, ControlDetail, Framework, Group } from "@rule1/shared";
+  import type { Control, ControlDetail, Framework, GraphData, Group, Revision } from "@rule1/shared";
   import { onMount } from "svelte";
-  import type { Rule1DataClient } from "$lib/db/contracts";
+  import type { E8Mapping, Rule1DataClient } from "$lib/db/contracts";
   import { openRule1DataClient } from "$lib/db/rpc";
   import ControlTree from "$lib/explorer/ControlTree.svelte";
+  import ContextPanel from "$lib/explorer/ContextPanel.svelte";
+  import HistoryPanel from "$lib/explorer/HistoryPanel.svelte";
+  import MappingPanel from "$lib/explorer/MappingPanel.svelte";
   import {
     APPLICABILITY,
     LatestRequest,
@@ -19,6 +22,8 @@
   } from "$lib/explorer/state";
 
   type CatalogueStatus = "loading" | "ready" | "error";
+  type DetailTab = "overview" | "changelog" | "context";
+  type RelatedStatus = "idle" | "loading" | "ready" | "error";
 
   let status = $state<CatalogueStatus>("loading");
   let errorMessage = $state("");
@@ -32,10 +37,22 @@
   let selectedId = $state<string | null>(null);
   let detail = $state<ControlDetail | null>(null);
   let detailStatus = $state<"idle" | "loading" | "ready" | "empty" | "error">("idle");
+  let activeTab = $state<DetailTab>("overview");
+  let controlHistory = $state<Revision[]>([]);
+  let historyStatus = $state<RelatedStatus>("idle");
+  let graph = $state<GraphData | null>(null);
+  let graphStatus = $state<RelatedStatus>("idle");
+  let mappings = $state<E8Mapping[]>([]);
+  let mappingLevels = $state<string[]>([]);
+  let mappingVersion = $state<string | null>(null);
+  let mappingStatus = $state<RelatedStatus>("idle");
   let client: Rule1DataClient | null = null;
 
   const listRequests = new LatestRequest();
   const detailRequests = new LatestRequest();
+  const historyRequests = new LatestRequest();
+  const graphRequests = new LatestRequest();
+  const mappingRequests = new LatestRequest();
   let filtered = $derived(filterControls(controls, filter, applicability, search));
   let bySection = $derived(controlsBySection(filtered));
   let isISM = $derived(framework === "ism");
@@ -47,14 +64,97 @@
   }
 
   function syncUrl(): void {
-    history.replaceState(null, "", writeExplorerUrl(new URL(window.location.href), currentUrlState()));
+    const url = writeExplorerUrl(new URL(window.location.href), currentUrlState());
+    if (activeTab === "overview") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", activeTab);
+    history.replaceState(null, "", url);
   }
 
-  function clearSelection(): void {
+  function resetRelatedData(): void {
+    historyRequests.cancel();
+    graphRequests.cancel();
+    mappingRequests.cancel();
+    controlHistory = [];
+    graph = null;
+    mappings = [];
+    mappingLevels = [];
+    mappingVersion = null;
+    historyStatus = "idle";
+    graphStatus = "idle";
+    mappingStatus = "idle";
+  }
+
+  function clearSelection(resetTab = true): void {
     detailRequests.cancel();
+    resetRelatedData();
     selectedId = null;
     detail = null;
     detailStatus = "idle";
+    if (resetTab) activeTab = "overview";
+  }
+
+  function tabFromUrl(url: URL): DetailTab {
+    const candidate = url.searchParams.get("tab");
+    return candidate === "changelog" || candidate === "context" ? candidate : "overview";
+  }
+
+  async function loadMappings(requestFramework: ExplorerUrlState["framework"], id: string, version: string): Promise<void> {
+    if (!client) return;
+    const request = mappingRequests.begin();
+    mappingStatus = "loading";
+    try {
+      const result = await client.e8Mappings({ framework: requestFramework, id, catalogVersion: version });
+      if (!mappingRequests.isCurrent(request) || selectedId !== id || framework !== requestFramework) return;
+      mappings = result;
+      mappingStatus = "ready";
+    } catch {
+      if (mappingRequests.isCurrent(request) && selectedId === id && framework === requestFramework) {
+        mappingStatus = "error";
+      }
+    }
+  }
+
+  async function loadHistory(): Promise<void> {
+    if (!client || !selectedId || historyStatus === "loading" || historyStatus === "ready") return;
+    const id = selectedId;
+    const requestFramework = framework;
+    const request = historyRequests.begin();
+    historyStatus = "loading";
+    try {
+      const result = await client.controlHistory({ framework: requestFramework, id });
+      if (!historyRequests.isCurrent(request) || selectedId !== id || framework !== requestFramework) return;
+      controlHistory = result;
+      historyStatus = "ready";
+    } catch {
+      if (historyRequests.isCurrent(request) && selectedId === id && framework === requestFramework) {
+        historyStatus = "error";
+      }
+    }
+  }
+
+  async function loadGraph(): Promise<void> {
+    if (!client || !selectedId || graphStatus === "loading" || graphStatus === "ready") return;
+    const id = selectedId;
+    const requestFramework = framework;
+    const request = graphRequests.begin();
+    graphStatus = "loading";
+    try {
+      const result = await client.graph({ framework: requestFramework, id });
+      if (!graphRequests.isCurrent(request) || selectedId !== id || framework !== requestFramework) return;
+      graph = result;
+      graphStatus = "ready";
+    } catch {
+      if (graphRequests.isCurrent(request) && selectedId === id && framework === requestFramework) {
+        graphStatus = "error";
+      }
+    }
+  }
+
+  function switchTab(tab: DetailTab): void {
+    activeTab = tab;
+    syncUrl();
+    if (tab === "changelog") void loadHistory();
+    if (tab === "context") void loadGraph();
   }
 
   function normalizeControlId(value: string): string | null {
@@ -81,6 +181,8 @@
     selectedId = normalized;
     detail = null;
     detailStatus = "loading";
+    resetRelatedData();
+    if (updateUrl) activeTab = "overview";
     if (updateUrl) syncUrl();
     const request = detailRequests.begin();
     const requestFramework = framework;
@@ -90,6 +192,20 @@
       if (!detailRequests.isCurrent(request) || selectedId !== normalized || framework !== requestFramework) return;
       detail = result;
       detailStatus = result ? "ready" : "empty";
+      const retainedMapping = result
+        ? [result.latest, ...result.history].find(
+            (revision) => (revision.e8_levels?.length ?? 0) > 0 && revision.catalog_version,
+          )
+        : undefined;
+      if (retainedMapping?.catalog_version) {
+        mappingLevels = retainedMapping.e8_levels ?? [];
+        mappingVersion = retainedMapping.catalog_version;
+        void loadMappings(requestFramework, normalized, retainedMapping.catalog_version);
+      } else {
+        mappingStatus = "ready";
+      }
+      if (activeTab === "changelog") void loadHistory();
+      if (activeTab === "context") void loadGraph();
     } catch {
       if (detailRequests.isCurrent(request) && selectedId === normalized && framework === requestFramework) {
         detail = null;
@@ -104,7 +220,7 @@
     framework = nextFramework;
     controls = [];
     groups = [];
-    clearSelection();
+    clearSelection(false);
     status = "loading";
     try {
       const [controlResult, groupResult] = await Promise.all([
@@ -155,6 +271,7 @@
   async function applyNavigatedUrl(url: URL): Promise<void> {
     if (!client || frameworks.length === 0) return;
     const next = readExplorerUrl(url, frameworks.map((item) => item.id));
+    activeTab = tabFromUrl(url);
     filter = next.filter;
     applicability = next.applicability;
     search = next.search;
@@ -188,6 +305,7 @@
         frameworks = await client.frameworks();
         if (!mounted) return;
         const urlState = readExplorerUrl(new URL(window.location.href), frameworks.map((item) => item.id));
+        activeTab = tabFromUrl(new URL(window.location.href));
         framework = urlState.framework;
         filter = urlState.filter;
         applicability = urlState.applicability;
@@ -207,6 +325,9 @@
       mounted = false;
       listRequests.cancel();
       detailRequests.cancel();
+      historyRequests.cancel();
+      graphRequests.cancel();
+      mappingRequests.cancel();
       client = null;
       if (closeClient) void closeClient();
     };
@@ -347,18 +468,49 @@
           {#each detail.latest.applicability ?? [] as value}<span class="tag">{value}</span>{/each}
           {#each detail.latest.e8_levels ?? [] as value}<span class="tag tag-e8">{value}</span>{/each}
         </div>
-        <section class="description-card">
-          <div class="section-label">
-            <span>Description</span><span>{detail.latest.catalog_version ?? "Latest"}</span>
-          </div>
-          <p>{detail.latest.statement ?? "No description is available for this control."}</p>
-        </section>
-        {#if detail.section_overview}
-          <section class="overview-card">
-            <h2>Section overview</h2>
-            <p>{detail.section_overview}</p>
-          </section>
-        {/if}
+        <div class="tabs" role="tablist" aria-label="Control detail views">
+          {#each [
+            { value: "overview", label: "Overview" },
+            { value: "changelog", label: "Changelog" },
+            { value: "context", label: "Context" },
+          ] as tab}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.value}
+              class:active={activeTab === tab.value}
+              onclick={() => switchTab(tab.value as DetailTab)}
+            >{tab.label}</button>
+          {/each}
+        </div>
+
+        <div class="tab-panel" role="tabpanel">
+          {#if activeTab === "overview"}
+            <section class="description-card">
+              <div class="section-label">
+                <span>Description</span><span>{detail.latest.catalog_version ?? "Latest"}</span>
+              </div>
+              <p>{detail.latest.statement ?? "No description is available for this control."}</p>
+            </section>
+            {#if detail.section_overview}
+              <section class="overview-card">
+                <h2>Section overview</h2>
+                <p>{detail.section_overview}</p>
+              </section>
+            {/if}
+            <MappingPanel
+              levels={mappingLevels}
+              {mappings}
+              version={mappingVersion}
+              currentVersion={detail.latest.catalog_version ?? null}
+              status={mappingStatus}
+            />
+          {:else if activeTab === "changelog"}
+            <HistoryPanel history={controlHistory} status={historyStatus} />
+          {:else}
+            <ContextPanel {graph} status={graphStatus} onSelect={(id) => void selectControl(id)} />
+          {/if}
+        </div>
       </article>
     {:else}
       <div class="detail-state">
@@ -633,6 +785,46 @@
     margin-top: 15px;
   }
 
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-top: 22px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tabs button {
+    position: relative;
+    padding: 9px 13px;
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 550;
+  }
+
+  .tabs button:hover {
+    color: var(--text);
+  }
+
+  .tabs button.active {
+    color: var(--accent);
+  }
+
+  .tabs button.active::after {
+    position: absolute;
+    right: 8px;
+    bottom: -1px;
+    left: 8px;
+    height: 2px;
+    background: var(--accent);
+    content: "";
+  }
+
+  .tab-panel {
+    padding-top: 20px;
+  }
+
   .tag-change {
     border-color: var(--amber-border);
     background: var(--amber-bg);
@@ -646,7 +838,10 @@
     color: var(--purple);
   }
 
-  .description-card,
+  .description-card {
+    margin-top: 0;
+  }
+
   .overview-card {
     margin-top: 24px;
   }
