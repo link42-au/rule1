@@ -108,4 +108,36 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).not.toContain("login2");
     expect(explorerSource).not.toContain("community");
   });
+
+  it("restores the familiar control header, tags, tabs, and description presentation", () => {
+    expect(explorerSource).toContain('class="control-header"');
+    expect(explorerSource).toContain('class="breadcrumb"');
+    expect(explorerSource).toContain("groupAncestors(groups, sectionId)");
+    expect(explorerSource).toContain('detail.title.startsWith("Control: ")');
+    expect(explorerSource).toContain("detail.latest.statement ?? detail.display_id");
+    expect(explorerSource).toContain('class="classification-chip"');
+    expect(explorerSource).toContain('class="tag tag-neutral">Essential 8');
+    expect(explorerSource).toContain('class="description-card"');
+    expect(explorerSource).toContain("Overview");
+    expect(explorerSource).toContain("Changelog");
+    expect(explorerSource).toContain("Context");
+  });
+
+  it("keeps restored detail actions and stats independent of backend services", () => {
+    expect(explorerSource).toContain("mailto:icd@wan0.net");
+    expect(explorerSource).toContain('class="overview-stats"');
+    expect(explorerSource).toContain("detail.history.length");
+    expect(explorerSource).toContain('revision.change_type === "modified"');
+    expect(explorerSource).toContain("relatedCount");
+    expect(explorerSource).toContain("Essential 8");
+    expect(explorerSource).toContain("void loadGraph()");
+    expect(explorerSource).not.toMatch(/apiFetch|fetchFrameworks|CommunityPanel|controlVotes/);
+  });
+
+  it("shows the compact old-style latest change card from retained catalogue data", () => {
+    expect(explorerSource).toContain('class="latest-change-section"');
+    expect(explorerSource).toContain("Latest change");
+    expect(explorerSource).toContain("data-change={detail.latest.change_type}");
+    expect(explorerSource).toContain('detail.latest.catalog_version ?? "Latest catalogue"');
+  });
 });

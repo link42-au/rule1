@@ -7,6 +7,7 @@
   import "@link42/ui/patterns.css";
   import "@link42/ui/components.css";
   import { onMount } from "svelte";
+  import DatabaseLoadingSplash from "$lib/DatabaseLoadingSplash.svelte";
   import "../brand.css";
 
   let { children } = $props();
@@ -51,6 +52,7 @@
 
 <Footer appName="rule1" excludeApps={["rule1", "login2", "threat10", "patch8", "peer6"]} />
 <Toast />
+<DatabaseLoadingSplash />
 
 <style>
   .skip-link {

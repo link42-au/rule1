@@ -7,6 +7,7 @@ import {
   initializeRule1Database,
   parseArtifactManifest,
   verifyDatabaseBytes,
+  type DatabaseLoadProgress,
 } from "./runtime";
 
 const SHA = "11".repeat(32);
@@ -63,6 +64,8 @@ const response = (body: unknown) =>
     status: 200,
     json: vi.fn(async () => body),
     arrayBuffer: vi.fn(async () => body),
+    body: null,
+    headers: new Headers(),
   }) as unknown as Response;
 
 describe("browser SQLite runtime", () => {
@@ -118,14 +121,21 @@ describe("browser SQLite runtime", () => {
     const { sqlite } = sqliteMock(async () => pool);
     const fetchMock = vi.fn(async () => response(manifest));
 
-    const runtime = await initializeRule1Database(sqlite, urls, {
-      fetch: fetchMock as unknown as typeof fetch,
-      subtle: { digest: vi.fn() } as unknown as SubtleCrypto,
-    });
+    const onProgress = vi.fn();
+    const runtime = await initializeRule1Database(
+      sqlite,
+      urls,
+      {
+        fetch: fetchMock as unknown as typeof fetch,
+        subtle: { digest: vi.fn() } as unknown as SubtleCrypto,
+      },
+      onProgress,
+    );
 
     expect(runtime.storage).toBe("opfs");
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(pool.importDb).not.toHaveBeenCalled();
+    expect(onProgress).not.toHaveBeenCalled();
     await expect(runtime.executor.all("select 1")).resolves.toEqual([{ value: "ok" }]);
   });
 
@@ -146,5 +156,64 @@ describe("browser SQLite runtime", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(deserialize).toHaveBeenCalledWith(7, "main", 99, 3, 3, 5);
     runtime.close();
+  });
+
+  it("reports streamed download bytes, verification, and opening without a timer", async () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(bytes.slice(0, 2));
+        controller.enqueue(bytes.slice(2));
+        controller.close();
+      },
+    });
+    const { sqlite } = sqliteMock(async () => {
+      throw new Error("OPFS unavailable");
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response(manifest))
+      .mockResolvedValueOnce(new Response(stream, { headers: { "content-length": "3" } }));
+    const progress: DatabaseLoadProgress[] = [];
+
+    await initializeRule1Database(
+      sqlite,
+      urls,
+      {
+        fetch: fetchMock as unknown as typeof fetch,
+        subtle: { digest: vi.fn(async () => digest(SHA)) } as unknown as SubtleCrypto,
+      },
+      (event) => progress.push(event),
+    );
+
+    expect(progress).toEqual([
+      { stage: "downloading", receivedBytes: 0, totalBytes: 3 },
+      { stage: "downloading", receivedBytes: 2, totalBytes: 3 },
+      { stage: "downloading", receivedBytes: 3, totalBytes: 3 },
+      { stage: "verifying" },
+      { stage: "opening" },
+    ]);
+  });
+
+  it("reports an unknown total when Content-Length is absent", async () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    const { sqlite } = sqliteMock(async () => {
+      throw new Error("OPFS unavailable");
+    });
+    const fetchMock = vi.fn().mockResolvedValueOnce(response(manifest)).mockResolvedValueOnce(new Response(bytes));
+    const progress: DatabaseLoadProgress[] = [];
+
+    await initializeRule1Database(
+      sqlite,
+      urls,
+      {
+        fetch: fetchMock as unknown as typeof fetch,
+        subtle: { digest: vi.fn(async () => digest(SHA)) } as unknown as SubtleCrypto,
+      },
+      (event) => progress.push(event),
+    );
+
+    expect(progress[0]).toEqual({ stage: "downloading", receivedBytes: 0, totalBytes: null });
+    expect(progress).toContainEqual({ stage: "downloading", receivedBytes: 3, totalBytes: null });
   });
 });

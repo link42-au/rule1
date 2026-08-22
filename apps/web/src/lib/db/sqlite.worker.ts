@@ -1,6 +1,6 @@
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { dispatchRule1Query } from "./queries";
-import type { WorkerRequest, WorkerResponse } from "./rpc";
+import type { WorkerMessage, WorkerRequest, WorkerResponse } from "./rpc";
 import { assertSameOriginAssets, initializeRule1Database, type Rule1DatabaseRuntime } from "./runtime";
 
 type SqliteModule = { default: () => Promise<Sqlite3Static> };
@@ -8,6 +8,7 @@ type SqliteModule = { default: () => Promise<Sqlite3Static> };
 let runtime: Rule1DatabaseRuntime | undefined;
 
 const respond = (response: WorkerResponse): void => self.postMessage(response);
+const reportProgress = (response: WorkerMessage): void => self.postMessage(response);
 
 const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : "Unknown database error.");
 
@@ -23,7 +24,9 @@ const initialize = async (request: Extract<WorkerRequest, { type: "initialize" }
   sqliteGlobal.sqlite3ApiConfig = { disable: { vfs: { opfs: true, "opfs-wl": true } } };
   const sqliteModule = (await import(/* @vite-ignore */ request.assets.moduleUrl)) as SqliteModule;
   const sqlite3 = await sqliteModule.default();
-  runtime = await initializeRule1Database(sqlite3, request.assets);
+  runtime = await initializeRule1Database(sqlite3, request.assets, undefined, (progress) =>
+    reportProgress({ id: request.id, type: "progress", progress }),
+  );
   return { storage: runtime.storage, sqliteVersion: runtime.sqliteVersion };
 };
 

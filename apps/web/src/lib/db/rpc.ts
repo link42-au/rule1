@@ -1,5 +1,6 @@
-import type { RuntimeAssetUrls } from "./runtime";
+import type { DatabaseLoadProgress, RuntimeAssetUrls } from "./runtime";
 import { buildRuntimeAssetUrls } from "./runtime";
+import { databaseLoading } from "./loading";
 import type {
   CompareParams,
   ControlParams,
@@ -23,6 +24,8 @@ export type WorkerRequest =
   | { id: number; type: "close" };
 
 export type WorkerResponse = { id: number; ok: true; result: unknown } | { id: number; ok: false; error: string };
+export type WorkerProgressResponse = { id: number; type: "progress"; progress: DatabaseLoadProgress };
+export type WorkerMessage = WorkerResponse | WorkerProgressResponse;
 
 type PendingRequest = {
   resolve: (value: unknown) => void;
@@ -39,6 +42,7 @@ export class Rule1WorkerRpc {
   readonly #worker: Worker;
   readonly #pending = new Map<number, PendingRequest>();
   #nextId = 1;
+  #reportedProgress = false;
 
   constructor(worker: Worker) {
     this.#worker = worker;
@@ -66,6 +70,7 @@ export class Rule1WorkerRpc {
     this.#worker.removeEventListener("message", this.#handleMessage);
     this.#worker.removeEventListener("error", this.#handleWorkerError);
     this.#worker.terminate();
+    this.#finishProgress();
   }
 
   #request(request: RequestWithoutId): Promise<unknown> {
@@ -76,15 +81,23 @@ export class Rule1WorkerRpc {
     });
   }
 
-  #handleMessage = (event: MessageEvent<WorkerResponse>): void => {
+  #handleMessage = (event: MessageEvent<WorkerMessage>): void => {
+    if ("type" in event.data) {
+      this.#reportedProgress = true;
+      databaseLoading.report(event.data.progress);
+      return;
+    }
     const pending = this.#pending.get(event.data.id);
     if (!pending) return;
     this.#pending.delete(event.data.id);
-    if (event.data.ok) pending.resolve(event.data.result);
-    else if ("error" in event.data) {
+    if (event.data.ok) {
+      pending.resolve(event.data.result);
+      this.#finishProgress();
+    } else if ("error" in event.data) {
       const error = new Error(event.data.error);
       console.error("Rule1 database worker request failed:", error);
       pending.reject(error);
+      this.#finishProgress();
     }
   };
 
@@ -93,6 +106,13 @@ export class Rule1WorkerRpc {
     console.error("Rule1 database worker crashed:", error);
     for (const pending of this.#pending.values()) pending.reject(error);
     this.#pending.clear();
+    this.#finishProgress();
+  };
+
+  #finishProgress = (): void => {
+    if (!this.#reportedProgress) return;
+    databaseLoading.finish();
+    this.#reportedProgress = false;
   };
 }
 

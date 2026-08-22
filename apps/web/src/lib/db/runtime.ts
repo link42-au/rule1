@@ -39,6 +39,11 @@ export interface Rule1DatabaseRuntime {
   close: () => void;
 }
 
+export type DatabaseLoadProgress =
+  | { stage: "downloading"; receivedBytes: number; totalBytes: number | null }
+  | { stage: "verifying" }
+  | { stage: "opening" };
+
 export type RuntimeDependencies = {
   fetch: typeof fetch;
   subtle: SubtleCrypto;
@@ -121,12 +126,41 @@ const fetchDatabase = async (
   url: string,
   manifest: DatabaseArtifactManifest,
   dependencies: RuntimeDependencies,
+  onProgress: (progress: DatabaseLoadProgress) => void,
 ): Promise<ArrayBuffer> => {
   const response = await dependencies.fetch(url, { credentials: "same-origin" });
   if (!response.ok) {
     throw new Error(`Unable to load the Rule1 database (${response.status}).`);
   }
-  const bytes = await response.arrayBuffer();
+
+  const contentLength = response.headers.get("content-length");
+  const parsedContentLength = contentLength === null ? Number.NaN : Number(contentLength);
+  const totalBytes = Number.isSafeInteger(parsedContentLength) && parsedContentLength > 0 ? parsedContentLength : null;
+  let receivedBytes = 0;
+  onProgress({ stage: "downloading", receivedBytes, totalBytes });
+
+  let bytes: ArrayBuffer;
+  if (response.body) {
+    const reader = response.body.getReader();
+    const destination = new Uint8Array(manifest.database.size_bytes);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (receivedBytes + value.byteLength > destination.byteLength) {
+        throw new Error("The downloaded Rule1 database size does not match its manifest.");
+      }
+      destination.set(value, receivedBytes);
+      receivedBytes += value.byteLength;
+      onProgress({ stage: "downloading", receivedBytes, totalBytes });
+    }
+    bytes = destination.buffer.slice(0, receivedBytes);
+  } else {
+    bytes = await response.arrayBuffer();
+    receivedBytes = bytes.byteLength;
+    onProgress({ stage: "downloading", receivedBytes, totalBytes });
+  }
+
+  onProgress({ stage: "verifying" });
   await verifyDatabaseBytes(bytes, manifest, dependencies.subtle);
   return bytes;
 };
@@ -139,6 +173,7 @@ const openCachedDatabase = async (
   sqlite3: Sqlite3Static,
   manifest: DatabaseArtifactManifest,
   getBytes: () => Promise<ArrayBuffer>,
+  onProgress: (progress: DatabaseLoadProgress) => void,
 ): Promise<Database> => {
   const pool = await sqlite3.installOpfsSAHPoolVfs({
     name: "rule1-opfs-sahpool",
@@ -153,7 +188,9 @@ const openCachedDatabase = async (
     }
   }
   if (!pool.getFileNames().includes(filename)) {
-    pool.importDb(filename, await getBytes());
+    const bytes = await getBytes();
+    onProgress({ stage: "opening" });
+    pool.importDb(filename, bytes);
   }
 
   return new sqlite3.oo1.DB(filename, "r", pool.vfsName);
@@ -178,21 +215,24 @@ export const initializeRule1Database = async (
   sqlite3: Sqlite3Static,
   urls: RuntimeAssetUrls,
   dependencies: RuntimeDependencies = createRuntimeDependencies(globalThis),
+  onProgress: (progress: DatabaseLoadProgress) => void = () => undefined,
 ): Promise<Rule1DatabaseRuntime> => {
   const manifest = await fetchManifest(urls.manifestUrl, dependencies.fetch);
   let databaseBytes: Promise<ArrayBuffer> | undefined;
   const getBytes = (): Promise<ArrayBuffer> => {
-    databaseBytes ??= fetchDatabase(urls.databaseUrl, manifest, dependencies);
+    databaseBytes ??= fetchDatabase(urls.databaseUrl, manifest, dependencies, onProgress);
     return databaseBytes;
   };
 
   let db: Database;
   let storage: "opfs" | "memory";
   try {
-    db = await openCachedDatabase(sqlite3, manifest, getBytes);
+    db = await openCachedDatabase(sqlite3, manifest, getBytes, onProgress);
     storage = "opfs";
   } catch {
-    db = openMemoryDatabase(sqlite3, await getBytes());
+    const bytes = await getBytes();
+    onProgress({ stage: "opening" });
+    db = openMemoryDatabase(sqlite3, bytes);
     storage = "memory";
   }
 
