@@ -4,11 +4,11 @@ Date: 22 August 2026
 
 Reviewed baseline: `link42-rule1` at `aaa140cdd753d6576f0a2bf3292b31518b88fbcc`
 
-Standalone candidate: private repository; publication workflow prepared, GitHub Pages activation pending
+Standalone release: public repository; live at [`wan0.net/rule1`](https://wan0.net/rule1/)
 
 ## Status and scope
 
-The standalone application is source-complete and produces a static `/rule1/` build. Publication was approved on 22 August 2026 and Feature 13 is in progress. The existing SQLite workflow now has a guarded Pages publication path for `main` pushes and manually dispatched runs; pull requests still build and test without uploading or deploying a Pages artifact. The repository remains private and GitHub Pages has not yet been activated, so this document does not claim a live deployment.
+The standalone application is source-complete and live on GitHub Pages. Publication was approved and completed on 22 August 2026: the repository is public, Pages is enabled, and [workflow run 32555995535](https://github.com/wan0net/rule1/actions/runs/32555995535) succeeded. Pull requests still build and test without uploading or deploying a Pages artifact; only eligible runs from `main` can publish.
 
 Parity is assessed against the reviewed old desktop product and the route/capability dispositions in [REVIEW.md](REVIEW.md). Mobile-specific and accessibility work were explicitly excluded from this port.
 
@@ -78,9 +78,9 @@ These are provenance/data differences, not UI defects. Framework decisions shoul
 - Web tests: 11 files and 74 tests passed.
 - Database validation: provenance, checksums, expected schema, 77 catalogue versions, 79 source files, recorded row counts, and `PRAGMA integrity_check` passed.
 - Static production build: 11 routes plus `404.html` generated beneath `/rule1/`; no rendered root-path escape or retired operated-host link was found.
-- Workflow audit: `.github/workflows/build-sqlite.yml` remains the only workflow. Its Pages artifact and deployment steps are restricted to `main` pushes and manually dispatched runs; the separate deployment job alone receives `pages: write` and `id-token: write` permissions.
+- Workflow audit: `.github/workflows/build-sqlite.yml` remains the only workflow. Its Pages artifact and deployment steps are restricted to `main` pushes and manually dispatched runs from `main`; the separate deployment job alone receives `pages: write` and `id-token: write` permissions.
 
-Canonical local database SHA-256:
+The canonical macOS local build SHA-256 is:
 
 ```text
 d122eb5cb62260173d9a78826b7b746fde11147b2f49cedbeac9913f26641d9e  build/rule1.sqlite3
@@ -89,11 +89,19 @@ d122eb5cb62260173d9a78826b7b746fde11147b2f49cedbeac9913f26641d9e  apps/web/build
 
 The current catalogue heads are `CE-3.3`, `ISM-OSCAL-2026.06.18`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
 
+### Live publication verification
+
+- The GitHub Actions artifact and deployed database both have SHA-256 `b78e17b880f84db97d60f2f571366f333915fd83da19eeb31b6674f1a30f78d0`; the deployed artifact manifest has SHA-256 `347daff73e8503dbacb11b5c1ab2b5645bbf9ff74c4d6a83729b6bac0cf08d7d`.
+- This Linux CI checksum is intentionally recorded separately from the macOS local checksum `d122eb5cb62260173d9a78826b7b746fde11147b2f49cedbeac9913f26641d9e`. Determinism is verified within each build environment; no unsupported cross-platform byte-identity claim is made.
+- The live root, explorer, comparison, and artifact-manifest routes returned HTTP 200. The downloaded deployed database passed `PRAGMA integrity_check` with 77 catalogue versions, 79 source files, and 66,586 history rows.
+- The current ISM contains 1,101 controls and 49 principles. `ISM-2116` is present as a new control, and browser verification covered its detail and history views.
+- Browser comparison of March 2026 with June 2026 rendered 20 added, 122 modified, and 1,008 unchanged controls.
+
 ## Desktop visual comparison
 
-The old landing, explorer, and long comparison references remain in `docs/reference/old-*.png`; the reviewed landing port reference is `docs/reference/port-feature3-landing-light.jpg`. Production-preview checks at 1265×890 passed for landing, explorer, and comparison across light and dark themes. Post-font-removal smoke confirmed that the system fallbacks retain the reviewed shell and layout. The current OSCAL production-preview check loaded 1,101 controls, opened June control `ISM-2116`, and rendered all 166 March-to-June changes from browser-local SQLite; ingestion regressions also confirm 49 principles, `ISM-2118`, and Essential Eight maturity mappings. The current shell preserves the old Rule1 hierarchy, compact control catalogue, blue accent, theme treatment, and detail layout. Detail and table content is denser because of the reviewed functional port. Explained differences are system fallback typography, browser-local loading/empty/error notices, static-route notices, local favourites/exports, and the absence of operated-service affordances listed above.
+The old landing, explorer, and long comparison references remain in `docs/reference/old-*.png`; the reviewed landing port reference is `docs/reference/port-feature3-landing-light.jpg`. Production-preview checks at 1265×890 passed for landing, explorer, and comparison across light and dark themes. Post-font-removal smoke confirmed that the system fallbacks retain the reviewed shell and layout. The current OSCAL production-preview check loaded 1,101 controls, opened June control `ISM-2116`, and rendered the March-to-June comparison from browser-local SQLite; ingestion regressions also confirm 49 principles, `ISM-2118`, and Essential Eight maturity mappings. The current shell preserves the old Rule1 hierarchy, compact control catalogue, blue accent, theme treatment, and detail layout. Detail and table content is denser because of the reviewed functional port. Explained differences are system fallback typography, browser-local loading/empty/error notices, static-route notices, local favourites/exports, and the absence of operated-service affordances listed above.
 
-## Remaining release gates
+## Publication outcome
 
-- Publication approval has been received. Repository visibility, GitHub Pages enablement, deployment at `wan0.net/rule1`, and live site/database verification remain to complete Feature 13.
-- `rule1.link42.app` is not changed by this work.
+- Feature 13 is complete. The public GitHub Pages deployment and its database have been verified live.
+- `rule1.link42.app` was not modified and continued to return HTTP 200 during publication verification.
