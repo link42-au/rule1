@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const source = async (path: string): Promise<string> => readFile(new URL(path, import.meta.url), "utf8");
 const compare = await source("./compare/+page.svelte");
+const explorer = await source("./explorer/+page.svelte");
 const glossary = await source("./glossary/+page.svelte");
 const guide = await source("./guide/+page.svelte");
 const privacy = await source("./privacy/+page.svelte");
@@ -24,6 +25,19 @@ describe("standalone comparison route", () => {
     expect(compare).toContain("versionPairFromUrl(requestedUrl ?? new URL(window.location.href), result)");
     expect(compare).toContain("comparisonCsv(filtered)");
     expect(compare).toContain("URL.revokeObjectURL(objectUrl)");
+  });
+
+  it("keeps comparison tables horizontally scrollable and other routes vertically scrollable", () => {
+    expect(compare).toContain("overflow-x: auto");
+    expect(compare).toContain("min-width: 1120px");
+    expect(compare).not.toContain("overflow: hidden");
+    expect(explorer).not.toContain(":global(body)");
+  });
+
+  it("renders structured comparison changes without unsafe HTML", () => {
+    expect(compare).toContain("<del>{part.text}</del>");
+    expect(compare).toContain("<ins>{part.text}</ins>");
+    expect(compare).not.toContain("{@html");
   });
 });
 
