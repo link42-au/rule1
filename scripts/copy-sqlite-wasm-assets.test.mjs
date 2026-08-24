@@ -4,9 +4,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { copySqliteWasmAssets, installedPackageRoot, SQLITE_WASM_ASSETS } from "./copy-sqlite-wasm-assets.mjs";
+import {
+  copySqliteWasmAssets,
+  installedPackageRoot,
+  SQLITE_WASM_ASSETS,
+  SQLITE_WASM_LICENSE,
+  SQLITE_WASM_LICENSE_SOURCE,
+} from "./copy-sqlite-wasm-assets.mjs";
 
-test("copies only the official SQLite module and WASM bytes", () => {
+test("copies the official SQLite runtime and its Apache licence", () => {
   const directory = mkdtempSync(join(tmpdir(), "rule1-sqlite-wasm-"));
   const packageRoot = installedPackageRoot();
   const targetRoot = join(directory, "static");
@@ -18,5 +24,9 @@ test("copies only the official SQLite module and WASM bytes", () => {
   for (const asset of SQLITE_WASM_ASSETS) {
     assert.deepEqual(readFileSync(join(targetRoot, asset)), readFileSync(join(packageRoot, "dist", asset)));
   }
+  const copiedLicense = readFileSync(join(targetRoot, SQLITE_WASM_LICENSE), "utf8");
+  assert.equal(copiedLicense, readFileSync(SQLITE_WASM_LICENSE_SOURCE, "utf8"));
+  assert.match(copiedLicense, /Apache License\s+Version 2\.0, January 2004/);
+  assert.match(copiedLicense, /http:\/\/www\.apache\.org\/licenses\//);
   assert.equal(existsSync(join(targetRoot, "node.mjs")), false);
 });

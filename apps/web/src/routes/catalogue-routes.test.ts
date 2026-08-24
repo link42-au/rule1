@@ -53,6 +53,13 @@ describe("standalone information and compatibility routes", () => {
     expect(privacy).not.toContain("api.rule1.link42.app");
   });
 
+  it("states the project licence without relicensing retained framework sources", () => {
+    expect(guide).toContain("GNU Affero General Public License v3.0 or later");
+    expect(guide).toContain("https://github.com/wan0net/rule1/blob/main/LICENSE");
+    expect(guide).toContain("data/");
+    expect(guide).toContain("are not relicensed by Rule1");
+  });
+
   it("uses a base-path-aware static redirect component for legacy destinations", () => {
     expect(redirect).toContain('import { base } from "$app/paths"');
     expect(redirect).toContain("goto(href, { replaceState: true })");
