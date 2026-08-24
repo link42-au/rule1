@@ -727,10 +727,6 @@
 </div>
 
 <style>
-  :global(body) {
-    overflow: hidden;
-  }
-
   :global(main#main-content) {
     min-height: 0;
   }
