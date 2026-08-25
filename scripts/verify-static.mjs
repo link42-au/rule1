@@ -37,7 +37,17 @@ await Promise.all([
   stat(resolve(buildDirectory, "data/rule1-artifact-manifest.json")),
   stat(resolve(buildDirectory, "vendor/sqlite/index.mjs")),
   stat(resolve(buildDirectory, "vendor/sqlite/sqlite3.wasm")),
+  stat(resolve(buildDirectory, "fonts/OFL-1.1.txt")),
 ]);
+
+const builtFonts = builtFiles.filter((path) => path.endsWith(".woff2"));
+const expectedFonts = [/Geist-wght-v1\.7\.1\..+\.woff2$/, /GeistMono-wght-v1\.7\.1\..+\.woff2$/];
+if (
+  builtFonts.length !== expectedFonts.length ||
+  expectedFonts.some((pattern) => !builtFonts.some((path) => pattern.test(path)))
+) {
+  throw new Error("Static build does not contain the pinned Geist webfont assets.");
+}
 
 const index = routeDocuments[0].html;
 if (!index.includes('assets: "/rule1"')) {
@@ -64,5 +74,5 @@ if (renderedAssets.some((asset) => /fonts\.(?:googleapis|gstatic)\.com/.test(ass
 }
 
 console.log(
-  `Verified ${routeDocuments.length} static routes, fallback, local database, and SQLite assets beneath /rule1/.`,
+  `Verified ${routeDocuments.length} static routes, fallback, local fonts, database, and SQLite assets beneath /rule1/.`,
 );

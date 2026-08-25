@@ -51,10 +51,10 @@ Each state or race fix has a focused regression test in the explorer, catalogue,
 - Control export supports JSON, formula-safe CSV, and escaped Markdown. XLSX is intentionally omitted rather than adding a spreadsheet dependency solely for parity.
 - `/about`, `/api`, `/changelog`, `/licence`, and `/bypass-eligibility` are static compatibility destinations rather than server redirects.
 - AI-generated annotations and summaries are absent; the application does not fabricate them.
-- The old Google Fonts request is removed for runtime independence. Existing system sans-serif and monospace fallbacks preserve the compact desktop layout without a third-party font request.
+- Geist and Geist Mono are self-hosted from pinned, checksum-recorded official v1.7.1 WOFF2 files. The reviewed typography is restored without an external font request; system fonts remain fallbacks if local font loading fails.
 - Mobile-specific and accessibility parity were outside the approved desktop scope.
 
-The shared, local UI package still contains dormant platform URL constants in its compiled JavaScript because the reviewed platform bar and footer are retained. They are not rendered as retired Rule1/account links and are not request targets. The only production `fetch` targets are same-origin SvelteKit version metadata, the SQLite module, the database artifact manifest, and the checksummed database. The static verifier rejects external Google Fonts requests.
+The shared, local UI package still contains dormant platform URL constants in its compiled JavaScript because the reviewed platform bar and footer are retained. They are not rendered as retired Rule1/account links and are not request targets. The only production `fetch` targets are same-origin SvelteKit version metadata, the SQLite module, the database artifact manifest, and the checksummed database. The static verifier requires the local font assets and rejects external Google Fonts requests.
 
 ## Current data and retained gaps
 
@@ -99,7 +99,7 @@ The current catalogue heads are `CE-3.3`, `ISM-OSCAL-2026.06.18`, `NZISM-3.9`, `
 
 ## Desktop visual comparison
 
-The old landing, explorer, and long comparison references remain in `docs/reference/old-*.png`; the reviewed landing port reference is `docs/reference/port-feature3-landing-light.jpg`. Production-preview checks at 1265×890 passed for landing, explorer, and comparison across light and dark themes. Post-font-removal smoke confirmed that the system fallbacks retain the reviewed shell and layout. The current OSCAL production-preview check loaded 1,101 controls, opened June control `ISM-2116`, and rendered the March-to-June comparison from browser-local SQLite; ingestion regressions also confirm 49 principles, `ISM-2118`, and Essential Eight maturity mappings. The current shell preserves the old Rule1 hierarchy, compact control catalogue, blue accent, theme treatment, and detail layout. Detail and table content is denser because of the reviewed functional port. Explained differences are system fallback typography, browser-local loading/empty/error notices, static-route notices, local favourites/exports, and the absence of operated-service affordances listed above.
+The old landing, explorer, and long comparison references remain in `docs/reference/old-*.png`; the reviewed landing port reference is `docs/reference/port-feature3-landing-light.jpg`. Production-preview checks at 1265×890 passed for landing, explorer, and comparison across light and dark themes. Geist and Geist Mono are now served locally to restore the reviewed typography while preserving runtime independence. The current OSCAL production-preview check loaded 1,101 controls, opened June control `ISM-2116`, and rendered the March-to-June comparison from browser-local SQLite; ingestion regressions also confirm 49 principles, `ISM-2118`, and Essential Eight maturity mappings. The current shell preserves the old Rule1 hierarchy, compact control catalogue, blue accent, theme treatment, and detail layout. Detail and table content is denser because of the reviewed functional port. Explained differences are browser-local loading/empty/error notices, static-route notices, local favourites/exports, and the absence of operated-service affordances listed above.
 
 ## Publication outcome
 
