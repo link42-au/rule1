@@ -261,4 +261,34 @@
     text-decoration: none;
     vertical-align: 1px;
   }
+
+  @media (max-width: 720px) {
+    .ctrl-group-header {
+      min-height: 44px;
+      padding: 10px 6px;
+      font-size: 11px;
+    }
+
+    .ctrl-row {
+      width: 100%;
+      min-height: 56px;
+      margin: 2px 0;
+      padding: 10px 8px;
+    }
+
+    .favourite {
+      display: grid;
+      min-width: 36px;
+      min-height: 36px;
+      place-items: center;
+      padding: 0;
+      font-size: 15px;
+      opacity: 1;
+    }
+
+    .ctrl-row-name {
+      font-size: 13px;
+      line-height: 1.4;
+    }
+  }
 </style>

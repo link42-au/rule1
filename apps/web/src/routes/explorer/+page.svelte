@@ -90,6 +90,7 @@
   let maxFrequency = $derived(Math.max(1, ...frequency.map((point) => point.changes)));
   let expandableIds = $derived(expandableGroupIds(groups, bySection));
   let allGroupsExpanded = $derived(expandableIds.size > 0 && [...expandableIds].every((id) => openGroupIds.has(id)));
+  let mobileDetailVisible = $derived(selectedId !== null || detailStatus !== "idle");
   let detailBreadcrumb = $derived.by(() => {
     if (!detail) return [];
     const sectionId = controls.find((control) => control.id === detail?.id)?.section_id ?? detail.section_id;
@@ -164,6 +165,11 @@
     detail = null;
     detailStatus = "idle";
     if (resetTab) activeTab = "overview";
+  }
+
+  function showControlList(): void {
+    clearSelection();
+    syncUrl();
   }
 
   function updateGroupOpen(id: string, open: boolean): void {
@@ -562,7 +568,7 @@
 
 <svelte:window onpointermove={resizeSidebar} onpointerup={finishSidebarResize} onpointercancel={finishSidebarResize} />
 
-<div class="explorer" style:--sidebar-width={`${sidebarWidth}px`}>
+<div class="explorer" class:show-mobile-detail={mobileDetailVisible} style:--sidebar-width={`${sidebarWidth}px`}>
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="filter-group-label">Framework</div>
@@ -694,6 +700,9 @@
   ></div>
 
   <section class="detail-panel" aria-live="polite">
+    <div class="mobile-detail-nav">
+      <button type="button" onclick={showControlList}><span aria-hidden="true">←</span> Back to controls</button>
+    </div>
     {#if detailStatus === "loading"}
       <div class="detail-state">Loading control detail…</div>
     {:else if detailStatus === "error"}
@@ -1599,5 +1608,172 @@
   .control-exports button:hover {
     border-color: var(--border-strong);
     color: var(--text);
+  }
+
+  .mobile-detail-nav {
+    display: none;
+  }
+
+  @media (max-width: 720px) {
+    .explorer {
+      display: block;
+      height: calc(100vh - 150px);
+      height: calc(100dvh - 150px);
+      min-height: 0;
+    }
+
+    .sidebar,
+    .detail-panel {
+      width: 100%;
+      height: 100%;
+    }
+
+    .detail-panel,
+    .show-mobile-detail .sidebar {
+      display: none;
+    }
+
+    .show-mobile-detail .detail-panel {
+      display: block;
+    }
+
+    .resize-handle {
+      display: none;
+    }
+
+    .sidebar-header {
+      padding: 12px 12px 10px;
+    }
+
+    .filter-row {
+      gap: 6px;
+    }
+
+    .filter-pill,
+    .favourite-actions button,
+    .hierarchy-toggle {
+      min-height: 36px;
+    }
+
+    .filter-pill {
+      padding: 7px 11px;
+      font-size: 12px;
+    }
+
+    .favourite-actions {
+      gap: 8px;
+    }
+
+    .favourite-actions button {
+      padding: 7px 10px;
+      font-size: 11px;
+    }
+
+    .sidebar-section-row {
+      min-height: 48px;
+      padding: 7px 12px;
+    }
+
+    .hierarchy-toggle {
+      padding-inline: 8px;
+      font-size: 11px;
+    }
+
+    .control-list {
+      padding: 4px 8px 16px;
+      overscroll-behavior-y: contain;
+    }
+
+    .mobile-detail-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      min-height: 48px;
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .mobile-detail-nav button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 36px;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--bg-subtle);
+      color: var(--text-mid);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .control-header {
+      position: relative;
+      padding: 18px 16px 12px;
+    }
+
+    .control-heading {
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .control-heading h1 {
+      font-size: 19px;
+    }
+
+    .detail-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .detail-favourite,
+    .report-issue {
+      min-height: 36px;
+    }
+
+    .detail-favourite {
+      min-width: 36px;
+    }
+
+    .tabs {
+      padding: 10px 12px 0;
+      overflow-x: auto;
+    }
+
+    .tabs button {
+      min-height: 44px;
+      padding-inline: 13px;
+    }
+
+    .tab-panel {
+      padding: 18px 16px 0;
+    }
+
+    .stats-grid,
+    .stats-grid.three-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .control-exports {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .control-exports > span {
+      flex-basis: 100%;
+    }
+
+    .control-exports button {
+      min-height: 36px;
+      padding: 7px 10px;
+    }
+
+    .detail-state {
+      min-height: calc(100% - 48px);
+      padding: 32px 18px;
+    }
   }
 </style>

@@ -227,4 +227,34 @@ describe("reviewed Rule1 explorer", () => {
     expect(glossaryTextSource).toContain("title={segment.meaning}");
     expect(glossaryTextSource).not.toContain("{@html");
   });
+
+  it("uses a deliberate phone list/detail flow without changing deep-link selection", () => {
+    expect(explorerSource).toContain('mobileDetailVisible = $derived(selectedId !== null || detailStatus !== "idle")');
+    expect(explorerSource).toContain("class:show-mobile-detail={mobileDetailVisible}");
+    expect(explorerSource).toContain("function showControlList(): void");
+    expect(explorerSource).toMatch(/function showControlList\(\): void \{\s*clearSelection\(\);\s*syncUrl\(\);\s*\}/s);
+    expect(explorerSource).toContain("Back to controls");
+    expect(explorerSource).toContain("if (deepLink) await selectControl(deepLink, false)");
+  });
+
+  it("keeps the split-pane desktop and tablet layout above the phone breakpoint", () => {
+    expect(explorerSource).toContain("grid-template-columns: var(--sidebar-width, 310px) 5px minmax(0, 1fr)");
+    expect(explorerSource).toContain("@media (max-width: 720px)");
+    const phoneStyles = explorerSource.slice(explorerSource.lastIndexOf("@media (max-width: 720px)"));
+    expect(phoneStyles).toMatch(/\.explorer\s*{[^}]*display:\s*block/s);
+    expect(phoneStyles).toMatch(/\.show-mobile-detail \.sidebar\s*{[^}]*display:\s*none/s);
+    expect(phoneStyles).toMatch(/\.show-mobile-detail \.detail-panel\s*{[^}]*display:\s*block/s);
+    expect(phoneStyles).toMatch(/\.resize-handle\s*{[^}]*display:\s*none/s);
+  });
+
+  it("provides practical phone targets for filters, tree rows, favourites, tabs, and exports", () => {
+    const phoneStyles = explorerSource.slice(explorerSource.lastIndexOf("@media (max-width: 720px)"));
+    const phoneTreeStyles = treeSource.slice(treeSource.lastIndexOf("@media (max-width: 720px)"));
+    expect(phoneStyles).toMatch(/\.filter-pill,[\s\S]*min-height:\s*36px/);
+    expect(phoneStyles).toMatch(/\.tabs button\s*{[^}]*min-height:\s*44px/s);
+    expect(phoneStyles).toMatch(/\.control-exports button\s*{[^}]*min-height:\s*36px/s);
+    expect(phoneTreeStyles).toMatch(/\.ctrl-group-header\s*{[^}]*min-height:\s*44px/s);
+    expect(phoneTreeStyles).toMatch(/\.ctrl-row\s*{[^}]*min-height:\s*56px/s);
+    expect(phoneTreeStyles).toMatch(/\.favourite\s*{[^}]*min-width:\s*36px[^}]*min-height:\s*36px/s);
+  });
 });
