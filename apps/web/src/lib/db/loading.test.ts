@@ -29,6 +29,9 @@ describe("database loading splash", () => {
 
     expect(body).toMatch(/class="database-splash(?:\s|")/);
     expect(body).toContain("Opening the local catalogue");
+    expect(body).toContain('role="dialog"');
+    expect(body).toContain('aria-modal="true"');
+    expect(body).toContain('aria-label="Local catalogue opening in progress"');
   });
 
   it("does not render a cover into initial server HTML for informational routes", () => {
@@ -37,5 +40,13 @@ describe("database loading splash", () => {
     });
 
     expect(body).not.toMatch(/class="database-splash(?:\s|")/);
+  });
+
+  it("announces only loading stages and keeps measured byte copy visual", () => {
+    expect(splashSource).toContain('class="sr-only" role="status"');
+    expect(splashSource).toContain('class="progress-copy" aria-hidden="true"');
+    expect(splashSource).not.toContain('class="database-splash" aria-live');
+    expect(splashSource).toContain('aria-labelledby="database-loading-title"');
+    expect(splashSource).toContain('aria-describedby="database-loading-retention"');
   });
 });

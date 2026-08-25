@@ -169,9 +169,9 @@
   <p class="cl-sub">Select two retained catalogue versions to see what changed between them.</p>
 
   {#if frameworks.length > 1}
-    <div class="cmp-frameworks" aria-label="Security framework">
+    <div class="cmp-frameworks" role="group" aria-label="Security framework">
       {#each frameworks as item}
-        <button class="fw-pill" class:active={framework === item.id} onclick={() => void loadVersions(item.id as FrameworkId)}>{item.short_name}<span class="fw-country">{item.country}</span></button>
+        <button class="fw-pill" class:active={framework === item.id} aria-pressed={framework === item.id} onclick={() => void loadVersions(item.id as FrameworkId)}>{item.short_name}<span class="fw-country">{item.country}</span></button>
       {/each}
     </div>
   {/if}
@@ -190,8 +190,8 @@
     <div class="cmp-toolbar">
       <div class="cmp-toolbar-left">
         <input aria-label="Filter changes" placeholder="Filter by ID or context…" bind:value={query} />
-        <div class="cmp-pills" aria-label="Change type">{#each ["all", "new", "modified", "withdrawn"] as type}<button class:active={changeType === type} onclick={() => (changeType = type)}>{type}</button>{/each}</div>
-        {#if isISM}<div class="cmp-pills applicability-filter" aria-label="ISM applicability">{#each APPLICABILITY_CODES as code}<button class:active={applicability === code} onclick={() => (applicability = applicability === code ? "" : code)}>{code}</button>{/each}</div>{/if}
+        <div class="cmp-pills" role="group" aria-label="Change type">{#each ["all", "new", "modified", "withdrawn"] as type}<button class:active={changeType === type} aria-pressed={changeType === type} onclick={() => (changeType = type)}>{type}</button>{/each}</div>
+        {#if isISM}<div class="cmp-pills applicability-filter" role="group" aria-label="ISM applicability">{#each APPLICABILITY_CODES as code}<button class:active={applicability === code} aria-pressed={applicability === code} onclick={() => (applicability = applicability === code ? "" : code)}>{code}</button>{/each}</div>{/if}
       </div>
       <div class="cmp-toolbar-right"><span>{filtered.length} of {changes.length} changes</span><button class="export" onclick={downloadCsv}>↓ Download CSV</button></div>
     </div>
@@ -203,10 +203,10 @@
         <table class="cmp-table">
           <colgroup><col class="col-id" /><col class="col-change" />{#if showComplexity}<col class="col-complexity" />{/if}<col class="col-context" />{#if isISM}<col class="col-applicability" />{/if}<col class="col-description" /></colgroup>
           <thead><tr>
-            <th><button class:active={sortColumn === "display_id"} onclick={() => toggleSort("display_id")}>ID <span>{sortArrow("display_id")}</span></button></th>
-            <th><button class:active={sortColumn === "change_type"} onclick={() => toggleSort("change_type")}>Change <span>{sortArrow("change_type")}</span></button></th>
+            <th aria-sort={sortColumn === "display_id" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}><button class:active={sortColumn === "display_id"} onclick={() => toggleSort("display_id")}>ID <span aria-hidden="true">{sortArrow("display_id")}</span></button></th>
+            <th aria-sort={sortColumn === "change_type" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}><button class:active={sortColumn === "change_type"} onclick={() => toggleSort("change_type")}>Change <span aria-hidden="true">{sortArrow("change_type")}</span></button></th>
             {#if showComplexity}<th>Complexity <span class="column-help" title="Values are shown exactly as retained in the comparison data." aria-label="Complexity values are shown exactly as retained in the comparison data.">?</span></th>{/if}
-            <th><button class:active={sortColumn === "context"} onclick={() => toggleSort("context")}>Context <span>{sortArrow("context")}</span></button></th>
+            <th aria-sort={sortColumn === "context" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}><button class:active={sortColumn === "context"} onclick={() => toggleSort("context")}>Context <span aria-hidden="true">{sortArrow("context")}</span></button></th>
             {#if isISM}<th>Applicability</th>{/if}<th>Description</th>
           </tr></thead>
           <tbody>{#each filtered as item (item.row.id)}<tr>

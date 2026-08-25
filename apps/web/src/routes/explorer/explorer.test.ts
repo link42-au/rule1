@@ -177,7 +177,7 @@ describe("reviewed Rule1 explorer", () => {
   it("uses the global debounced search and opens exact, first, or no results", () => {
     expect(explorerSource).not.toContain('id="explorer-search"');
     expect(explorerSource).toContain("searchSelection(matches, search)");
-    expect(explorerSource).toContain("if (match) await selectControl(match, false)");
+    expect(explorerSource).toContain("if (match) await selectControl(match, false, false)");
     expect(explorerSource).toContain("else clearSelection()");
     expect(layoutSource).toContain("onInput: searchControls");
     expect(layoutSource).toContain("value: headerSearchValue");

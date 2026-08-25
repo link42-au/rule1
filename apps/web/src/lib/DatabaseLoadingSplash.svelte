@@ -1,12 +1,15 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { databaseLoading, formatBytes } from "./db/loading";
 
   let {
     initiallyVisible = false,
     routeKey = "",
+    onVisibilityChange,
   }: {
     initiallyVisible?: boolean;
     routeKey?: string;
+    onVisibilityChange?: (visible: boolean) => void;
   } = $props();
 
   const initialVisibility = (): boolean => initiallyVisible;
@@ -15,6 +18,7 @@
   let bootstrapVisible = $state(initialVisibility());
   let lifecycleStarted = $state(false);
   let previousRouteKey = $state(initialRouteKey());
+  let databaseCard: HTMLElement | undefined = $state();
 
   $effect(() => {
     if (routeKey !== previousRouteKey) {
@@ -31,42 +35,66 @@
   });
 
   let visible = $derived(bootstrapVisible || $databaseLoading.visible);
+  let stageAnnouncement = $derived(
+    $databaseLoading.visible && $databaseLoading.stage === "downloading"
+      ? "Downloading the local catalogue."
+      : $databaseLoading.visible && $databaseLoading.stage === "verifying"
+        ? "Verifying the local catalogue."
+        : "Opening the local catalogue.",
+  );
   const percentage = (received: number, total: number): number => Math.min(100, Math.round((received / total) * 100));
+
+  $effect(() => {
+    onVisibilityChange?.(visible);
+    if (visible) requestAnimationFrame(() => databaseCard?.focus());
+  });
+
+  onDestroy(() => onVisibilityChange?.(false));
 </script>
 
 {#if visible}
-  <div class="database-splash" aria-live="polite" aria-busy="true">
-    <section class="database-card">
-      <div class="database-mark">R1</div>
+  <div class="database-splash">
+    <div
+      bind:this={databaseCard}
+      class="database-card"
+      role="dialog"
+      aria-modal="true"
+      aria-busy="true"
+      aria-labelledby="database-loading-title"
+      aria-describedby="database-loading-retention"
+      tabindex="-1"
+    >
+      <p class="sr-only" role="status">{stageAnnouncement}</p>
+      <div class="database-mark" aria-hidden="true">R1</div>
       {#if $databaseLoading.visible && $databaseLoading.stage === "downloading"}
         <p class="eyebrow">Preparing local catalogue</p>
-        <h1>Downloading Rule1 data</h1>
+        <h1 id="database-loading-title">Downloading Rule1 data</h1>
         {#if $databaseLoading.totalBytes !== null}
-          <progress max={$databaseLoading.totalBytes} value={$databaseLoading.receivedBytes}></progress>
-          <p class="progress-copy">
+          <progress aria-label="Catalogue download progress" max={$databaseLoading.totalBytes} value={$databaseLoading.receivedBytes}></progress>
+          <p class="progress-copy" aria-hidden="true">
             {formatBytes($databaseLoading.receivedBytes)} of {formatBytes($databaseLoading.totalBytes)}
             <span>{$databaseLoading.totalBytes > 0 ? percentage($databaseLoading.receivedBytes, $databaseLoading.totalBytes) : 0}%</span>
           </p>
         {:else}
-          <progress max="1"></progress>
-          <p class="progress-copy">{formatBytes($databaseLoading.receivedBytes)} downloaded <span>Total size unavailable</span></p>
+          <progress aria-label="Catalogue download in progress" max="1"></progress>
+          <p class="progress-copy" aria-hidden="true">{formatBytes($databaseLoading.receivedBytes)} downloaded <span>Total size unavailable</span></p>
         {/if}
       {:else if $databaseLoading.visible && $databaseLoading.stage === "verifying"}
         <p class="eyebrow">Preparing local catalogue</p>
-        <h1>Verifying catalogue integrity</h1>
-        <progress max="1"></progress>
+        <h1 id="database-loading-title">Verifying catalogue integrity</h1>
+        <progress aria-label="Catalogue integrity verification in progress" max="1"></progress>
         <p class="progress-copy">Checking the downloaded snapshot before it is opened.</p>
       {:else}
         <p class="eyebrow">Almost ready</p>
-        <h1>Opening the local catalogue</h1>
-        <progress max="1"></progress>
+        <h1 id="database-loading-title">Opening the local catalogue</h1>
+        <progress aria-label="Local catalogue opening in progress" max="1"></progress>
         <p class="progress-copy">Starting SQLite inside your browser.</p>
       {/if}
-      <p class="retention-copy">
+      <p id="database-loading-retention" class="retention-copy">
         The first visit downloads about 51 MiB. When browser storage is available, Rule1 retains the checked copy locally so
         later visits normally open without downloading it again.
       </p>
-    </section>
+    </div>
   </div>
 {/if}
 

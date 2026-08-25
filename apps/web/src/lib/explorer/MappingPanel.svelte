@@ -23,9 +23,9 @@
 <section class="mapping-panel">
   <h2>{historical ? "Historical Essential Eight mapping" : "Essential Eight mapping"}</h2>
   {#if status === "loading"}
-    <p class="mapping-state">Loading retained mappings…</p>
+    <p class="mapping-state" role="status">Loading retained mappings…</p>
   {:else if status === "error"}
-    <p class="mapping-state error">Could not load mapping data for this control.</p>
+    <p class="mapping-state error" role="alert">Could not load mapping data for this control.</p>
   {:else if state === "unmapped"}
     <p class="mapping-state">No Essential Eight mapping is retained for this control.</p>
   {:else}

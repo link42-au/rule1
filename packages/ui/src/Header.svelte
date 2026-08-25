@@ -76,6 +76,7 @@ function handleMobileSearchSubmit(event: Event) {
             href={item.href}
             class="nav-link"
             class:active={activePath === item.href}
+            aria-current={activePath === item.href ? "page" : undefined}
           >
             {item.label}
             {#if item.badge !== undefined && item.badge > 0}
@@ -105,7 +106,7 @@ function handleMobileSearchSubmit(event: Event) {
         </form>
       {/if}
 
-      <button class="hamburger" onclick={toggleMobileMenu} aria-label="Toggle menu" aria-expanded={mobileMenuOpen}>
+      <button class="hamburger" onclick={toggleMobileMenu} aria-label="Toggle menu" aria-expanded={mobileMenuOpen} aria-controls="primary-mobile-navigation">
         <span class="hamburger-bar"></span>
         <span class="hamburger-bar"></span>
         <span class="hamburger-bar"></span>
@@ -114,12 +115,13 @@ function handleMobileSearchSubmit(event: Event) {
   </div>
 
   {#if mobileMenuOpen}
-    <nav class="nav-mobile" aria-label="Primary navigation">
+    <nav id="primary-mobile-navigation" class="nav-mobile" aria-label="Primary navigation">
       {#each navItems as item}
         <a
           href={item.href}
           class="nav-mobile-link"
           class:active={activePath === item.href}
+          aria-current={activePath === item.href ? "page" : undefined}
           onclick={closeMobileMenu}
         >
           {item.label}
@@ -228,7 +230,7 @@ function handleMobileSearchSubmit(event: Event) {
     align-items: center;
     justify-content: center;
     background: var(--red, #ef4444);
-    color: white;
+    color: var(--text-inv, white);
     font-size: 10px;
     font-weight: 600;
     min-width: 16px;

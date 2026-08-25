@@ -21,6 +21,7 @@
     { href: appPath("/guide/"), label: "Guide" },
   ];
   const catalogueRouteIds = new Set(["/", "/explorer", "/compare", "/glossary"]);
+  let catalogueBlocked = $state(page.route.id !== null && catalogueRouteIds.has(page.route.id));
   const catalogueBackedRoute = $derived(page.route.id !== null && catalogueRouteIds.has(page.route.id));
 
   function searchControls(query: string): void {
@@ -41,37 +42,51 @@
     headerSearchValue = page.url.searchParams.get("search") ?? "";
   });
 
+  $effect(() => {
+    catalogueBlocked = catalogueBackedRoute;
+  });
+
   onMount(() => theme.init());
 </script>
 
-<a href="#main-content" class="skip-link">Skip to content</a>
+<div class="app-shell" inert={catalogueBlocked} aria-hidden={catalogueBlocked ? "true" : undefined}>
+  <a href="#main-content" class="skip-link">Skip to content</a>
 
-<PlatformBar
-  currentApp="rule1"
-  currentAppHref={appPath("/")}
-  hideAuth
-  theme={theme.value}
-  onToggleTheme={() => theme.toggle()}
+  <PlatformBar
+    currentApp="rule1"
+    currentAppHref={appPath("/")}
+    hideAuth
+    theme={theme.value}
+    onToggleTheme={() => theme.toggle()}
+  />
+
+  <Header
+    {navItems}
+    activePath={page.url.pathname}
+    search={{
+      placeholder: "Search controls…",
+      value: headerSearchValue,
+      onInput: searchControls,
+      onSubmit: searchControls,
+    }}
+  />
+
+  <main id="main-content">{@render children()}</main>
+
+  <Footer appName="rule1" excludeApps={["rule1", "login2", "threat10", "patch8", "peer6"]} />
+  <Toast />
+</div>
+<DatabaseLoadingSplash
+  initiallyVisible={catalogueBackedRoute}
+  routeKey={page.route.id ?? page.url.pathname}
+  onVisibilityChange={(visible) => (catalogueBlocked = visible)}
 />
-
-<Header
-  {navItems}
-  activePath={page.url.pathname}
-  search={{
-    placeholder: "Search controls…",
-    value: headerSearchValue,
-    onInput: searchControls,
-    onSubmit: searchControls,
-  }}
-/>
-
-<main id="main-content">{@render children()}</main>
-
-<Footer appName="rule1" excludeApps={["rule1", "login2", "threat10", "patch8", "peer6"]} />
-<Toast />
-<DatabaseLoadingSplash initiallyVisible={catalogueBackedRoute} routeKey={page.route.id ?? page.url.pathname} />
 
 <style>
+  .app-shell {
+    display: contents;
+  }
+
   .skip-link {
     position: absolute;
     top: -100%;

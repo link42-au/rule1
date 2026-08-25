@@ -158,11 +158,12 @@
   {:else if catalogue.status === "unavailable"}
     <p class="catalogue-status catalogue-status--unavailable" role="status">{catalogue.message}</p>
   {:else if frameworks.length > 1}
-    <div class="landing-fw-bar" aria-label="Security framework">
+    <div class="landing-fw-bar" role="group" aria-label="Security framework">
       {#each frameworks as framework}
         <button
           class="landing-fw-pill"
           class:active={curFramework === framework.id}
+          aria-pressed={curFramework === framework.id}
           onclick={() => void selectFramework(framework.id)}
           title={framework.name}
         >

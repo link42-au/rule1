@@ -139,20 +139,20 @@
 <div class="cl-main glossary-page">
   <h1 class="cl-title">Glossary</h1>
   <p class="cl-sub">Definitions retained with each security framework source.</p>
-  <div class="frameworks">{#each frameworks as item}<button class:active={framework === item.id} onclick={() => void loadTerms(item.id as FrameworkId)}>{item.short_name}</button>{/each}</div>
+  <div class="frameworks" role="group" aria-label="Security framework">{#each frameworks as item}<button class:active={framework === item.id} aria-pressed={framework === item.id} onclick={() => void loadTerms(item.id as FrameworkId)}>{item.short_name}</button>{/each}</div>
   <label class="search-row">Search terms<input type="search" value={query} oninput={(event) => updateSearch(event.currentTarget.value)} placeholder="Search terms and definitions…" /><span>{filtered.length} terms</span></label>
 
-  {#if status === "loading"}<p class="state">Loading retained glossary…</p>
-  {:else if status === "error"}<p class="state error">Could not load glossary data from the local catalogue.</p>
-  {:else if status === "empty"}<p class="state">No glossary terms are retained for {frameworkName} in the archived sources.</p>
-  {:else if filtered.length === 0}<p class="state">No terms match the current search.</p>
+  {#if status === "loading"}<p class="state" role="status">Loading retained glossary…</p>
+  {:else if status === "error"}<p class="state error" role="alert">Could not load glossary data from the local catalogue.</p>
+  {:else if status === "empty"}<p class="state" role="status">No glossary terms are retained for {frameworkName} in the archived sources.</p>
+  {:else if filtered.length === 0}<p class="state" role="status">No terms match the current search.</p>
   {:else}
     <div class="glossary-layout">
       <div class="term-list">{#each filtered as term}<button class:active={selectedId === term.id} onclick={() => void selectTerm(term.id)}><strong>{term.term}</strong><span>{term.meaning}</span></button>{/each}</div>
       <aside class="term-detail">
-        {#if detailStatus === "loading"}<p class="state">Loading term history…</p>
-        {:else if detailStatus === "error"}<p class="state error">Could not load this term.</p>
-        {:else if detailStatus === "empty"}<p class="state">The selected term is not retained for {frameworkName}.</p>
+        {#if detailStatus === "loading"}<p class="state" role="status">Loading term history…</p>
+        {:else if detailStatus === "error"}<p class="state error" role="alert">Could not load this term.</p>
+        {:else if detailStatus === "empty"}<p class="state" role="status">The selected term is not retained for {frameworkName}.</p>
         {:else if detail}
           <h2>{detail.term}</h2>
           {#each detail.history as revision}<article><strong>{revision.catalog_version}</strong><span>{revision.change_type}</span><p>{revision.meaning}</p></article>{/each}

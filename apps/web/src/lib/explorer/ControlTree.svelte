@@ -67,30 +67,26 @@
             class:active={selectedId === control.id}
             class:withdrawn={control.change_type === "withdrawn"}
             data-id={control.id}
-            role="button"
-            tabindex="0"
-            onclick={() => onSelect(control.id)}
-            onkeydown={(event) => (event.key === "Enter" || event.key === " ") && onSelect(control.id)}
           >
-            <span class="ctrl-row-content">
-              <span class="ctrl-row-id">
-                {control.display_id}
-                {#if control.change_type === "withdrawn"}<span class="withdrawn-badge">Withdrawn</span>{/if}
+            <button type="button" class="ctrl-select" onclick={() => onSelect(control.id)}>
+              <span class="ctrl-row-content">
+                <span class="ctrl-row-id">
+                  {control.display_id}
+                  {#if control.change_type === "withdrawn"}<span class="withdrawn-badge">Withdrawn</span>{/if}
+                </span>
+                {#if control.title && !control.title.startsWith("Control: ")}
+                  <span class="ctrl-row-title">{control.title}</span>
+                {/if}
+                <span class="ctrl-row-name">{control.statement ?? control.label ?? "No description available."}</span>
               </span>
-              {#if control.title && !control.title.startsWith("Control: ")}
-                <span class="ctrl-row-title">{control.title}</span>
-              {/if}
-              <span class="ctrl-row-name">{control.statement ?? control.label ?? "No description available."}</span>
-            </span>
+            </button>
             <button
               type="button"
               class="favourite"
               class:active={favourites.has(control.id)}
               aria-label={favourites.has(control.id) ? `Remove ${control.display_id} from favourites` : `Add ${control.display_id} to favourites`}
-              onclick={(event) => {
-                event.stopPropagation();
-                onToggleFavourite(control.id);
-              }}
+              aria-pressed={favourites.has(control.id)}
+              onclick={() => onToggleFavourite(control.id)}
             >★</button>
           </div>
         {/each}
@@ -157,9 +153,23 @@
   .ctrl-row {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
     width: calc(100% - 12px);
     margin: 1px 6px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+  }
+
+  .ctrl-row:hover,
+  .ctrl-row.active {
+    background: var(--bg-active);
+  }
+
+  .ctrl-select {
+    display: block;
+    min-width: 0;
+    flex: 1;
     padding: 8px;
     border: 0;
     border-radius: 8px;
@@ -169,12 +179,7 @@
     text-align: left;
   }
 
-  .ctrl-row:hover,
-  .ctrl-row.active {
-    background: var(--bg-active);
-  }
-
-  .ctrl-row:focus-visible {
+  .ctrl-select:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;
   }
@@ -191,6 +196,7 @@
   }
 
   .favourite {
+    margin: 8px 8px 0 0;
     padding: 2px;
     border: 0;
     background: transparent;
@@ -273,10 +279,15 @@
       width: 100%;
       min-height: 56px;
       margin: 2px 0;
+    }
+
+    .ctrl-select {
+      min-height: 56px;
       padding: 10px 8px;
     }
 
     .favourite {
+      margin: 10px 8px 0 0;
       display: grid;
       min-width: 36px;
       min-height: 36px;

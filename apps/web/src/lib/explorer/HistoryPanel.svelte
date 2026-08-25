@@ -24,9 +24,9 @@
 </script>
 
 {#if status === "loading"}
-  <p class="panel-state">Loading version history…</p>
+  <p class="panel-state" role="status">Loading version history…</p>
 {:else if status === "error"}
-  <p class="panel-state error">Could not load the retained history for this control.</p>
+  <p class="panel-state error" role="alert">Could not load the retained history for this control.</p>
 {:else if status === "ready" && history.length === 0}
   <p class="panel-state">No version history is retained for this control.</p>
 {:else if status === "ready"}

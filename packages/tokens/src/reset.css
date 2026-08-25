@@ -52,3 +52,18 @@ select {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: User motion preferences must override component animation declarations. */
+    scroll-behavior: auto !important;
+    /* biome-ignore lint/complexity/noImportantStyles: User motion preferences must override component animation declarations. */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: User motion preferences must override component animation declarations. */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: User motion preferences must override component animation declarations. */
+    transition-duration: 0.01ms !important;
+  }
+}

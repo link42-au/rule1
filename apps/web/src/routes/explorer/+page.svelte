@@ -25,6 +25,8 @@
     APPLICABILITY,
     LatestRequest,
     SIDEBAR_WIDTH_DEFAULT,
+    SIDEBAR_WIDTH_MAX,
+    SIDEBAR_WIDTH_MIN,
     changeFrequency,
     clampSidebarWidth,
     controlsBySection,
@@ -42,6 +44,12 @@
   type CatalogueStatus = "loading" | "ready" | "error";
   type DetailTab = "overview" | "changelog" | "context";
   type RelatedStatus = "idle" | "loading" | "ready" | "error";
+
+  const DETAIL_TABS: ReadonlyArray<{ value: DetailTab; label: string }> = [
+    { value: "overview", label: "Overview" },
+    { value: "changelog", label: "Changelog" },
+    { value: "context", label: "Context" },
+  ];
 
   let status = $state<CatalogueStatus>("loading");
   let errorMessage = $state("");
@@ -203,11 +211,27 @@
     resizingSidebar = false;
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
+    persistSidebarWidth();
+  }
+
+  function persistSidebarWidth(): void {
     try {
       window.localStorage.setItem("rule1-sidebar-width", String(sidebarWidth));
     } catch {
       // Resizing remains useful for this session when storage is unavailable.
     }
+  }
+
+  function handleSidebarResizeKey(event: KeyboardEvent): void {
+    let nextWidth: number | null = null;
+    if (event.key === "ArrowLeft") nextWidth = sidebarWidth - 16;
+    else if (event.key === "ArrowRight") nextWidth = sidebarWidth + 16;
+    else if (event.key === "Home") nextWidth = SIDEBAR_WIDTH_MIN;
+    else if (event.key === "End") nextWidth = SIDEBAR_WIDTH_MAX;
+    if (nextWidth === null) return;
+    event.preventDefault();
+    sidebarWidth = clampSidebarWidth(nextWidth);
+    persistSidebarWidth();
   }
 
   function revealBreadcrumbGroup(group: Group): void {
@@ -218,7 +242,7 @@
     requestAnimationFrame(() => {
       const escaped = CSS.escape(group.id);
       document.querySelector<HTMLElement>(`.ctrl-group[data-group-id="${escaped}"]`)?.scrollIntoView({
-        behavior: "smooth",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
         block: "start",
       });
     });
@@ -286,6 +310,20 @@
     syncUrl();
     if (tab === "changelog") void loadHistory();
     if (tab === "context") void loadGraph();
+  }
+
+  function handleTabKey(event: KeyboardEvent, tab: DetailTab): void {
+    const currentIndex = DETAIL_TABS.findIndex((item) => item.value === tab);
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % DETAIL_TABS.length;
+    else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + DETAIL_TABS.length) % DETAIL_TABS.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = DETAIL_TABS.length - 1;
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = DETAIL_TABS[nextIndex].value;
+    switchTab(nextTab);
+    document.getElementById(`control-tab-${nextTab}`)?.focus();
   }
 
   function toggleFavourite(id: string): void {
@@ -358,7 +396,7 @@
     return null;
   }
 
-  async function selectControl(id: string, updateUrl = true): Promise<void> {
+  async function selectControl(id: string, updateUrl = true, focusDetail = updateUrl): Promise<void> {
     if (!client) return;
     const normalized = normalizeControlId(id);
     if (!normalized) {
@@ -382,6 +420,9 @@
       if (!detailRequests.isCurrent(request) || selectedId !== normalized || framework !== requestFramework) return;
       detail = result;
       detailStatus = result ? "ready" : "empty";
+      if (focusDetail && result) {
+        requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-control-heading]")?.focus());
+      }
       const retainedMapping = requestFramework === "ism" && result
         ? [result.latest, ...result.history].find(
             (revision) => (revision.e8_levels?.length ?? 0) > 0 && revision.catalog_version,
@@ -470,7 +511,7 @@
   async function selectSearchResult(updateUrl = true): Promise<void> {
     const matches = filterControls(controls, filter, applicability, search, favourites);
     const match = searchSelection(matches, search);
-    if (match) await selectControl(match, false);
+    if (match) await selectControl(match, false, false);
     else clearSelection();
     if (updateUrl) syncUrl();
   }
@@ -572,12 +613,13 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="filter-group-label">Framework</div>
-      <div class="filter-row framework-row">
+      <div class="filter-row framework-row" role="group" aria-label="Security framework">
         {#each frameworks as item (item.id)}
           <button
             type="button"
             class="filter-pill framework-pill"
             class:active={framework === item.id}
+            aria-pressed={framework === item.id}
             title={item.name}
             onclick={() => void changeFramework(item.id as ExplorerUrlState["framework"])}
           >{item.short_name}</button>
@@ -585,7 +627,7 @@
       </div>
 
       <div class="filter-group-label">Control filters</div>
-      <div class="filter-row">
+      <div class="filter-row" role="group" aria-label="Control filters">
         {#each [
           { value: "all", label: "All" },
           { value: "favourites", label: "★ Favourites" },
@@ -598,6 +640,7 @@
             class="filter-pill control-filter-pill"
             data-filter={item.value}
             class:active={filter === item.value}
+            aria-pressed={filter === item.value}
             onclick={() => changeFilter(item.value as ExplorerFilter)}
           >{item.label}</button>
         {/each}
@@ -610,19 +653,20 @@
 
       {#if isISM}
         <div class="filter-group-label">Essential 8</div>
-        <div class="filter-row">
+        <div class="filter-row" role="group" aria-label="Essential Eight maturity">
           {#each ["ml1", "ml2", "ml3"] as value}
             <button
               type="button"
               class="filter-pill maturity-pill"
               class:active={filter === value}
+              aria-pressed={filter === value}
               onclick={() => changeFilter(value as ExplorerFilter)}
             >{value.toUpperCase()}</button>
           {/each}
         </div>
 
         <div class="filter-group-label">Data classification</div>
-        <div class="filter-row">
+        <div class="filter-row" role="group" aria-label="Data classification">
           {#each [
             { value: "NC", label: "NC" },
             { value: "OS", label: "OS" },
@@ -635,6 +679,7 @@
               type="button"
               class="filter-pill applicability-pill"
               class:active={applicability === item.value}
+              aria-pressed={applicability === item.value}
               data-applicability={item.value}
               onclick={() => toggleApplicability(item.value as (typeof APPLICABILITY)[number])}
             >{item.label}</button>
@@ -649,6 +694,7 @@
         type="button"
         class="hierarchy-toggle"
         aria-label={allGroupsExpanded ? "Collapse all control groups" : "Expand all control groups"}
+        aria-expanded={allGroupsExpanded}
         title={allGroupsExpanded ? "Collapse all" : "Expand all"}
         onclick={toggleAllGroups}
       >{allGroupsExpanded ? "Collapse all" : "Expand all"}</button>
@@ -687,6 +733,9 @@
     </div>
   </aside>
 
+  <!-- A focusable separator is the ARIA-prescribed keyboard-resizable split-pane control. -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="resize-handle"
     class:active={resizingSidebar}
@@ -696,19 +745,21 @@
     aria-valuemin="180"
     aria-valuemax="480"
     aria-valuenow={sidebarWidth}
+    tabindex="0"
+    onkeydown={handleSidebarResizeKey}
     onpointerdown={beginSidebarResize}
   ></div>
 
-  <section class="detail-panel" aria-live="polite">
+  <section class="detail-panel">
     <div class="mobile-detail-nav">
       <button type="button" onclick={showControlList}><span aria-hidden="true">←</span> Back to controls</button>
     </div>
     {#if detailStatus === "loading"}
-      <div class="detail-state">Loading control detail…</div>
+      <div class="detail-state" role="status">Loading control detail…</div>
     {:else if detailStatus === "error"}
-      <div class="detail-state error">Could not load this control from the local catalogue.</div>
+      <div class="detail-state error" role="alert">Could not load this control from the local catalogue.</div>
     {:else if detailStatus === "empty"}
-      <div class="detail-state">
+      <div class="detail-state" role="status">
         <div class="empty-icon">?</div>
         <h1>Control not found</h1>
         <p>The selected control is not present in the latest {frameworkLabel(framework)} catalogue.</p>
@@ -729,10 +780,10 @@
           <div class="control-heading">
             <div class="control-title">
               {#if detail.title && !detail.title.startsWith("Control: ")}
-                <h1>{detail.title}</h1>
+                <h1 data-control-heading tabindex="-1">{detail.title}</h1>
                 <div class="control-id">{detail.display_id}</div>
               {:else}
-                <h1>{detail.latest.statement ?? detail.display_id}</h1>
+                <h1 data-control-heading tabindex="-1">{detail.latest.statement ?? detail.display_id}</h1>
               {/if}
             </div>
             <div class="detail-actions">
@@ -743,6 +794,7 @@
                 aria-label={favourites.has(detail.id)
                   ? `Remove ${detail.display_id} from favourites`
                   : `Add ${detail.display_id} to favourites`}
+                aria-pressed={favourites.has(detail.id)}
                 title={favourites.has(detail.id) ? "Remove from favourites" : "Add to favourites"}
                 onclick={() => toggleFavourite(detail!.id)}
               >★</button>
@@ -773,22 +825,22 @@
         </header>
 
         <div class="tabs" role="tablist" aria-label="Control detail views">
-          {#each [
-            { value: "overview", label: "Overview" },
-            { value: "changelog", label: "Changelog" },
-            { value: "context", label: "Context" },
-          ] as tab}
+          {#each DETAIL_TABS as tab}
             <button
+              id={`control-tab-${tab.value}`}
               type="button"
               role="tab"
               aria-selected={activeTab === tab.value}
+              aria-controls="control-tabpanel"
+              tabindex={activeTab === tab.value ? 0 : -1}
               class:active={activeTab === tab.value}
-              onclick={() => switchTab(tab.value as DetailTab)}
+              onclick={() => switchTab(tab.value)}
+              onkeydown={(event) => handleTabKey(event, tab.value)}
             >{tab.label}</button>
           {/each}
         </div>
 
-        <div class="tab-panel" role="tabpanel">
+        <div id="control-tabpanel" class="tab-panel" role="tabpanel" aria-labelledby={`control-tab-${activeTab}`}>
           {#if activeTab === "overview"}
             <section class="description-card">
               <div class="section-label">
@@ -868,7 +920,7 @@
         </div>
       </article>
     {:else}
-      <div class="detail-state">
+      <div class="detail-state" role="status">
         <div class="empty-icon">▤</div>
         <h1>Select a control</h1>
         <p>Choose a control from the sidebar to explore its current detail.</p>
@@ -901,6 +953,9 @@
 
   .resize-handle {
     z-index: 5;
+    min-width: 0;
+    padding: 0;
+    border: 0;
     border-left: 1px solid var(--border);
     background: transparent;
     cursor: col-resize;
@@ -968,13 +1023,13 @@
   .control-filter-pill[data-filter="favourites"].active {
     border-color: var(--amber);
     background: var(--amber);
-    color: white;
+    color: var(--text-inv);
   }
 
   .control-filter-pill[data-filter="withdrawn"].active {
     border-color: var(--red);
     background: var(--red);
-    color: white;
+    color: var(--text-inv);
   }
 
   .favourite-actions {
@@ -1013,11 +1068,11 @@
   .maturity-pill.active {
     border-color: var(--purple);
     background: var(--purple);
-    color: white;
+    color: var(--text-inv);
   }
 
   .applicability-pill[data-applicability="P"].active { background: #1d4ed8; color: white; }
-  .applicability-pill[data-applicability="C"].active { background: #16a34a; color: white; }
+  .applicability-pill[data-applicability="C"].active { background: #15803d; color: white; }
   .applicability-pill[data-applicability="S"].active { background: #db2777; color: white; }
   .applicability-pill[data-applicability="TS"].active { background: #dc2626; color: white; }
 

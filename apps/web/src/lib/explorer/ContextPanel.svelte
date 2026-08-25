@@ -21,12 +21,18 @@
     const angle = (index / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
     return { x: 300 + Math.cos(angle) * 215, y: 160 + Math.sin(angle) * 115 };
   }
+
+  function selectNeighbor(event: KeyboardEvent, id: string): void {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onSelect(id);
+  }
 </script>
 
 {#if status === "loading"}
-  <p class="panel-state">Loading control relationships…</p>
+  <p class="panel-state" role="status">Loading control relationships…</p>
 {:else if status === "error"}
-  <p class="panel-state error">Could not load relationships for this control.</p>
+  <p class="panel-state error" role="alert">Could not load relationships for this control.</p>
 {:else if status === "ready" && (!center || neighbors.length === 0)}
   <p class="panel-state">No related controls are retained in the same section.</p>
 {:else if status === "ready" && center}
@@ -39,7 +45,13 @@
       {#each visibleNeighbors as neighbor, index}
         {@const position = point(index, visibleNeighbors.length)}
         <line x1="300" y1="160" x2={position.x} y2={position.y}></line>
-        <g role="button" tabindex="0" onclick={() => onSelect(neighbor.data.id)} onkeydown={(event) => event.key === "Enter" && onSelect(neighbor.data.id)}>
+        <g
+          role="button"
+          tabindex="0"
+          aria-label={`Open ${neighbor.data.display_id ?? neighbor.data.id}`}
+          onclick={() => onSelect(neighbor.data.id)}
+          onkeydown={(event) => selectNeighbor(event, neighbor.data.id)}
+        >
           <circle cx={position.x} cy={position.y} r="19"></circle>
           <text x={position.x} y={position.y + 3}>{neighbor.data.display_id ?? neighbor.data.id}</text>
         </g>
