@@ -66,6 +66,14 @@ describe("WCAG interaction and presentation repairs", () => {
     expect(explorer).toMatch(/\.tag-count\s*\{[\s\S]*?color: var\(--accent-text\)/);
     expect(landing).toMatch(/\.landing-fw-pill\.active\s*\{[\s\S]*?background: var\(--accent-solid\)/);
     expect(compare).toMatch(/\.fw-pill\.active,[\s\S]*?background: var\(--accent-solid\)/);
+    expect(compare).toMatch(/\.fw-country\s*\{[^}]*color: var\(--text-dim\)[^}]*\}/);
+    expect(compare).toContain(".fw-pill.active .fw-country { color: var(--accent-solid-text); }");
+    expect(compare).not.toMatch(/\.fw-country\s*\{[^}]*opacity:/);
+    expect(landing).toMatch(/\.landing-fw-country\s*\{[^}]*color: var\(--text-dim\)[^}]*\}/);
+    expect(landing).toMatch(
+      /\.landing-fw-pill\.active \.landing-fw-country\s*\{[^}]*color: var\(--accent-solid-text\)[^}]*\}/,
+    );
+    expect(landing).not.toMatch(/\.landing-fw-country\s*\{[^}]*opacity:/);
   });
 
   it("identifies current navigation and pressed filter state", () => {

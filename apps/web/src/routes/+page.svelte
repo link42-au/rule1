@@ -516,10 +516,14 @@
   }
 
   .landing-fw-country {
+    color: var(--text-dim);
     font-size: 10px;
     font-weight: 400;
-    opacity: 0.7;
     letter-spacing: 0.03em;
+  }
+
+  .landing-fw-pill.active .landing-fw-country {
+    color: var(--accent-solid-text);
   }
 
   .landing-fw-count {
