@@ -2,7 +2,7 @@
   import { base } from "$app/paths";
   import type { ChangeRow, Framework, VersionRow } from "@rule1/shared";
   import { onMount } from "svelte";
-  import { APPLICABILITY_CODES, comparisonCsv, comparisonRows, type ComparisonSortColumn, type SortDirection } from "$lib/compare-model";
+  import { APPLICABILITY_CODES, comparisonCsv, comparisonRows, hasRetainedComplexity, type ComparisonSortColumn, type SortDirection } from "$lib/compare-model";
   import { frameworkFromUrl, versionPairFromUrl } from "$lib/catalogue-pages";
   import type { FrameworkId, Rule1DataClient } from "$lib/db/contracts";
   import { openRule1DataClient } from "$lib/db/rpc";
@@ -28,6 +28,7 @@
   let fromOptions = $derived(versions.filter((version) => versions.indexOf(version) < versions.findIndex((item) => item.version === to)));
   let toOptions = $derived(versions.filter((version) => versions.indexOf(version) > versions.findIndex((item) => item.version === from)));
   let filtered = $derived(comparisonRows(changes, framework, query, changeType, applicability, sortColumn, sortDirection));
+  let showComplexity = $derived(hasRetainedComplexity(changes));
   let isISM = $derived(framework === "ism");
 
   function syncUrl(): void {
@@ -149,7 +150,19 @@
   });
 </script>
 
-<svelte:head><title>Compare versions — rule1</title></svelte:head>
+<svelte:head>
+  <title>Compare versions — rule1</title>
+  <meta name="description" content="Compare retained security framework versions locally in your browser and review controls that were added, modified, or withdrawn." />
+  <meta property="og:title" content="Compare versions — rule1" />
+  <meta property="og:description" content="Compare retained security framework versions locally in your browser and review controls that were added, modified, or withdrawn." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://wan0.net/rule1/compare/" />
+  <meta property="og:site_name" content="rule1" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Compare versions — rule1" />
+  <meta name="twitter:description" content="Compare retained security framework versions locally in your browser and review controls that were added, modified, or withdrawn." />
+  <link rel="canonical" href="https://wan0.net/rule1/compare/" />
+</svelte:head>
 
 <div class="cl-main cl-main--wide compare-page">
   <h1 class="cl-title">Compare versions</h1>
@@ -188,18 +201,18 @@
     {:else}
       <div class="cmp-results" role="region" aria-label="Comparison results">
         <table class="cmp-table">
-          <colgroup><col class="col-id" /><col class="col-change" /><col class="col-complexity" /><col class="col-context" />{#if isISM}<col class="col-applicability" />{/if}<col class="col-description" /></colgroup>
+          <colgroup><col class="col-id" /><col class="col-change" />{#if showComplexity}<col class="col-complexity" />{/if}<col class="col-context" />{#if isISM}<col class="col-applicability" />{/if}<col class="col-description" /></colgroup>
           <thead><tr>
             <th><button class:active={sortColumn === "display_id"} onclick={() => toggleSort("display_id")}>ID <span>{sortArrow("display_id")}</span></button></th>
             <th><button class:active={sortColumn === "change_type"} onclick={() => toggleSort("change_type")}>Change <span>{sortArrow("change_type")}</span></button></th>
-            <th>Complexity</th>
+            {#if showComplexity}<th>Complexity <span class="column-help" title="Values are shown exactly as retained in the comparison data." aria-label="Complexity values are shown exactly as retained in the comparison data.">?</span></th>{/if}
             <th><button class:active={sortColumn === "context"} onclick={() => toggleSort("context")}>Context <span>{sortArrow("context")}</span></button></th>
             {#if isISM}<th>Applicability</th>{/if}<th>Description</th>
           </tr></thead>
           <tbody>{#each filtered as item (item.row.id)}<tr>
             <td class="id-cell"><a href={`${base}/explorer/?framework=${framework}&id=${encodeURIComponent(item.row.id)}`}>{item.row.display_id}</a>{#if item.row.label && item.row.label !== item.row.display_id}<div class="control-label">{item.row.label}</div>{/if}</td>
             <td><span class="change-badge {item.row.change_type}">{item.row.change_type}</span></td>
-            <td>{#if item.complexity}<span class="complexity cplx-{item.complexity.value}">{item.complexity.label}</span>{:else}<span class="none">—</span>{/if}</td>
+            {#if showComplexity}<td>{#if item.complexity}<span class="complexity cplx-{item.complexity.value}">{item.complexity.label}</span>{:else}<span class="none">—</span>{/if}</td>{/if}
             <td class="context-cell">{#if item.contextTag}<span class="meta-tag">{item.contextTag}</span>{/if}{item.context || "—"}</td>
             {#if isISM}<td class="applicability-cell">
               {#if item.row.change_type === "withdrawn"}
@@ -246,6 +259,7 @@
   th button { padding: 0; border: 0; background: transparent; color: inherit; font-size: inherit; font-weight: 700; text-transform: uppercase; }
   th button:hover, th button.active { color: var(--accent); }
   th button span { margin-left: 3px; }
+  .column-help { display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 3px; border: 1px solid var(--border); border-radius: 50%; color: var(--text-dim); font-size: 9px; line-height: 1; cursor: help; text-transform: none; }
   tbody tr:hover { background: var(--bg-hover, var(--bg-card)); }
   tbody tr:last-child td { border-bottom: 0; }
   .id-cell { font-family: var(--font-mono); white-space: nowrap; }

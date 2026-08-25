@@ -122,7 +122,19 @@
   });
 </script>
 
-<svelte:head><title>Glossary — rule1</title></svelte:head>
+<svelte:head>
+  <title>Glossary — rule1</title>
+  <meta name="description" content="Browse definitions retained with Rule1's archived security framework sources." />
+  <meta property="og:title" content="Glossary — rule1" />
+  <meta property="og:description" content="Browse definitions retained with Rule1's archived security framework sources." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://wan0.net/rule1/glossary/" />
+  <meta property="og:site_name" content="rule1" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Glossary — rule1" />
+  <meta name="twitter:description" content="Browse definitions retained with Rule1's archived security framework sources." />
+  <link rel="canonical" href="https://wan0.net/rule1/glossary/" />
+</svelte:head>
 
 <div class="cl-main glossary-page">
   <h1 class="cl-title">Glossary</h1>

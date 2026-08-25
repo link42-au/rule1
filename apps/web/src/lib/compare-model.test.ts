@@ -1,6 +1,6 @@
 import type { ChangeRow } from "@rule1/shared";
 import { describe, expect, it } from "vitest";
-import { comparisonCsv, comparisonRows, presentComparison } from "./compare-model";
+import { comparisonCsv, comparisonRows, hasRetainedComplexity, presentComparison } from "./compare-model";
 
 const modified: ChangeRow = {
   id: "ism-0009",
@@ -17,6 +17,12 @@ const modified: ChangeRow = {
 };
 
 describe("comparison presentation", () => {
+  it("only exposes the complexity column when retained values exist", () => {
+    expect(hasRetainedComplexity([{ ...modified, change_complexity: null }])).toBe(false);
+    expect(hasRetainedComplexity([{ ...modified, change_complexity: "  " }])).toBe(false);
+    expect(hasRetainedComplexity([{ ...modified, change_complexity: "low" }])).toBe(true);
+  });
+
   it("uses the shared word diff and retains changed applicability", () => {
     const item = presentComparison(modified, "ism");
     expect(item.statement).toEqual([

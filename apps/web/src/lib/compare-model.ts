@@ -17,6 +17,10 @@ export interface ComparisonPresentation {
   applicabilityChanged: boolean;
 }
 
+export function hasRetainedComplexity(rows: readonly ChangeRow[]): boolean {
+  return rows.some((row) => Boolean(row.change_complexity?.trim()));
+}
+
 const COMPLEXITY_LABELS: Record<string, string> = {
   unknown: "Unknown",
   "very-low": "Very Low",

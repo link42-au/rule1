@@ -39,6 +39,13 @@ describe("standalone comparison route", () => {
     expect(compare).toContain("<ins>{part.text}</ins>");
     expect(compare).not.toContain("{@html");
   });
+
+  it("only renders retained complexity with a provenance-neutral explanation", () => {
+    expect(compare).toContain("hasRetainedComplexity(changes)");
+    expect(compare).toContain("{#if showComplexity}<th>Complexity");
+    expect(compare).toContain("Values are shown exactly as retained in the comparison data.");
+    expect(compare).not.toMatch(/Claude|AI-scored/i);
+  });
 });
 
 describe("standalone glossary route", () => {
@@ -72,6 +79,39 @@ describe("standalone information and compatibility routes", () => {
     expect(guide).toContain("https://github.com/wan0net/rule1/blob/main/LICENSE");
     expect(guide).toContain("data/");
     expect(guide).toContain("are not relicensed by Rule1");
+  });
+
+  it("accurately describes browser-local favourites", () => {
+    expect(privacy).toContain("Theme preference and favourites are stored locally in your browser");
+    expect(privacy).toContain("imported from or exported to a local file");
+    expect(privacy).toContain("Clearing Rule1 site data removes");
+    expect(privacy).not.toContain("favourites are not part of the current release");
+  });
+
+  it("restores the narrow separator-based information-page layout", () => {
+    for (const page of [guide, privacy]) {
+      expect(page).toContain("max-width: 640px");
+      expect(page).toContain('class="lic-section"');
+      expect(page).toContain("border-bottom: 1px solid var(--border)");
+      expect(page).not.toContain("border-radius: 10px");
+    }
+  });
+
+  it("publishes current metadata for every catalogue route", () => {
+    for (const [page, route] of [
+      [compare, "compare"],
+      [glossary, "glossary"],
+      [guide, "guide"],
+      [privacy, "privacy"],
+    ]) {
+      expect(page).toContain('<meta name="description"');
+      expect(page).toContain('<meta property="og:title"');
+      expect(page).toContain('<meta property="og:description"');
+      expect(page).toContain('<meta name="twitter:card" content="summary"');
+      expect(page).toContain(`<link rel="canonical" href="https://wan0.net/rule1/${route}/"`);
+      expect(page).toContain(`<meta property="og:url" content="https://wan0.net/rule1/${route}/"`);
+      expect(page).not.toContain("rule1.link42.app");
+    }
   });
 
   it("uses a base-path-aware static redirect component for legacy destinations", () => {
