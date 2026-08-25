@@ -1,6 +1,6 @@
 # Third-party notices
 
-Rule1 is licensed under AGPL-3.0-or-later, but its third-party dependencies retain their own licences. The dependency tree was audited from the locked JavaScript and Python environments on 25 August 2026. The licences present were MIT, Apache-2.0, ISC, BSD-3-Clause, `MIT OR Apache-2.0`, and AGPL-3.0 (PyMuPDF). These licences are compatible with distributing Rule1 under AGPL-3.0-or-later.
+Rule1 is licensed under AGPL-3.0-or-later, but its third-party dependencies retain their own licences. The dependency tree was audited from the locked JavaScript and Python environments on 25 August 2026. The licences present were MIT, Apache-2.0, MPL-2.0, ISC, BSD-3-Clause, `MIT OR Apache-2.0`, and AGPL-3.0 (PyMuPDF). These licences are compatible with distributing Rule1 under AGPL-3.0-or-later.
 
 ## Code shipped to browsers
 
@@ -14,6 +14,7 @@ The complete MIT permission and warranty text is retained in [LICENSES/MIT.txt](
 ## Build and ingestion tooling
 
 - **PyMuPDF 1.26.4** — GNU Affero GPL 3.0 or a commercial Artifex licence. Rule1 uses it only in the ingestion pipeline; it is not shipped to browsers. Rule1 uses it under the AGPL option.
-- Node.js development, test, and build dependencies use MIT, Apache-2.0, ISC, BSD-3-Clause, or `MIT OR Apache-2.0`. They are pinned in `pnpm-lock.yaml` and are not direct runtime components of the published site.
+- **Playwright Test 1.62.1** — Apache-2.0, and **@axe-core/playwright 4.13.0** — MPL-2.0. Both are development-only browser regression tools and are not shipped in the published application.
+- Other Node.js development, test, and build dependencies use MIT, Apache-2.0, ISC, BSD-3-Clause, or `MIT OR Apache-2.0`. They are pinned in `pnpm-lock.yaml` and are not direct runtime components of the published site.
 
 This file is a concise notice, not a substitute for the dependency packages' own licence files. The font binaries remain under the SIL OFL 1.1 and are not relicensed under Rule1's AGPL licence. Framework documents under `data/` are source material rather than software dependencies and remain subject to their publishers' terms, as described in the README.

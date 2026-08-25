@@ -1,0 +1,144 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page, type TestInfo } from "@playwright/test";
+
+const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+
+async function assertNoSeriousAxeViolations(page: Page, testInfo: TestInfo, label: string): Promise<void> {
+  const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
+  const reportable = results.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
+  if (reportable.length > 0) {
+    await testInfo.attach(`axe-${label}`, {
+      body: JSON.stringify(results, null, 2),
+      contentType: "application/json",
+    });
+  }
+  expect(reportable, `${label} has serious or critical automated accessibility violations`).toEqual([]);
+}
+
+async function assertDocumentDoesNotOverflow(page: Page): Promise<void> {
+  const dimensions = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+}
+
+async function selectTheme(page: Page, value: "light" | "dark"): Promise<void> {
+  await page.evaluate((theme) => {
+    localStorage.setItem("theme", theme);
+  }, value);
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", value);
+}
+
+test("static routes reflow across representative viewports and themes", async ({ page }, testInfo) => {
+  await page.goto("/rule1/guide/");
+  await selectTheme(page, "light");
+  await expect(page.getByRole("heading", { name: "Rule1 guide" })).toBeVisible();
+  await assertDocumentDoesNotOverflow(page);
+  await assertNoSeriousAxeViolations(page, testInfo, "guide-light-desktop");
+
+  await selectTheme(page, "dark");
+  await assertNoSeriousAxeViolations(page, testInfo, "guide-dark-desktop");
+
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto("/rule1/privacy/");
+  await expect(page.getByRole("heading", { name: "Privacy" })).toBeVisible();
+  await assertDocumentDoesNotOverflow(page);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "Toggle menu" })).toBeVisible();
+  await page.getByRole("button", { name: "Toggle menu" }).click();
+  await expect(page.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "Search" })).toBeVisible();
+  await assertDocumentDoesNotOverflow(page);
+  await assertNoSeriousAxeViolations(page, testInfo, "privacy-mobile-menu-dark");
+
+  // 640 and 320 CSS pixels are stable reflow proxies for 200% and 400% zoom
+  // on a 1280-pixel-wide desktop viewport. Actual browser zoom remains a
+  // manual acceptance check because Playwright exposes no portable zoom API.
+  for (const width of [640, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole("heading", { name: "Privacy" })).toBeVisible();
+    await assertDocumentDoesNotOverflow(page);
+  }
+});
+
+test("catalogue splash and loaded interactions remain accessible and locally contained", async ({ page }, testInfo) => {
+  let releaseDatabase!: () => void;
+  const databaseGate = new Promise<void>((resolve) => {
+    releaseDatabase = resolve;
+  });
+  let databaseRequested = false;
+
+  await page.route("**/data/rule1.sqlite3", async (route) => {
+    databaseRequested = true;
+    await databaseGate;
+    await route.continue();
+  });
+
+  await page.goto("/rule1/guide/");
+  await page.evaluate(() => localStorage.setItem("theme", "light"));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/rule1/explorer/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  const splash = page.locator(".database-splash");
+  await expect(splash).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveAttribute("aria-busy", "true");
+  await expect.poll(() => databaseRequested).toBe(true);
+  await assertNoSeriousAxeViolations(page, testInfo, "database-splash-mobile");
+
+  releaseDatabase();
+  await expect(splash).toBeHidden({ timeout: 90_000 });
+  await expect(page.getByText("Controls list")).toBeVisible();
+  await assertDocumentDoesNotOverflow(page);
+
+  await page.getByRole("button", { name: "Toggle menu" }).click();
+  const mobileSearch = page.getByRole("searchbox", { name: "Search" });
+  await mobileSearch.fill("ism-0009");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await expect(page).toHaveURL(/id=ism-0009/);
+  await page.getByRole("button", { name: "Back to controls" }).click();
+
+  await page.getByRole("button", { name: /^ISM-0009 / }).click();
+  await expect(page.getByRole("button", { name: "Back to controls" })).toBeVisible();
+  await expect(page.locator("[data-control-heading]")).toBeFocused();
+  await assertNoSeriousAxeViolations(page, testInfo, "explorer-mobile-detail-light");
+  await page.getByRole("button", { name: "Back to controls" }).click();
+  await expect(page.getByText("Controls list")).toBeVisible();
+
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto("/rule1/explorer/?id=ism-0009");
+  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  const tabs = page.getByRole("tablist", { name: "Control detail views" });
+  await tabs.getByRole("tab", { name: "Overview" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(tabs.getByRole("tab", { name: "Changelog" })).toHaveAttribute("aria-selected", "true");
+  await assertDocumentDoesNotOverflow(page);
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const separator = page.getByRole("separator", { name: "Resize control navigation" });
+  await expect(separator).toBeVisible();
+  const originalWidth = Number(await separator.getAttribute("aria-valuenow"));
+  await separator.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(separator).toHaveAttribute("aria-valuenow", String(originalWidth + 16));
+
+  await selectTheme(page, "dark");
+  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await assertNoSeriousAxeViolations(page, testInfo, "explorer-dark-desktop");
+
+  await page.goto("/rule1/compare/?from=ISM-OSCAL-2026.03.24&to=ISM-OSCAL-2026.06.18");
+  const results = page.getByRole("region", { name: "Comparison results" });
+  await expect(results).toBeVisible();
+  await expect(results.getByRole("table")).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertDocumentDoesNotOverflow(page);
+  const overflow = await results.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(overflow.scrollWidth).toBeGreaterThan(overflow.clientWidth);
+  await assertNoSeriousAxeViolations(page, testInfo, "compare-mobile-dark");
+});

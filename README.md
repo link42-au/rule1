@@ -23,7 +23,10 @@ Install JavaScript dependencies:
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm exec playwright install chromium
 ```
+
+The Chromium install is a one-time local prerequisite for the responsive and accessibility regression suite.
 
 Run the web application locally:
 
@@ -31,11 +34,13 @@ Run the web application locally:
 pnpm --filter @rule1/web dev
 ```
 
-Run the complete test, ingestion, database-integrity, and static-build verification:
+Run the complete test, ingestion, database-integrity, static-build, and browser verification:
 
 ```sh
 pnpm verify
 ```
+
+To prepare the real local SQLite snapshot and run only the browser regression suite, use `pnpm test:e2e:prepare`.
 
 To build and validate only the SQLite snapshot:
 
