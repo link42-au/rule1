@@ -260,6 +260,8 @@
 
   .landing {
     flex: 1;
+    width: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -328,6 +330,7 @@
 
   .landing-search-input {
     flex: 1;
+    min-width: 0;
     padding: 10px 16px;
     background: var(--bg-subtle);
     border: 1px solid var(--border);
@@ -477,6 +480,9 @@
 
   .landing-fw-bar {
     display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 6px;
     margin-bottom: 8px;
   }
@@ -520,5 +526,49 @@
     color: var(--text-dim);
     margin-bottom: 20px;
     text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .landing {
+      justify-content: flex-start;
+      padding: 28px 16px 36px;
+    }
+
+    .landing-logo {
+      width: 150px;
+      height: 150px;
+    }
+
+    .landing-title {
+      font-size: 28px;
+    }
+
+    .landing-description,
+    .catalogue-status--unavailable {
+      max-width: 100%;
+    }
+
+    .landing-fw-pill {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .landing-search-form {
+      max-width: 100%;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .landing-search-form {
+      gap: 6px;
+    }
+
+    .landing-search-input {
+      padding-inline: 12px;
+    }
+
+    .landing-search-btn {
+      padding-inline: 14px;
+    }
   }
 </style>

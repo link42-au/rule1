@@ -283,5 +283,14 @@
   .description-cell del { padding: 0 2px; border-radius: 2px; background: var(--red-bg); color: var(--red); }
   .description-cell ins { padding: 0 2px; border-radius: 2px; background: var(--green-bg); color: var(--green); font-weight: 600; text-decoration: none; }
   .description-cell.withdrawn { color: var(--text-dim); }
-  @media (max-width: 720px) { .cmp-selectors { align-items: stretch; flex-direction: column; } .cmp-arrow { display: none; } select, .cmp-toolbar input { width: 100%; min-width: 0; } .cmp-toolbar-left, .cmp-toolbar-right { width: 100%; } }
+  @media (max-width: 720px) {
+    .compare-page { padding: 32px 16px 48px; }
+    .cmp-frameworks { width: 100%; }
+    .cmp-selectors { align-items: stretch; flex-direction: column; }
+    .cmp-arrow { display: none; }
+    select, .cmp-toolbar input { width: 100%; min-width: 0; }
+    .cmp-toolbar-left, .cmp-toolbar-right { width: 100%; }
+    .cmp-toolbar-right { justify-content: space-between; }
+    .cmp-results { max-width: 100%; }
+  }
 </style>

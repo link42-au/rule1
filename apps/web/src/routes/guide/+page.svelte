@@ -35,4 +35,9 @@
   h2 { margin: 0 0 14px; color: var(--text); font-size: 16px; letter-spacing: -0.02em; }
   p { margin: 0; color: var(--text-mid); font-size: 13px; line-height: 1.7; }
   a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  @media (max-width: 640px) {
+    .guide-page { padding: 32px 16px 48px; }
+    .lic-section { margin-top: 32px; padding-bottom: 28px; }
+  }
 </style>

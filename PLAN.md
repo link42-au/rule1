@@ -1,6 +1,6 @@
 # Rule1 standalone port plan
 
-Status: **Complete**
+Status: **In progress**
 
 Repository: [`wan0net/rule1`](https://github.com/wan0net/rule1) (**public**)
 Reference source: `/Users/icd/Workspace/link42-rule1/rule1`
@@ -20,7 +20,7 @@ The application will query a browser-local SQLite database generated from source
 - GitHub Actions builds one deterministic SQLite artifact.
 - SQLite validation is intentionally limited to provenance, source checksums, schema, framework versions, row counts, and `PRAGMA integrity_check`.
 - Do not add signing, attestations, evidence bundles, release policy engines, or other publication machinery.
-- Desktop verification is required. Mobile-specific and accessibility work are out of scope.
+- Desktop, phone, and tablet verification are required. Accessibility work targets WCAG 2.2 AA for the retained static application.
 - Known static-hosting gaps: authentication, cloud-synchronised favourites, community writes/voting, bypass tokens, and maintenance polling. Browser-local favourites remain in scope.
 - Publication was approved and completed on 22 August 2026 at [`wan0.net/rule1`](https://wan0.net/rule1/).
 
@@ -54,6 +54,10 @@ The application will query a browser-local SQLite database generated from source
 | 23 | Explorer interaction parity | Show the latest real historical change even when the current revision is unchanged; make search select an exact or first matching control without a duplicate sidebar search; restore interactive hierarchy breadcrumbs; and expose glossary annotations only when retained term data supports them. | 22 | Unit and interaction tests cover latest-change selection, exact/first/no-result search, URL state, breadcrumb expansion/navigation, and glossary present/absent states; desktop comparison confirms the restored interactions. | done |
 | 24 | Explorer secondary visual parity | Restore the resizable navigation pane, Expand/Collapse All controls, full classification labels and state-specific colours/pills, the change-frequency sparkline, and explicit Withdrawn badges without changing the local data contract. | 23 | Component and desktop browser tests cover resizing, hierarchy expansion, classification/filter rendering, sparkline data and empty states, and withdrawn controls in light and dark themes. | done |
 | 25 | Informational and metadata parity | Correct the Privacy page's description of local favourites; restore the old narrow, separator-based Guide and Privacy layout; provide accurate canonical and social metadata for current static routes; and hide or clearly explain Compare complexity when the retained data is empty. | 24 | Route and browser tests verify accurate privacy copy, content-page layout, canonical/Open Graph metadata under `/rule1/`, and honest complexity behaviour for empty and populated data; the static build makes no external runtime requests. | done |
+| 26 | Responsive shell and routes | Remove the fixed-width page floor and make the shared shell, navigation, search, landing, Compare, Glossary, Guide, Privacy, and loading experience reflow cleanly at phone, tablet, and desktop widths without changing the desktop visual language. | 25 | Automated checks cover 390 px and 768 px page reflow, mobile navigation/search, route scrolling, and locally contained comparison-table overflow; production browser verification covers phone, tablet, and desktop. | done |
+| 27 | Mobile Explorer | Add a deliberate single-pane phone flow between the control list and selected control, retain a usable tablet/desktop split view, hide the resizer where unavailable, and preserve deep links, filters, favourites, and search. | 26 | Interaction tests cover list/detail/back navigation, direct control links, mobile search, filters, touch targets, tablet panes, and desktop resizing at representative viewports. | pending |
+| 28 | WCAG interaction and presentation fixes | Correct contrast, control composition, current/pressed/sort states, keyboard resizing, tab semantics, context controls, focus movement, live regions, and the initial database loading blocker across retained routes. | 27 | Keyboard-only and component tests cover all repaired patterns; light/dark contrast and 200%/400% zoom are verified against WCAG 2.2 AA expectations. | pending |
+| 29 | Mobile and accessibility regression suite | Add focused browser checks for route reflow and automated accessibility violations, integrated with the existing single-command test workflow without changing production runtime dependencies. | 28 | Chromium checks pass at 390x844, 768x900, and desktop in light/dark modes; automated accessibility checks report no serious or critical violations on representative loaded routes. | pending |
 
 ## Working rules
 

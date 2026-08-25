@@ -54,12 +54,17 @@ function handleSearchInput(event: Event) {
 	clearTimeout(searchTimer);
 	searchTimer = setTimeout(() => search?.onInput?.(searchQuery.trim()), 250);
 }
+
+function handleMobileSearchSubmit(event: Event) {
+	handleSearchSubmit(event);
+	closeMobileMenu();
+}
 </script>
 
 <header class="header">
   <div class="header-container">
     <div class="header-left">
-      <nav class="nav-desktop">
+      <nav class="nav-desktop" aria-label="Primary navigation">
         {#each navItems as item, i}
           {#if item.group && (i === 0 || navItems[i - 1].group !== item.group)}
             {#if i > 0}
@@ -109,7 +114,7 @@ function handleSearchInput(event: Event) {
   </div>
 
   {#if mobileMenuOpen}
-    <nav class="nav-mobile">
+    <nav class="nav-mobile" aria-label="Primary navigation">
       {#each navItems as item}
         <a
           href={item.href}
@@ -126,6 +131,23 @@ function handleSearchInput(event: Event) {
       <div class="nav-mobile-children" onclick={closeMobileMenu} onkeydown={(e) => e.key === 'Enter' && closeMobileMenu()} role="presentation">
         {@render children?.()}
       </div>
+      {#if search}
+        <form class="mobile-search-form" onsubmit={handleMobileSearchSubmit}>
+          <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
+            <line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input
+            type="search"
+            class="mobile-search-input"
+            placeholder={search.placeholder}
+            aria-label="Search"
+            value={searchQuery}
+            oninput={handleSearchInput}
+          />
+          <button type="submit" class="mobile-search-submit">Search</button>
+        </form>
+      {/if}
     </nav>
   {/if}
 </header>
@@ -332,6 +354,10 @@ function handleSearchInput(event: Event) {
     display: none;
   }
 
+  .mobile-search-form {
+    display: none;
+  }
+
   @media (max-width: 640px) {
     .header-container {
       padding: 0 16px;
@@ -351,6 +377,40 @@ function handleSearchInput(event: Event) {
 
     .nav-mobile {
       display: block;
+    }
+
+    .mobile-search-form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .mobile-search-input {
+      min-width: 0;
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .mobile-search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+
+    .mobile-search-submit {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: var(--text);
+      color: var(--text-inv);
+      font-size: 13px;
+      font-weight: 600;
     }
   }
 </style>

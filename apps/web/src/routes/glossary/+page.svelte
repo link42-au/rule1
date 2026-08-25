@@ -163,7 +163,7 @@
 </div>
 
 <style>
-  .glossary-page { display: block; width: min(1100px, calc(100% - 48px)); margin: 0 auto; }
+  .glossary-page { display: block; width: min(1100px, 100%); min-width: 0; margin: 0 auto; }
   .frameworks { display: flex; flex-wrap: wrap; gap: 5px; margin: 16px 0; }
   button, input { border: 1px solid var(--border); border-radius: 7px; background: var(--bg-card); color: var(--text-mid); font: inherit; }
   button { padding: 5px 10px; cursor: pointer; }
@@ -184,4 +184,13 @@
   .term-detail article { padding: 11px 0; border-top: 1px solid var(--border); }
   .term-detail article > span { margin-left: 8px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; }
   .term-detail article p { color: var(--text-mid); font-size: 12px; line-height: 1.55; }
+
+  @media (max-width: 720px) {
+    .glossary-page { padding: 32px 16px 48px; }
+    .search-row { align-items: stretch; flex-wrap: wrap; }
+    .search-row input { order: 3; width: 100%; min-width: 0; }
+    .search-row span { margin-left: auto; }
+    .glossary-layout { grid-template-columns: minmax(0, 1fr); }
+    .term-detail { position: static; }
+  }
 </style>

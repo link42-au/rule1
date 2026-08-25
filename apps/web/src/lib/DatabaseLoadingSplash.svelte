@@ -171,4 +171,36 @@
     font-size: 13px;
     line-height: 1.6;
   }
+
+  @media (max-width: 480px) {
+    .database-splash {
+      padding: 16px;
+    }
+
+    .database-card {
+      width: 100%;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .database-mark {
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 21px;
+    }
+
+    .progress-copy {
+      flex-wrap: wrap;
+      gap: 4px 12px;
+    }
+
+    .retention-copy {
+      margin-top: 20px;
+      padding-top: 16px;
+    }
+  }
 </style>

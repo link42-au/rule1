@@ -27,4 +27,9 @@
   .lic-tag { display: inline-block; margin-bottom: 10px; padding: 3px 9px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg-subtle); color: var(--text-dim); font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
   h2 { margin: 0 0 14px; color: var(--text); font-size: 16px; letter-spacing: -0.02em; }
   p { margin: 0; color: var(--text-mid); font-size: 13px; line-height: 1.7; }
+
+  @media (max-width: 640px) {
+    .privacy-page { padding: 32px 16px 48px; }
+    .lic-section { margin-top: 32px; padding-bottom: 28px; }
+  }
 </style>

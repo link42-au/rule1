@@ -474,7 +474,25 @@ function handleWindowKeydown(e: KeyboardEvent) {
 
   @media (max-width: 640px) {
     .platform-bar {
-      padding: 0 16px;
+      padding: 0 12px;
+    }
+
+    .pb-nav {
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .pb-app,
+    .pb-app--active {
+      padding: 4px 5px;
+    }
+
+    .pb-more-wrap {
+      margin-left: 0;
+    }
+
+    .pb-more-trigger {
+      padding-inline: 5px;
     }
 
     .pb-name {
@@ -484,6 +502,10 @@ function handleWindowKeydown(e: KeyboardEvent) {
     .pb-more-dropdown {
       left: auto;
       right: 0;
+    }
+
+    .pb-theme-toggle {
+      margin-right: 0;
     }
   }
 </style>

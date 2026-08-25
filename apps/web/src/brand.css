@@ -13,12 +13,9 @@
   --accent-border: #1d4ed8;
 }
 
-body {
-  min-width: 960px;
-}
-
 main {
   flex: 1 0 auto;
+  min-width: 0;
 }
 
 .cl-main {
