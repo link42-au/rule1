@@ -510,9 +510,9 @@
   }
 
   .landing-fw-pill.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
+    background: var(--accent-solid);
+    color: var(--accent-solid-text);
+    border-color: var(--accent-solid);
   }
 
   .landing-fw-country {

@@ -1060,9 +1060,9 @@
   }
 
   .framework-pill.active {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: white;
+    border-color: var(--accent-solid);
+    background: var(--accent-solid);
+    color: var(--accent-solid-text);
   }
 
   .maturity-pill.active {
@@ -1439,7 +1439,7 @@
   .tag-count {
     border-color: var(--accent-border);
     background: var(--accent-bg);
-    color: var(--accent);
+    color: var(--accent-text);
   }
 
   .tag-e8 {

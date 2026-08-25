@@ -236,7 +236,7 @@
   button, select, input { border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-mid); font: inherit; }
   button { cursor: pointer; }
   .fw-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; }
-  .fw-pill.active, .cmp-pills button.active { border-color: var(--accent); background: var(--accent); color: white; }
+  .fw-pill.active, .cmp-pills button.active { border-color: var(--accent-solid); background: var(--accent-solid); color: var(--accent-solid-text); }
   .fw-country { font-size: 10px; opacity: 0.65; }
   .cmp-selectors { display: flex; align-items: end; gap: 16px; margin: 22px 0; }
   label { display: grid; gap: 5px; color: var(--text-dim); font-size: 11px; font-weight: 600; text-transform: uppercase; }

@@ -218,7 +218,7 @@
 
   .ctrl-row-id {
     margin-bottom: 1px;
-    color: var(--accent);
+    color: var(--accent-text);
     font-family: var(--font-mono);
     font-size: 12px;
     font-weight: 600;

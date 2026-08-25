@@ -1,6 +1,9 @@
 /* Rule1's original blue-accent visual language, retained for the standalone port. */
 [data-theme="light"] {
   --accent: #2563eb;
+  --accent-text: #2563eb;
+  --accent-solid: #2563eb;
+  --accent-solid-text: #ffffff;
   --accent-hover: #1d4ed8;
   --accent-bg: #eff6ff;
   --accent-border: #bfdbfe;
@@ -8,6 +11,9 @@
 
 [data-theme="dark"] {
   --accent: #3b82f6;
+  --accent-text: #60a5fa;
+  --accent-solid: #2563eb;
+  --accent-solid-text: #ffffff;
   --accent-hover: #2563eb;
   --accent-bg: #1e2e4a;
   --accent-border: #1d4ed8;

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 const source = async (path: string): Promise<string> => readFile(new URL(path, import.meta.url), "utf8");
 
 const tokens = await source("../../../../packages/tokens/src/tokens.css");
+const brand = await source("../brand.css");
 const reset = await source("../../../../packages/tokens/src/reset.css");
 const header = await source("../../../../packages/ui/src/Header.svelte");
 const layout = await source("./+layout.svelte");
@@ -46,6 +47,9 @@ describe("WCAG interaction and presentation repairs", () => {
       ["#f59e0b", "#2c2009"],
       ["#ef4444", "#2c1515"],
       ["#a78bfa", "#1e1730"],
+      ["#60a5fa", "#2c2c2b"],
+      ["#60a5fa", "#1e2e4a"],
+      ["#ffffff", "#2563eb"],
     ]) {
       expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5);
     }
@@ -55,6 +59,13 @@ describe("WCAG interaction and presentation repairs", () => {
     expect(explorer).toContain(
       '.applicability-pill[data-applicability="C"].active { background: #15803d; color: white; }',
     );
+    expect(brand).toContain("--accent-text: #60a5fa");
+    expect(brand).toContain("--accent-solid: #2563eb");
+    expect(tree).toMatch(/\.ctrl-row-id\s*\{[\s\S]*?color: var\(--accent-text\)/);
+    expect(explorer).toMatch(/\.framework-pill\.active\s*\{[\s\S]*?background: var\(--accent-solid\)/);
+    expect(explorer).toMatch(/\.tag-count\s*\{[\s\S]*?color: var\(--accent-text\)/);
+    expect(landing).toMatch(/\.landing-fw-pill\.active\s*\{[\s\S]*?background: var\(--accent-solid\)/);
+    expect(compare).toMatch(/\.fw-pill\.active,[\s\S]*?background: var\(--accent-solid\)/);
   });
 
   it("identifies current navigation and pressed filter state", () => {
