@@ -1,4 +1,4 @@
-import type { Control, Group } from "@rule1/shared";
+import type { Control, GlossaryTerm, Group, Revision } from "@rule1/shared";
 import { canonicalFrameworkId, type FrameworkId } from "$lib/db/contracts";
 
 export const FILTERS = ["all", "favourites", "e8", "ml1", "ml2", "ml3", "changed", "new", "withdrawn"] as const;
@@ -93,6 +93,54 @@ export function filterControls(
       .filter(Boolean)
       .some((value) => value!.toLowerCase().includes(query)),
   );
+}
+
+/** Select the same result the reviewed explorer search would open. */
+export function searchSelection(controls: readonly Control[], query: string): string | null {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return null;
+  const exact = controls.find(
+    (control) => control.id.toLowerCase() === normalized || control.display_id.toLowerCase() === normalized,
+  );
+  return exact?.id ?? controls[0]?.id ?? null;
+}
+
+/** The latest snapshot may be unchanged, so report the newest actual retained change. */
+export function latestRealChange(latest: Revision, history: readonly Revision[]): Revision | null {
+  return [latest, ...history].find((revision) => revision.change_type && revision.change_type !== "unchanged") ?? null;
+}
+
+export interface GlossarySegment {
+  text: string;
+  meaning?: string;
+}
+
+/**
+ * Split prose into renderable text/term segments. This keeps catalogue text as
+ * text nodes instead of constructing HTML from retained source material.
+ */
+export function glossarySegments(raw: string, terms: readonly GlossaryTerm[]): GlossarySegment[] {
+  if (terms.length === 0 || !raw) return [{ text: raw }];
+  const sorted = [...terms].filter((term) => term.term.trim()).sort((a, b) => b.term.length - a.term.length);
+  if (sorted.length === 0) return [{ text: raw }];
+  const meanings = new Map(sorted.map((term) => [term.term.toLowerCase(), term.meaning]));
+  const pattern = sorted.map((term) => term.term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  const regex = new RegExp(`\\b(${pattern})\\b`, "gi");
+  const segments: GlossarySegment[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  for (const match of raw.matchAll(regex)) {
+    const index = match.index ?? 0;
+    if (index > offset) segments.push({ text: raw.slice(offset, index) });
+    const text = match[0];
+    const key = text.toLowerCase();
+    const meaning = seen.has(key) ? undefined : meanings.get(key);
+    segments.push(meaning ? { text, meaning } : { text });
+    seen.add(key);
+    offset = index + text.length;
+  }
+  if (offset < raw.length) segments.push({ text: raw.slice(offset) });
+  return segments.length > 0 ? segments : [{ text: raw }];
 }
 
 export function controlsBySection(controls: readonly Control[]): Map<string, Control[]> {

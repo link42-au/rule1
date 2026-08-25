@@ -8,30 +8,25 @@
     bySection,
     selectedId,
     favourites,
+    openGroupIds,
     onSelect,
     onToggleFavourite,
+    onGroupToggle,
     depth = 0,
   }: {
     groups: Group[];
     bySection: Map<string, Control[]>;
     selectedId: string | null;
     favourites: Set<string>;
+    openGroupIds: Set<string>;
     onSelect: (id: string) => void;
     onToggleFavourite: (id: string) => void;
+    onGroupToggle: (id: string, open: boolean) => void;
     depth?: number;
   } = $props();
 
-  let openGroups = $state(new Set<string>());
-
   function groupIsOpen(group: Group): boolean {
-    return openGroups.has(group.id) || groupContainsControl(group, selectedId, bySection);
-  }
-
-  function updateGroupOpen(groupId: string, open: boolean): void {
-    const next = new Set(openGroups);
-    if (open) next.add(groupId);
-    else next.delete(groupId);
-    openGroups = next;
+    return openGroupIds.has(group.id) || groupContainsControl(group, selectedId, bySection);
   }
 </script>
 
@@ -41,8 +36,9 @@
     <details
       class="ctrl-group"
       class:ctrl-group-child={depth > 0}
+      data-group-id={group.id}
       open={groupIsOpen(group)}
-      ontoggle={(event) => updateGroupOpen(group.id, event.currentTarget.open)}
+      ontoggle={(event) => onGroupToggle(group.id, event.currentTarget.open)}
     >
       <summary class="ctrl-group-header" style:padding-left={`${8 + depth * 12}px`}>
         <span class="ctrl-group-chevron">▶</span>
@@ -57,8 +53,10 @@
             {bySection}
             {selectedId}
             {favourites}
+            {openGroupIds}
             {onSelect}
             {onToggleFavourite}
+            {onGroupToggle}
             depth={depth + 1}
           />
         {/if}

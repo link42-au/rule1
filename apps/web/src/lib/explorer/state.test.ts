@@ -6,8 +6,11 @@ import {
   controlsBySection,
   countGroupControls,
   filterControls,
+  glossarySegments,
   groupContainsControl,
+  latestRealChange,
   readExplorerUrl,
+  searchSelection,
   writeExplorerUrl,
   type ExplorerUrlState,
 } from "./state";
@@ -129,6 +132,13 @@ describe("explorer filters and hierarchy", () => {
     ]);
   });
 
+  it("opens an exact control ID before otherwise choosing the first filtered result", () => {
+    expect(searchSelection([controls[0], controls[1]], "ISM-2")).toBe("ism-2");
+    expect(searchSelection([controls[0], controls[1]], "security")).toBe("ism-1");
+    expect(searchSelection([], "missing")).toBeNull();
+    expect(searchSelection(controls, "")).toBeNull();
+  });
+
   it("counts controls through nested framework hierarchy", () => {
     const grouped = controlsBySection(controls);
     const group: Group = {
@@ -167,6 +177,33 @@ describe("explorer filters and hierarchy", () => {
     expect(groupContainsControl(identity, "ism-2", grouped)).toBe(true);
     expect(groupContainsControl(identity.children[0], "ism-2", grouped)).toBe(true);
     expect(groupContainsControl(identity, null, grouped)).toBe(false);
+  });
+});
+
+describe("explorer retained detail presentation", () => {
+  it("finds the newest actual change when the latest snapshot is unchanged", () => {
+    expect(
+      latestRealChange({ catalog_version: "v3", change_type: "unchanged" }, [
+        { catalog_version: "v3", change_type: "unchanged" },
+        { catalog_version: "v2", change_type: "modified" },
+        { catalog_version: "v1", change_type: "new" },
+      ]),
+    ).toMatchObject({ catalog_version: "v2", change_type: "modified" });
+    expect(latestRealChange({ change_type: "unchanged" }, [{ change_type: "unchanged" }])).toBeNull();
+  });
+
+  it("returns safe structured glossary segments only for retained terms", () => {
+    expect(glossarySegments("Use access control safely.", [])).toEqual([{ text: "Use access control safely." }]);
+    expect(
+      glossarySegments("Access control and access control <script> remain text.", [
+        { id: "access-control", term: "access control", meaning: 'Restrict <b>access</b> "carefully".' },
+      ]),
+    ).toEqual([
+      { text: "Access control", meaning: 'Restrict <b>access</b> "carefully".' },
+      { text: " and " },
+      { text: "access control" },
+      { text: " <script> remain text." },
+    ]);
   });
 });
 

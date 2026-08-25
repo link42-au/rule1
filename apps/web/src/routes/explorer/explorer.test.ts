@@ -7,6 +7,7 @@ const layoutSource = await readFile(new URL("../+layout.svelte", import.meta.url
 const historySource = await readFile(new URL("../../lib/explorer/HistoryPanel.svelte", import.meta.url), "utf8");
 const mappingSource = await readFile(new URL("../../lib/explorer/MappingPanel.svelte", import.meta.url), "utf8");
 const contextSource = await readFile(new URL("../../lib/explorer/ContextPanel.svelte", import.meta.url), "utf8");
+const glossaryTextSource = await readFile(new URL("../../lib/explorer/GlossaryText.svelte", import.meta.url), "utf8");
 
 describe("reviewed Rule1 explorer", () => {
   it("uses only the browser-local typed client for framework, hierarchy, list, and detail data", () => {
@@ -29,9 +30,9 @@ describe("reviewed Rule1 explorer", () => {
   });
 
   it("auto-opens only the selected control's ancestor groups", () => {
-    expect(treeSource).toContain("openGroups.has(group.id) || groupContainsControl(group, selectedId, bySection)");
+    expect(treeSource).toContain("openGroupIds.has(group.id) || groupContainsControl(group, selectedId, bySection)");
     expect(treeSource).toContain("{#if groupIsOpen(group)}");
-    expect(treeSource).toContain("ontoggle={(event) => updateGroupOpen(group.id, event.currentTarget.open)}");
+    expect(treeSource).toContain("ontoggle={(event) => onGroupToggle(group.id, event.currentTarget.open)}");
     expect(treeSource).not.toContain("depth === 0 && selectedId !== null");
   });
 
@@ -124,7 +125,7 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).toContain('candidate === "changelog" || candidate === "context"');
     expect(explorerSource).toContain('url.searchParams.set("tab", activeTab)');
     expect(explorerSource).not.toContain("CompareResponse");
-    expect(explorerSource).not.toContain("GlossaryTerm");
+    expect(explorerSource).toContain("client.terms({ framework: nextFramework })");
   });
 
   it("keeps favourites, imports, and control exports browser-local", () => {
@@ -168,7 +169,33 @@ describe("reviewed Rule1 explorer", () => {
   it("shows the compact old-style latest change card from retained catalogue data", () => {
     expect(explorerSource).toContain('class="latest-change-section"');
     expect(explorerSource).toContain("Latest change");
-    expect(explorerSource).toContain("data-change={detail.latest.change_type}");
-    expect(explorerSource).toContain('detail.latest.catalog_version ?? "Latest catalogue"');
+    expect(explorerSource).toContain("latestRealChange(detail.latest, detail.history)");
+    expect(explorerSource).toContain("data-change={latestChange.change_type}");
+    expect(explorerSource).toContain('latestChange.catalog_version ?? "Latest catalogue"');
+  });
+
+  it("uses the global debounced search and opens exact, first, or no results", () => {
+    expect(explorerSource).not.toContain('id="explorer-search"');
+    expect(explorerSource).toContain("searchSelection(matches, search)");
+    expect(explorerSource).toContain("if (match) await selectControl(match, false)");
+    expect(explorerSource).toContain("else clearSelection()");
+    expect(layoutSource).toContain("onInput: searchControls");
+    expect(layoutSource).toContain("value: headerSearchValue");
+    expect(layoutSource).toContain('page.url.searchParams.get("search") ?? ""');
+  });
+
+  it("controls hierarchy expansion from interactive breadcrumb ancestors", () => {
+    expect(explorerSource).toContain("function revealBreadcrumbGroup(group: Group)");
+    expect(explorerSource).toContain("openGroupIds = next");
+    expect(explorerSource).toContain("scrollIntoView");
+    expect(treeSource).toContain("data-group-id={group.id}");
+    expect(treeSource).toContain("{openGroupIds}");
+  });
+
+  it("renders retained glossary annotations as structured text without raw HTML", () => {
+    expect(explorerSource).toContain("<GlossaryText");
+    expect(glossaryTextSource).toContain("{#each segments as segment}");
+    expect(glossaryTextSource).toContain("title={segment.meaning}");
+    expect(glossaryTextSource).not.toContain("{@html");
   });
 });

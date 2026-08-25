@@ -1,12 +1,13 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import { afterNavigate } from "$app/navigation";
-  import type { Control, ControlDetail, Framework, GraphData, Group, Revision } from "@rule1/shared";
+  import { afterNavigate, replaceState } from "$app/navigation";
+  import type { Control, ControlDetail, Framework, GlossaryTerm, GraphData, Group, Revision } from "@rule1/shared";
   import { showToast } from "@link42/ui";
   import { onMount } from "svelte";
   import type { E8Mapping, Rule1DataClient } from "$lib/db/contracts";
   import { openRule1DataClient } from "$lib/db/rpc";
   import ControlTree from "$lib/explorer/ControlTree.svelte";
+  import GlossaryText from "$lib/explorer/GlossaryText.svelte";
   import ContextPanel from "$lib/explorer/ContextPanel.svelte";
   import HistoryPanel from "$lib/explorer/HistoryPanel.svelte";
   import MappingPanel from "$lib/explorer/MappingPanel.svelte";
@@ -26,6 +27,8 @@
     controlsBySection,
     filterControls,
     readExplorerUrl,
+    latestRealChange,
+    searchSelection,
     writeExplorerUrl,
     type Applicability,
     type ExplorerFilter,
@@ -58,6 +61,8 @@
   let mappingVersion = $state<string | null>(null);
   let mappingStatus = $state<RelatedStatus>("idle");
   let favourites = $state(new Set<string>());
+  let glossaryTerms = $state<GlossaryTerm[]>([]);
+  let openGroupIds = $state(new Set<string>());
   let favouriteStorage: StorageLike | undefined;
   let favouriteInput: HTMLInputElement | undefined = $state();
   let client: Rule1DataClient | null = null;
@@ -72,6 +77,7 @@
   let isISM = $derived(framework === "ism");
   let changeCount = $derived(detail?.history.filter((revision) => revision.change_type === "modified").length ?? 0);
   let relatedCount = $derived(graph?.nodes.filter((node) => node.data.role === "neighbor").length ?? 0);
+  let latestChange = $derived(detail ? latestRealChange(detail.latest, detail.history) : null);
   let detailBreadcrumb = $derived.by(() => {
     if (!detail) return [];
     const sectionId = controls.find((control) => control.id === detail?.id)?.section_id ?? detail.section_id;
@@ -122,7 +128,7 @@
     const url = writeExplorerUrl(new URL(window.location.href), currentUrlState());
     if (activeTab === "overview") url.searchParams.delete("tab");
     else url.searchParams.set("tab", activeTab);
-    history.replaceState(null, "", url);
+    replaceState(url, {});
   }
 
   function resetRelatedData(): void {
@@ -146,6 +152,27 @@
     detail = null;
     detailStatus = "idle";
     if (resetTab) activeTab = "overview";
+  }
+
+  function updateGroupOpen(id: string, open: boolean): void {
+    const next = new Set(openGroupIds);
+    if (open) next.add(id);
+    else next.delete(id);
+    openGroupIds = next;
+  }
+
+  function revealBreadcrumbGroup(group: Group): void {
+    const index = detailBreadcrumb.findIndex((candidate) => candidate.id === group.id);
+    const next = new Set(openGroupIds);
+    for (const ancestor of detailBreadcrumb.slice(0, index + 1)) next.add(ancestor.id);
+    openGroupIds = next;
+    requestAnimationFrame(() => {
+      const escaped = CSS.escape(group.id);
+      document.querySelector<HTMLElement>(`.ctrl-group[data-group-id="${escaped}"]`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   }
 
   function tabFromUrl(url: URL): DetailTab {
@@ -335,18 +362,26 @@
     framework = nextFramework;
     controls = [];
     groups = [];
+    glossaryTerms = [];
+    openGroupIds = new Set();
     clearSelection(false);
     status = "loading";
     try {
-      const [controlResult, groupResult] = await Promise.all([
+      const [controlResult, groupResult, termResult] = await Promise.all([
         client.controls({ framework: nextFramework }),
         client.groups({ framework: nextFramework }),
+        client.terms({ framework: nextFramework }).catch(() => ({ terms: [], total: 0 })),
       ]);
       if (!listRequests.isCurrent(request) || framework !== nextFramework) return;
       controls = controlResult.controls;
       groups = groupResult;
+      glossaryTerms = termResult.terms;
       status = "ready";
       if (deepLink) await selectControl(deepLink, false);
+      else if (search) {
+        await selectSearchResult(false);
+        syncUrl();
+      }
     } catch {
       if (!listRequests.isCurrent(request)) return;
       status = "error";
@@ -367,20 +402,28 @@
 
   function changeFilter(nextFilter: ExplorerFilter): void {
     filter = nextFilter;
-    clearSelection();
-    syncUrl();
+    if (search) void selectSearchResult();
+    else {
+      clearSelection();
+      syncUrl();
+    }
   }
 
   function toggleApplicability(nextApplicability: Exclude<Applicability, "">): void {
     applicability = applicability === nextApplicability ? "" : nextApplicability;
-    clearSelection();
-    syncUrl();
+    if (search) void selectSearchResult();
+    else {
+      clearSelection();
+      syncUrl();
+    }
   }
 
-  function updateSearch(value: string): void {
-    search = value;
-    clearSelection();
-    syncUrl();
+  async function selectSearchResult(updateUrl = true): Promise<void> {
+    const matches = filterControls(controls, filter, applicability, search, favourites);
+    const match = searchSelection(matches, search);
+    if (match) await selectControl(match, false);
+    else clearSelection();
+    if (updateUrl) syncUrl();
   }
 
   async function applyNavigatedUrl(url: URL): Promise<void> {
@@ -395,8 +438,14 @@
       syncUrl();
     } else if (next.selectedId) {
       await selectControl(next.selectedId, false);
+      syncUrl();
+    } else if (next.search) {
+      clearSelection();
+      syncUrl();
+      await selectSearchResult();
     } else {
       clearSelection();
+      syncUrl();
     }
   }
 
@@ -481,16 +530,6 @@
         {/each}
       </div>
 
-      <label class="search-label" for="explorer-search">Search controls</label>
-      <input
-        id="explorer-search"
-        class="search-input"
-        type="search"
-        placeholder="ID, title, or description"
-        value={search}
-        oninput={(event) => updateSearch(event.currentTarget.value)}
-      />
-
       <div class="filter-group-label">Control filters</div>
       <div class="filter-row">
         {#each [
@@ -556,8 +595,10 @@
           {bySection}
           {selectedId}
           {favourites}
+          {openGroupIds}
           onSelect={(id) => void selectControl(id)}
           onToggleFavourite={toggleFavourite}
+          onGroupToggle={updateGroupOpen}
         />
         {#each bySection.get("__none__") ?? [] as control (control.id)}
           <button
@@ -591,7 +632,7 @@
           <nav class="breadcrumb" aria-label="Breadcrumb">
             {#if detailBreadcrumb.length > 0}
               {#each detailBreadcrumb as group}
-                <span>{group.title}</span><span class="breadcrumb-separator">›</span>
+                <button type="button" onclick={() => revealBreadcrumbGroup(group)}>{group.title}</button><span class="breadcrumb-separator">›</span>
               {/each}
             {:else if detail.section}
               <span>{detail.section}</span><span class="breadcrumb-separator">›</span>
@@ -666,12 +707,12 @@
               <div class="section-label">
                 <span>Description</span><span>{detail.latest.catalog_version ?? "Latest"}</span>
               </div>
-              <p>{detail.latest.statement ?? "No description is available for this control."}</p>
+              <p><GlossaryText text={detail.latest.statement ?? "No description is available for this control."} terms={glossaryTerms} /></p>
             </section>
             {#if detail.section_overview}
               <section class="overview-card">
                 <h2>Section overview</h2>
-                <p>{detail.section_overview}</p>
+                <p><GlossaryText text={detail.section_overview} terms={glossaryTerms} /></p>
               </section>
             {/if}
             {#if isISM}
@@ -683,12 +724,12 @@
                 status={mappingStatus}
               />
             {/if}
-            {#if detail.latest.change_type && detail.latest.change_type !== "unchanged"}
+            {#if latestChange}
               <section class="latest-change-section">
                 <h2>Latest change</h2>
                 <div class="latest-change-card">
-                  <span class="tag tag-change" data-change={detail.latest.change_type}>{detail.latest.change_type}</span>
-                  <span>{detail.latest.catalog_version ?? "Latest catalogue"}</span>
+                  <span class="tag tag-change" data-change={latestChange.change_type}>{latestChange.change_type}</span>
+                  <span>{latestChange.catalog_version ?? "Latest catalogue"}</span>
                 </div>
               </section>
             {/if}
@@ -755,7 +796,6 @@
   }
 
   .filter-group-label,
-  .search-label,
   .sidebar-section-label,
   .section-label {
     display: block;
@@ -846,23 +886,6 @@
   .applicability-pill[data-applicability="C"].active { background: #16a34a; color: white; }
   .applicability-pill[data-applicability="S"].active { background: #db2777; color: white; }
   .applicability-pill[data-applicability="TS"].active { background: #dc2626; color: white; }
-
-  .search-input {
-    width: 100%;
-    padding: 7px 9px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg-card);
-    color: var(--text);
-    font: inherit;
-    font-size: 12px;
-  }
-
-  .search-input:focus {
-    border-color: var(--accent);
-    outline: none;
-    box-shadow: 0 0 0 2px var(--accent-bg);
-  }
 
   .sidebar-section-label {
     margin: 0;
@@ -980,6 +1003,21 @@
 
   .breadcrumb [aria-current="page"] {
     color: var(--text);
+  }
+
+  .breadcrumb button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .breadcrumb button:hover,
+  .breadcrumb button:focus-visible {
+    color: var(--accent);
+    text-decoration: underline;
   }
 
   .breadcrumb-separator {

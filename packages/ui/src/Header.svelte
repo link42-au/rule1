@@ -9,6 +9,8 @@ interface NavItem {
 interface SearchConfig {
 	placeholder: string;
 	onSubmit: (query: string) => void;
+	onInput?: (query: string) => void;
+	value?: string;
 }
 
 interface Props {
@@ -23,6 +25,14 @@ let { appName, navItems, activePath, search, children }: Props = $props();
 
 let mobileMenuOpen = $state(false);
 let searchQuery = $state("");
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+$effect(() => {
+	const value = search?.value;
+	if (value !== undefined) searchQuery = value;
+});
+
+$effect(() => () => clearTimeout(searchTimer));
 
 function toggleMobileMenu() {
 	mobileMenuOpen = !mobileMenuOpen;
@@ -34,9 +44,15 @@ function closeMobileMenu() {
 
 function handleSearchSubmit(e: Event) {
 	e.preventDefault();
-	if (search && searchQuery.trim()) {
-		search.onSubmit(searchQuery.trim());
-	}
+	if (!search) return;
+	clearTimeout(searchTimer);
+	search.onSubmit(searchQuery.trim());
+}
+
+function handleSearchInput(event: Event) {
+	searchQuery = (event.currentTarget as HTMLInputElement).value;
+	clearTimeout(searchTimer);
+	searchTimer = setTimeout(() => search?.onInput?.(searchQuery.trim()), 250);
 }
 </script>
 
@@ -78,7 +94,8 @@ function handleSearchSubmit(e: Event) {
             class="search-input"
             placeholder={search.placeholder}
             aria-label="Search"
-            bind:value={searchQuery}
+            value={searchQuery}
+            oninput={handleSearchInput}
           />
         </form>
       {/if}

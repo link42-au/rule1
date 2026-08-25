@@ -11,6 +11,7 @@
   import "../brand.css";
 
   let { children } = $props();
+  let headerSearchValue = $state("");
 
   const appPath = (path: string): string => `${base}${path}`;
   const navItems = [
@@ -23,13 +24,22 @@
   const catalogueBackedRoute = $derived(page.route.id !== null && catalogueRouteIds.has(page.route.id));
 
   function searchControls(query: string): void {
+    headerSearchValue = query;
     const params = page.url.pathname === appPath("/explorer/") ? new URLSearchParams(page.url.searchParams) : new URLSearchParams();
     params.delete("search");
     params.delete("id");
     params.delete("tab");
     if (query) params.set("search", query);
-    goto(`${appPath("/explorer/")}${params.size > 0 ? `?${params}` : ""}`);
+    goto(`${appPath("/explorer/")}${params.size > 0 ? `?${params}` : ""}`, {
+      keepFocus: true,
+      noScroll: true,
+      replaceState: page.url.pathname === appPath("/explorer/"),
+    });
   }
+
+  $effect(() => {
+    headerSearchValue = page.url.searchParams.get("search") ?? "";
+  });
 
   onMount(() => theme.init());
 </script>
@@ -47,7 +57,12 @@
 <Header
   {navItems}
   activePath={page.url.pathname}
-  search={{ placeholder: "Search controls…", onSubmit: searchControls }}
+  search={{
+    placeholder: "Search controls…",
+    value: headerSearchValue,
+    onInput: searchControls,
+    onSubmit: searchControls,
+  }}
 />
 
 <main id="main-content">{@render children()}</main>
