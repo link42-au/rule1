@@ -73,7 +73,10 @@
             onkeydown={(event) => (event.key === "Enter" || event.key === " ") && onSelect(control.id)}
           >
             <span class="ctrl-row-content">
-              <span class="ctrl-row-id">{control.display_id}</span>
+              <span class="ctrl-row-id">
+                {control.display_id}
+                {#if control.change_type === "withdrawn"}<span class="withdrawn-badge">Withdrawn</span>{/if}
+              </span>
               {#if control.title && !control.title.startsWith("Control: ")}
                 <span class="ctrl-row-title">{control.title}</span>
               {/if}
@@ -241,5 +244,21 @@
   .ctrl-row.withdrawn .ctrl-row-id {
     color: var(--text-dim);
     text-decoration: line-through;
+  }
+
+  .withdrawn-badge {
+    display: inline-flex;
+    margin-left: 5px;
+    padding: 1px 5px;
+    border: 1px solid var(--red-border);
+    border-radius: 4px;
+    background: var(--red-bg);
+    color: var(--red);
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 650;
+    line-height: 1.3;
+    text-decoration: none;
+    vertical-align: 1px;
   }
 </style>

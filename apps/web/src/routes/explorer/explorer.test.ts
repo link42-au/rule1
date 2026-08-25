@@ -192,6 +192,35 @@ describe("reviewed Rule1 explorer", () => {
     expect(treeSource).toContain("{openGroupIds}");
   });
 
+  it("restores bounded persistent sidebar resizing and controlled hierarchy actions", () => {
+    expect(explorerSource).toMatch(/style:--sidebar-width=\{`\$\{sidebarWidth\}px`\}/);
+    expect(explorerSource).toContain('window.localStorage.getItem("rule1-sidebar-width")');
+    expect(explorerSource).toContain('window.localStorage.setItem("rule1-sidebar-width", String(sidebarWidth))');
+    expect(explorerSource).toContain('aria-label="Resize control navigation"');
+    expect(explorerSource).toContain("openGroupIds = allGroupsExpanded ? new Set() : new Set(expandableIds)");
+    expect(explorerSource).toContain('"Collapse all" : "Expand all"');
+  });
+
+  it("restores the reviewed ISM filter labels and state-specific active colours", () => {
+    for (const label of ["Protected", "Confidential", "Secret", "Top Secret"]) {
+      expect(explorerSource).toContain(`label: "${label}"`);
+    }
+    expect(explorerSource).toContain('{#each ["ml1", "ml2", "ml3"] as value}');
+    expect(explorerSource).not.toContain('{#each ["e8", "ml1", "ml2", "ml3"] as value}');
+    expect(explorerSource).toContain('.control-filter-pill[data-filter="favourites"].active');
+    expect(explorerSource).toContain('.control-filter-pill[data-filter="withdrawn"].active');
+    expect(explorerSource).toContain('.applicability-pill[data-applicability="NC"].active');
+    expect(explorerSource).toContain('.applicability-pill[data-applicability="OS"].active');
+  });
+
+  it("shows retained change frequency honestly and explicit withdrawn tree badges", () => {
+    expect(explorerSource).toContain("changeFrequency(detail?.history ?? [])");
+    expect(explorerSource).toContain("No dated changes are retained for this control.");
+    expect(explorerSource).toContain('class="spark-column"');
+    expect(treeSource).toContain('{#if control.change_type === "withdrawn"}');
+    expect(treeSource).toContain('class="withdrawn-badge"');
+  });
+
   it("renders retained glossary annotations as structured text without raw HTML", () => {
     expect(explorerSource).toContain("<GlossaryText");
     expect(glossaryTextSource).toContain("{#each segments as segment}");

@@ -7,6 +7,15 @@ export type ExplorerFilter = (typeof FILTERS)[number];
 export const APPLICABILITY = ["NC", "OS", "P", "C", "S", "TS"] as const;
 export type Applicability = (typeof APPLICABILITY)[number] | "";
 
+export const SIDEBAR_WIDTH_DEFAULT = 310;
+export const SIDEBAR_WIDTH_MIN = 180;
+export const SIDEBAR_WIDTH_MAX = 480;
+
+export interface ChangeFrequencyPoint {
+  year: number;
+  changes: number;
+}
+
 export interface ExplorerUrlState {
   framework: FrameworkId;
   filter: ExplorerFilter;
@@ -108,6 +117,47 @@ export function searchSelection(controls: readonly Control[], query: string): st
 /** The latest snapshot may be unchanged, so report the newest actual retained change. */
 export function latestRealChange(latest: Revision, history: readonly Revision[]): Revision | null {
   return [latest, ...history].find((revision) => revision.change_type && revision.change_type !== "unchanged") ?? null;
+}
+
+export function clampSidebarWidth(value: unknown): number {
+  const parsed = typeof value === "number" ? value : Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed)) return SIDEBAR_WIDTH_DEFAULT;
+  return Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, Math.round(parsed)));
+}
+
+export function expandableGroupIds(
+  groups: readonly Group[],
+  grouped: ReadonlyMap<string, readonly Control[]>,
+): Set<string> {
+  const ids = new Set<string>();
+  const visit = (items: readonly Group[]): void => {
+    for (const group of items) {
+      if (countGroupControls(group, grouped) === 0) continue;
+      ids.add(group.id);
+      visit(group.children);
+    }
+  };
+  visit(groups);
+  return ids;
+}
+
+/** Build a compact, continuous yearly series from the retained local revision history. */
+export function changeFrequency(history: readonly Revision[]): ChangeFrequencyPoint[] {
+  const counts = new Map<number, number>();
+  for (const revision of history) {
+    if (!revision.change_type || revision.change_type === "unchanged") continue;
+    const sourceDate = revision.commit_date ?? revision.catalog_version ?? "";
+    const year = Number.parseInt(sourceDate.slice(0, 4), 10);
+    if (!Number.isInteger(year) || year < 1900 || year > 2200) continue;
+    counts.set(year, (counts.get(year) ?? 0) + 1);
+  }
+  if (counts.size === 0) return [];
+  const years = [...counts.keys()].sort((left, right) => left - right);
+  const points: ChangeFrequencyPoint[] = [];
+  for (let year = years[0]; year <= years.at(-1)!; year++) {
+    points.push({ year, changes: counts.get(year) ?? 0 });
+  }
+  return points;
 }
 
 export interface GlossarySegment {

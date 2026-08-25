@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import { FRAMEWORK_IDS } from "$lib/db/contracts";
 import {
   LatestRequest,
+  changeFrequency,
+  clampSidebarWidth,
   controlsBySection,
   countGroupControls,
+  expandableGroupIds,
   filterControls,
   glossarySegments,
   groupContainsControl,
@@ -178,6 +181,30 @@ describe("explorer filters and hierarchy", () => {
     expect(groupContainsControl(identity.children[0], "ism-2", grouped)).toBe(true);
     expect(groupContainsControl(identity, null, grouped)).toBe(false);
   });
+
+  it("collects only visible hierarchy groups for expand all", () => {
+    const grouped = controlsBySection(controls.slice(0, 2));
+    const groups: Group[] = [
+      {
+        id: "root",
+        title: "Root",
+        parent_id: null,
+        control_count: 0,
+        children: [
+          { id: "patching", title: "Patching", parent_id: "root", control_count: 1, children: [] },
+          { id: "empty", title: "Empty", parent_id: "root", control_count: 0, children: [] },
+        ],
+      },
+    ];
+    expect([...expandableGroupIds(groups, grouped)]).toEqual(["root", "patching"]);
+  });
+
+  it("clamps persisted sidebar widths to the reviewed desktop bounds", () => {
+    expect(clampSidebarWidth("420")).toBe(420);
+    expect(clampSidebarWidth(50)).toBe(180);
+    expect(clampSidebarWidth(900)).toBe(480);
+    expect(clampSidebarWidth("not-a-width")).toBe(310);
+  });
 });
 
 describe("explorer retained detail presentation", () => {
@@ -204,6 +231,24 @@ describe("explorer retained detail presentation", () => {
       { text: "access control" },
       { text: " <script> remain text." },
     ]);
+  });
+
+  it("builds a continuous change-frequency series and stays honest when dates are absent", () => {
+    expect(
+      changeFrequency([
+        { commit_date: "2022-01-10", change_type: "new" },
+        { commit_date: "2022-06-01", change_type: "modified" },
+        { catalog_version: "2024-03", change_type: "withdrawn" },
+        { commit_date: "2025-01-01", change_type: "unchanged" },
+      ]),
+    ).toEqual([
+      { year: 2022, changes: 2 },
+      { year: 2023, changes: 0 },
+      { year: 2024, changes: 1 },
+    ]);
+    expect(
+      changeFrequency([{ change_type: "modified" }, { commit_date: "2026-01-01", change_type: "unchanged" }]),
+    ).toEqual([]);
   });
 });
 

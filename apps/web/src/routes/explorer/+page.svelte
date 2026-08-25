@@ -24,7 +24,11 @@
   import {
     APPLICABILITY,
     LatestRequest,
+    SIDEBAR_WIDTH_DEFAULT,
+    changeFrequency,
+    clampSidebarWidth,
     controlsBySection,
+    expandableGroupIds,
     filterControls,
     readExplorerUrl,
     latestRealChange,
@@ -65,6 +69,10 @@
   let openGroupIds = $state(new Set<string>());
   let favouriteStorage: StorageLike | undefined;
   let favouriteInput: HTMLInputElement | undefined = $state();
+  let sidebarWidth = $state(SIDEBAR_WIDTH_DEFAULT);
+  let resizingSidebar = $state(false);
+  let resizeStartX = 0;
+  let resizeStartWidth = SIDEBAR_WIDTH_DEFAULT;
   let client: Rule1DataClient | null = null;
 
   const listRequests = new LatestRequest();
@@ -78,6 +86,10 @@
   let changeCount = $derived(detail?.history.filter((revision) => revision.change_type === "modified").length ?? 0);
   let relatedCount = $derived(graph?.nodes.filter((node) => node.data.role === "neighbor").length ?? 0);
   let latestChange = $derived(detail ? latestRealChange(detail.latest, detail.history) : null);
+  let frequency = $derived(changeFrequency(detail?.history ?? []));
+  let maxFrequency = $derived(Math.max(1, ...frequency.map((point) => point.changes)));
+  let expandableIds = $derived(expandableGroupIds(groups, bySection));
+  let allGroupsExpanded = $derived(expandableIds.size > 0 && [...expandableIds].every((id) => openGroupIds.has(id)));
   let detailBreadcrumb = $derived.by(() => {
     if (!detail) return [];
     const sectionId = controls.find((control) => control.id === detail?.id)?.section_id ?? detail.section_id;
@@ -159,6 +171,37 @@
     if (open) next.add(id);
     else next.delete(id);
     openGroupIds = next;
+  }
+
+  function toggleAllGroups(): void {
+    openGroupIds = allGroupsExpanded ? new Set() : new Set(expandableIds);
+  }
+
+  function beginSidebarResize(event: PointerEvent): void {
+    if (event.button !== 0) return;
+    resizingSidebar = true;
+    resizeStartX = event.clientX;
+    resizeStartWidth = sidebarWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    event.currentTarget instanceof HTMLElement && event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function resizeSidebar(event: PointerEvent): void {
+    if (!resizingSidebar) return;
+    sidebarWidth = clampSidebarWidth(resizeStartWidth + event.clientX - resizeStartX);
+  }
+
+  function finishSidebarResize(): void {
+    if (!resizingSidebar) return;
+    resizingSidebar = false;
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+    try {
+      window.localStorage.setItem("rule1-sidebar-width", String(sidebarWidth));
+    } catch {
+      // Resizing remains useful for this session when storage is unavailable.
+    }
   }
 
   function revealBreadcrumbGroup(group: Group): void {
@@ -461,6 +504,7 @@
       try {
         try {
           favouriteStorage = window.localStorage;
+          sidebarWidth = clampSidebarWidth(window.localStorage.getItem("rule1-sidebar-width"));
         } catch {
           favouriteStorage = undefined;
         }
@@ -502,6 +546,8 @@
       historyRequests.cancel();
       graphRequests.cancel();
       mappingRequests.cancel();
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
       client = null;
       if (closeClient) void closeClient();
     };
@@ -514,7 +560,9 @@
   <link rel="canonical" href="https://wan0.net/rule1/explorer/" />
 </svelte:head>
 
-<div class="explorer">
+<svelte:window onpointermove={resizeSidebar} onpointerup={finishSidebarResize} onpointercancel={finishSidebarResize} />
+
+<div class="explorer" style:--sidebar-width={`${sidebarWidth}px`}>
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="filter-group-label">Framework</div>
@@ -541,7 +589,8 @@
         ] as item}
           <button
             type="button"
-            class="filter-pill"
+            class="filter-pill control-filter-pill"
+            data-filter={item.value}
             class:active={filter === item.value}
             onclick={() => changeFilter(item.value as ExplorerFilter)}
           >{item.label}</button>
@@ -556,7 +605,7 @@
       {#if isISM}
         <div class="filter-group-label">Essential 8</div>
         <div class="filter-row">
-          {#each ["e8", "ml1", "ml2", "ml3"] as value}
+          {#each ["ml1", "ml2", "ml3"] as value}
             <button
               type="button"
               class="filter-pill maturity-pill"
@@ -568,20 +617,36 @@
 
         <div class="filter-group-label">Data classification</div>
         <div class="filter-row">
-          {#each APPLICABILITY as value}
+          {#each [
+            { value: "NC", label: "NC" },
+            { value: "OS", label: "OS" },
+            { value: "P", label: "Protected" },
+            { value: "C", label: "Confidential" },
+            { value: "S", label: "Secret" },
+            { value: "TS", label: "Top Secret" },
+          ] as item}
             <button
               type="button"
               class="filter-pill applicability-pill"
-              class:active={applicability === value}
-              data-applicability={value}
-              onclick={() => toggleApplicability(value)}
-            >{value}</button>
+              class:active={applicability === item.value}
+              data-applicability={item.value}
+              onclick={() => toggleApplicability(item.value as (typeof APPLICABILITY)[number])}
+            >{item.label}</button>
           {/each}
         </div>
       {/if}
     </div>
 
-    <div class="sidebar-section-label">Controls list <span>({filtered.length})</span></div>
+    <div class="sidebar-section-row">
+      <div class="sidebar-section-label">Controls list <span>({filtered.length})</span></div>
+      <button
+        type="button"
+        class="hierarchy-toggle"
+        aria-label={allGroupsExpanded ? "Collapse all control groups" : "Expand all control groups"}
+        title={allGroupsExpanded ? "Collapse all" : "Expand all"}
+        onclick={toggleAllGroups}
+      >{allGroupsExpanded ? "Collapse all" : "Expand all"}</button>
+    </div>
     <div class="control-list">
       {#if status === "loading"}
         <p class="list-state" aria-live="polite">Loading local controls…</p>
@@ -608,12 +673,25 @@
             onclick={() => void selectControl(control.id)}
           >
             <strong>{control.display_id}</strong>
+            {#if control.change_type === "withdrawn"}<span class="withdrawn-badge">Withdrawn</span>{/if}
             <span>{control.statement ?? control.title ?? "No description available."}</span>
           </button>
         {/each}
       {/if}
     </div>
   </aside>
+
+  <div
+    class="resize-handle"
+    class:active={resizingSidebar}
+    role="separator"
+    aria-label="Resize control navigation"
+    aria-orientation="vertical"
+    aria-valuemin="180"
+    aria-valuemax="480"
+    aria-valuenow={sidebarWidth}
+    onpointerdown={beginSidebarResize}
+  ></div>
 
   <section class="detail-panel" aria-live="polite">
     {#if detailStatus === "loading"}
@@ -744,6 +822,29 @@
                 {/if}
               </div>
             </section>
+            <section class="change-frequency" aria-label="Change frequency">
+              <h2>Change frequency</h2>
+              {#if frequency.length > 0}
+                <div class="sparkline">
+                  {#each frequency as point (point.year)}
+                    <span
+                      class="spark-column"
+                      class:has-change={point.changes > 0}
+                      class:major-change={point.changes > 1}
+                      style:height={`${Math.max(3, Math.round((point.changes / maxFrequency) * 32))}px`}
+                      title={`${point.year}${point.changes > 0 ? `: ${point.changes} change${point.changes === 1 ? "" : "s"}` : ": no retained changes"}`}
+                    ></span>
+                  {/each}
+                </div>
+                <div class="spark-axis">
+                  <span>{frequency[0].year}</span>
+                  {#if frequency.length > 2}<span>{frequency[Math.floor(frequency.length / 2)].year}</span>{/if}
+                  {#if frequency.length > 1}<span>{frequency.at(-1)?.year}</span>{/if}
+                </div>
+              {:else}
+                <p class="spark-empty">No dated changes are retained for this control.</p>
+              {/if}
+            </section>
             <div class="control-exports" aria-label="Export control">
               <span>Export control</span>
               <button type="button" onclick={() => downloadControl("json")}>JSON</button>
@@ -774,7 +875,7 @@
 
   .explorer {
     display: grid;
-    grid-template-columns: 310px minmax(0, 1fr);
+    grid-template-columns: var(--sidebar-width, 310px) 5px minmax(0, 1fr);
     height: calc(100vh - 150px);
     min-height: 560px;
     overflow: hidden;
@@ -786,8 +887,20 @@
     min-width: 0;
     flex-direction: column;
     overflow: hidden;
-    border-right: 1px solid var(--border);
     background: var(--bg-subtle);
+  }
+
+  .resize-handle {
+    z-index: 5;
+    border-left: 1px solid var(--border);
+    background: transparent;
+    cursor: col-resize;
+    transition: border-color 0.12s;
+  }
+
+  .resize-handle:hover,
+  .resize-handle.active {
+    border-left-color: var(--accent);
   }
 
   .sidebar-header {
@@ -843,6 +956,18 @@
     color: var(--text-inv);
   }
 
+  .control-filter-pill[data-filter="favourites"].active {
+    border-color: var(--amber);
+    background: var(--amber);
+    color: white;
+  }
+
+  .control-filter-pill[data-filter="withdrawn"].active {
+    border-color: var(--red);
+    background: var(--red);
+    color: white;
+  }
+
   .favourite-actions {
     display: flex;
     gap: 5px;
@@ -887,14 +1012,45 @@
   .applicability-pill[data-applicability="S"].active { background: #db2777; color: white; }
   .applicability-pill[data-applicability="TS"].active { background: #dc2626; color: white; }
 
+  .applicability-pill[data-applicability="NC"].active {
+    border-color: #9ca3af;
+    background: #e5e7eb;
+    color: #111827;
+  }
+
+  .applicability-pill[data-applicability="OS"].active {
+    border-color: #6b7280;
+    background: #6b7280;
+    color: white;
+  }
+
+  .sidebar-section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px 5px;
+  }
+
   .sidebar-section-label {
     margin: 0;
-    padding: 9px 14px 5px;
   }
 
   .sidebar-section-label span {
     font-weight: 400;
     letter-spacing: 0;
+  }
+
+  .hierarchy-toggle {
+    padding: 2px 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 10px;
+  }
+
+  .hierarchy-toggle:hover {
+    color: var(--accent);
   }
 
   .control-list {
@@ -935,6 +1091,21 @@
   .orphan-row strong,
   .orphan-row span {
     display: block;
+  }
+
+  .withdrawn-badge {
+    display: inline-flex;
+    width: fit-content;
+    margin: 2px 0;
+    padding: 1px 5px;
+    border: 1px solid var(--red-border);
+    border-radius: 4px;
+    background: var(--red-bg);
+    color: var(--red);
+    font-size: 9px;
+    font-weight: 650;
+    line-height: 1.3;
+    text-decoration: none;
   }
 
   .orphan-row strong {
@@ -1271,6 +1442,63 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     background: var(--bg-subtle);
+  }
+
+  .change-frequency {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-subtle);
+  }
+
+  .change-frequency h2 {
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .sparkline {
+    display: flex;
+    height: 36px;
+    align-items: flex-end;
+    gap: 3px;
+  }
+
+  .spark-column {
+    min-height: 3px;
+    flex: 1;
+    border-radius: 2px;
+    background: var(--border-strong);
+    opacity: 0.55;
+  }
+
+  .spark-column.has-change {
+    background: var(--accent);
+    opacity: 0.55;
+  }
+
+  .spark-column.major-change {
+    background: var(--amber);
+    opacity: 0.72;
+  }
+
+  .spark-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 9px;
+  }
+
+  .spark-empty {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 12px;
   }
 
   .latest-change-section {
