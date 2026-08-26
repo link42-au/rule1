@@ -4,6 +4,8 @@
 
 ASD's official OSCAL releases cover the June 2022 through June 2026 ISM editions. Rule1 retains the latest published OSCAL artifact for each edition, including ASD patch releases that supersede an earlier artifact for the same ISM edition. The committed catalogs come directly from ASD's versioned OSCAL artifact URLs; their catalog metadata versions and SHA-256 checksums are recorded in the ledger. This also restores the June 2023 and March 2025 editions that were missing from the previous PDF archive.
 
+The standalone parser carries forward the original Rule1 OSCAL handling for versioned ISM namespaces, applicability defaults, UUID cross-reference cleanup, stable hierarchical groups, nested controls, source ordering, glossary history, and revision-only metadata changes. Essential Eight control memberships are read from the committed catalogs. Their canonical mappings were checked control-for-control against ASD's three official maturity-level profiles for every retained edition, so duplicate profile files are not required as ingestion inputs.
+
 The NZISM CSVs are pinned to the already-approved `jlaundry/nzism` commit recorded in their origin URLs. The NIST SP 800-53 catalogs use immutable commits from the official `usnistgov/oscal-content` repository. Run `pnpm validate:sources` to reject missing, additional, or checksum-changed source files and mismatches with the NIST version manifests.
 
 Known gaps kept outside this feature:

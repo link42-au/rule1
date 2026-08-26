@@ -9,6 +9,12 @@ export interface ComparisonRecord extends Record<string, unknown> {
 const active = (row: ComparisonRecord | undefined): row is ComparisonRecord =>
   row !== undefined && row.change_type !== "withdrawn";
 
+const visibleMetadata = (row: ComparisonRecord): Record<string, unknown> => {
+  const metadata = { ...jsonObject(row.metadata) };
+  delete metadata.sort_id;
+  return metadata;
+};
+
 const comparable = (row: ComparisonRecord): string =>
   JSON.stringify([
     row.display_id,
@@ -19,9 +25,8 @@ const comparable = (row: ComparisonRecord): string =>
     row.guideline,
     row.section_id,
     row.section_title,
-    jsonObject(row.metadata),
+    visibleMetadata(row),
     row.compliance,
-    row.revision,
   ]);
 
 function changeRow(

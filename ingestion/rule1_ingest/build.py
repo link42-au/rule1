@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,13 @@ def _value(item: dict[str, Any], key: str, default: Any = None) -> Any:
     return default if value is None and default is not None else value
 
 
+def _natural_key(value: object) -> tuple[tuple[int, object], ...]:
+    return tuple(
+        (1, int(part)) if part.isdigit() else (0, part)
+        for part in re.split(r"(\d+)", str(value or "").lower())
+    )
+
+
 def _insert_snapshots(connection: sqlite3.Connection, snapshots: list[Snapshot]) -> None:
     by_framework: dict[str, list[Snapshot]] = {}
     for snapshot in snapshots:
@@ -48,7 +56,7 @@ def _insert_snapshots(connection: sqlite3.Connection, snapshots: list[Snapshot])
                 "INSERT INTO catalog_versions VALUES (?, ?, ?, ?, ?)",
                 (framework, version, date, None, version_ordinal),
             )
-            groups = sorted(snapshot.get("groups", []), key=lambda item: str(item.get("id", "")))
+            groups = list(snapshot.get("groups", []))
             seen_groups: set[str] = set()
             for ordinal, group in enumerate(groups):
                 group_id = str(group.get("id", ""))
@@ -61,7 +69,10 @@ def _insert_snapshots(connection: sqlite3.Connection, snapshots: list[Snapshot])
                 )
             raw_controls = snapshot.get("controls", {})
             controls = list(raw_controls.values()) if isinstance(raw_controls, dict) else list(raw_controls)
-            controls.sort(key=lambda item: str(item.get("id", "")))
+            controls.sort(key=lambda item: (
+                _natural_key((item.get("metadata") or {}).get("sort_id") or item.get("id", "")),
+                _natural_key(item.get("id", "")),
+            ))
             seen_controls: set[str] = set()
             for ordinal, control in enumerate(controls):
                 control_id = str(control.get("id", ""))

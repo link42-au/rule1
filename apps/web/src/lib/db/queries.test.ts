@@ -77,6 +77,25 @@ describe("Rule1 domain helpers", () => {
       ["ism-4", "new"],
     ]);
   });
+
+  it("compares visible control content rather than revision and sort bookkeeping", () => {
+    const before: ComparisonRecord = {
+      control_id: "ism-1",
+      display_id: "ISM-1",
+      statement: "Same statement",
+      change_type: "unchanged",
+      revision: "1",
+      updated: "Mar-26",
+      metadata: { authority: "ASD", sort_id: "catalog[1].control[1]" },
+    };
+    const bookkeepingOnly: ComparisonRecord = {
+      ...before,
+      revision: "2",
+      updated: "Jun-26",
+      metadata: { authority: "ASD", sort_id: "catalog[1].control[2]" },
+    };
+    expect(compareSnapshots("ism", "v1", "v2", [before], [bookkeepingOnly]).changes).toEqual([]);
+  });
 });
 
 describe("Rule1 query dispatcher", () => {

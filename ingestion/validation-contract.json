@@ -74,12 +74,12 @@
   "page_size": 4096,
   "row_counts": {
     "catalog_versions": 79,
-    "control_groups": 12251,
+    "control_groups": 11911,
     "control_history": 68798,
     "e8_mappings": 3957,
     "frameworks": 5,
     "source_files": 81,
-    "term_history": 0
+    "term_history": 3810
   },
   "schema_sha256": "4553b9115d826aebb646bc8fcef05328f01fdbc09eada31433cf50a8da40c073",
   "source_ledger_sha256": "46e2fd0a6c6a474d794cc78967e27f6f2a81b390b54430976fb8e93387bd0d27",
@@ -115,89 +115,89 @@
     },
     "ism": {
       "ISM-OSCAL-2022.09.14": {
-        "control_groups": 501,
+        "control_groups": 481,
         "control_history": 847,
-        "term_history": 0
+        "term_history": 208
       },
       "ISM-OSCAL-2022.09.15": {
-        "control_groups": 507,
+        "control_groups": 487,
         "control_history": 863,
-        "term_history": 0
+        "term_history": 209
       },
       "ISM-OSCAL-2022.12.1": {
-        "control_groups": 508,
+        "control_groups": 488,
         "control_history": 877,
-        "term_history": 0
+        "term_history": 209
       },
       "ISM-OSCAL-2023.04.12": {
-        "control_groups": 514,
+        "control_groups": 494,
         "control_history": 907,
-        "term_history": 0
+        "term_history": 214
       },
       "ISM-OSCAL-2023.08.3": {
-        "control_groups": 513,
+        "control_groups": 493,
         "control_history": 913,
-        "term_history": 0
+        "term_history": 217
       },
       "ISM-OSCAL-2023.09.25": {
-        "control_groups": 517,
+        "control_groups": 497,
         "control_history": 923,
-        "term_history": 0
+        "term_history": 216
       },
       "ISM-OSCAL-2023.12.1": {
-        "control_groups": 518,
+        "control_groups": 498,
         "control_history": 955,
-        "term_history": 0
+        "term_history": 217
       },
       "ISM-OSCAL-2024.03.12": {
-        "control_groups": 518,
+        "control_groups": 498,
         "control_history": 933,
-        "term_history": 0
+        "term_history": 217
       },
       "ISM-OSCAL-2024.06.18": {
-        "control_groups": 519,
+        "control_groups": 499,
         "control_history": 962,
-        "term_history": 0
+        "term_history": 225
       },
       "ISM-OSCAL-2024.10.4": {
-        "control_groups": 526,
+        "control_groups": 506,
         "control_history": 978,
-        "term_history": 0
+        "term_history": 218
       },
       "ISM-OSCAL-2024.12.19": {
-        "control_groups": 531,
+        "control_groups": 511,
         "control_history": 1009,
-        "term_history": 0
+        "term_history": 229
       },
       "ISM-OSCAL-2025.03.31": {
-        "control_groups": 541,
+        "control_groups": 521,
         "control_history": 1029,
-        "term_history": 0
+        "term_history": 231
       },
       "ISM-OSCAL-2025.07.16": {
-        "control_groups": 547,
+        "control_groups": 527,
         "control_history": 1112,
-        "term_history": 0
+        "term_history": 237
       },
       "ISM-OSCAL-2025.10.8": {
-        "control_groups": 555,
+        "control_groups": 535,
         "control_history": 1093,
-        "term_history": 0
+        "term_history": 237
       },
       "ISM-OSCAL-2025.12.9": {
-        "control_groups": 562,
+        "control_groups": 542,
         "control_history": 1113,
-        "term_history": 0
+        "term_history": 238
       },
       "ISM-OSCAL-2026.03.24": {
-        "control_groups": 564,
+        "control_groups": 544,
         "control_history": 1134,
-        "term_history": 0
+        "term_history": 240
       },
       "ISM-OSCAL-2026.06.18": {
-        "control_groups": 570,
+        "control_groups": 550,
         "control_history": 1150,
-        "term_history": 0
+        "term_history": 248
       },
       "ISM-PDF-2010-11": {
         "control_groups": 20,

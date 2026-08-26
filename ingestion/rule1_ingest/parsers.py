@@ -14,9 +14,118 @@ import fitz
 
 Snapshot = dict[str, Any]
 
+_OSCAL_UUID_LINK_RE = re.compile(
+    r"\[([^\]]+)\]\(#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\)",
+    re.IGNORECASE,
+)
+_ISM_NS_PREFIX = "https://cyber.gov.au/ns/ism/oscal/"
+_ALL_APPLICABILITY = ["NC", "OS", "P", "S", "TS"]
+_GLOSSARY_TITLE = "glossary of cybersecurity terms"
+_SMALL_TITLE_WORDS = {"and", "or", "the", "of", "in", "for", "to", "a", "an", "at", "by", "from", "with"}
+
 
 def _text(value: object) -> str:
     return re.sub(r"\s+", " ", html.unescape(str(value or ""))).strip()
+
+
+def _slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+
+
+def _normalized_title(value: str) -> str:
+    return value.lower().replace("cyber security", "cybersecurity").strip()
+
+
+def _ism_title_case(value: str) -> str:
+    words = value.split(" ")
+    return " ".join(
+        word.lower() if index > 0 and word.lower() in _SMALL_TITLE_WORDS
+        else word[:1].upper() + word[1:]
+        for index, word in enumerate(words)
+    )
+
+
+def _ism_root_title(value: str) -> str:
+    match = re.match(r"^(Guidelines\s+for\s+)(.+)$", value, re.IGNORECASE)
+    if not match:
+        return value
+    suffix = match.group(2).rstrip(".")
+    return _ism_title_case(suffix) if suffix[:1].islower() else suffix
+
+
+def _ism_guideline_title(value: str) -> str:
+    title = _ism_title_case(_ism_root_title(value))
+    return re.sub(r"\bcyber security\b", "Cybersecurity", title, flags=re.IGNORECASE)
+
+
+def _strip_oscal_uuid_links(value: str) -> str:
+    return _OSCAL_UUID_LINK_RE.sub(r"\1", value)
+
+
+def _ism_prop_values(props: list[dict[str, Any]], name: str) -> list[str]:
+    return [
+        str(prop["value"])
+        for prop in props
+        if prop.get("name") == name
+        and str(prop.get("ns") or "").startswith(_ISM_NS_PREFIX)
+        and prop.get("value") is not None
+    ]
+
+
+def _ism_prop(props: list[dict[str, Any]], name: str) -> str | None:
+    values = _ism_prop_values(props, name)
+    return values[0] if values else None
+
+
+def _ism_applicability(props: list[dict[str, Any]]) -> tuple[list[str], list[str]]:
+    raw = _ism_prop_values(props, "applicability")
+    return (list(_ALL_APPLICABILITY) if not raw or raw == ["ALL"] else raw, raw)
+
+
+def _raw_part_prose(parts: list[dict[str, Any]], name: str) -> str:
+    for part in parts:
+        if part.get("name") == name and part.get("prose"):
+            return _strip_oscal_uuid_links(str(part["prose"]))
+    return ""
+
+
+def _parse_markdown_table(prose: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    past_separator = False
+    for line in prose.strip().splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        if re.match(r"\|[-| ]+\|", stripped):
+            past_separator = True
+            continue
+        if past_separator:
+            cells = [_text(cell) for cell in stripped.strip("|").split("|")]
+            if len(cells) >= 2 and cells[0]:
+                rows.append({"term": cells[0], "meaning": cells[1]})
+    return rows
+
+
+def _find_group_by_title(groups: list[dict[str, Any]], normalized_title: str) -> dict[str, Any] | None:
+    for group in groups:
+        if _normalized_title(str(group.get("title", ""))) == normalized_title:
+            return group
+        found = _find_group_by_title(group.get("groups", []), normalized_title)
+        if found:
+            return found
+    return None
+
+
+def _parse_ism_terms(groups: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
+    glossary = _find_group_by_title(groups, _GLOSSARY_TITLE)
+    if not glossary:
+        return {}
+    terms: dict[str, dict[str, str]] = {}
+    for entry in _parse_markdown_table(_raw_part_prose(glossary.get("parts", []), "overview")):
+        term_id = _slug(entry["term"])
+        if term_id:
+            terms[term_id] = {"id": term_id, **entry}
+    return terms
 
 
 def _changed(current: dict[str, Any], previous: dict[str, Any] | None) -> str:
@@ -31,13 +140,16 @@ def _changed(current: dict[str, Any], previous: dict[str, Any] | None) -> str:
         return "modified" if any(current.get(key) != previous.get(key) for key in boundary_visible) else "unchanged"
     visible = (
         "display_id", "label", "title", "statement", "section_id", "section_title",
-        "applicability", "compliance", "revision", "metadata",
+        "applicability", "compliance", "metadata",
         "control_class", "e8_levels",
     )
     for key in visible:
         current_value, previous_value = current.get(key), previous.get(key)
         if key == "statement":
             current_value, previous_value = _text(current_value), _text(previous_value)
+        elif key == "metadata":
+            current_value = {name: value for name, value in (current_value or {}).items() if name != "sort_id"}
+            previous_value = {name: value for name, value in (previous_value or {}).items() if name != "sort_id"}
         if current_value != previous_value:
             return "modified"
     return "unchanged"
@@ -46,6 +158,7 @@ def _changed(current: dict[str, Any], previous: dict[str, Any] | None) -> str:
 def _history(framework: str, parsed: list[tuple[dict[str, str], Snapshot]]) -> list[Snapshot]:
     result: list[Snapshot] = []
     previous: dict[str, dict[str, Any]] = {}
+    previous_terms: dict[str, dict[str, Any]] = {}
     for source, snapshot in parsed:
         live = snapshot["controls"]
         controls: dict[str, dict[str, Any]] = {}
@@ -58,15 +171,26 @@ def _history(framework: str, parsed: list[tuple[dict[str, str], Snapshot]]) -> l
             withdrawn = dict(previous[control_id])
             withdrawn["change_type"] = "withdrawn"
             controls[control_id] = withdrawn
+        terms: dict[str, dict[str, Any]] = {}
+        for term_id, raw_term in sorted(snapshot.get("terms", {}).items()):
+            term = dict(raw_term)
+            prior_term = previous_terms.get(term_id)
+            term["change_type"] = (
+                "new" if prior_term is None
+                else "modified" if _text(term.get("meaning")) != _text(prior_term.get("meaning"))
+                else "unchanged"
+            )
+            terms[term_id] = term
         result.append({
             "framework": framework,
             "catalog_version": source["version"],
             "commit_date": source["date"],
             "groups": snapshot.get("groups", []),
             "controls": controls,
-            "terms": snapshot.get("terms", {}),
+            "terms": terms,
         })
         previous = {key: dict(value) for key, value in live.items() if not value.get("_withdrawn")}
+        previous_terms = {key: dict(value) for key, value in snapshot.get("terms", {}).items()}
     return result
 
 
@@ -315,73 +439,80 @@ def _parse_ism(path: Path) -> Snapshot:
 
 
 def _parse_ism_oscal(path: Path) -> Snapshot:
-    """Parse the publisher's current OSCAL catalog, including principles."""
+    """Parse ASD's OSCAL catalog using the reviewed original Rule1 semantics."""
     catalog = json.loads(path.read_text(encoding="utf-8"))["catalog"]
-    groups: list[dict[str, Any]] = []
-    controls: dict[str, dict[str, Any]] = {}
+    seen_control_ids: set[str] = set()
 
-    def values(props: list[dict[str, Any]], name: str) -> list[str]:
-        return [str(prop["value"]) for prop in props if prop.get("name") == name and prop.get("value")]
+    def parse_control(item: dict[str, Any], group_id: str, group_title: str,
+                      guideline: str) -> dict[str, Any]:
+        raw_id = str(item.get("id", "")).lower()
+        if not raw_id or raw_id in seen_control_ids:
+            raise ValueError(f"duplicate or empty ISM OSCAL control id in {path}: {raw_id!r}")
+        seen_control_ids.add(raw_id)
+        props = item.get("props", [])
+        applicability, applicability_raw = _ism_applicability(props)
+        control_class = str(item.get("class") or "ISM-control")
+        is_principle = control_class == "ISM-principle"
+        label = _prop(props, "label") if is_principle else None
+        return {
+            "id": raw_id,
+            "display_id": label or raw_id.upper(),
+            "label": label or raw_id.upper(),
+            "title": (_text(item.get("title")) or None) if is_principle else None,
+            "statement": _text(_strip_oscal_uuid_links(_part_prose(item.get("parts", []), "statement"))),
+            "section_id": group_id,
+            "section_title": group_title,
+            "control_class": control_class,
+            "source": "oscal",
+            "applicability": applicability,
+            "applicability_raw": applicability_raw,
+            "revision": _ism_prop(props, "revision") or "0",
+            "updated": _ism_prop(props, "updated") or "",
+            "guideline": guideline,
+            "e8_levels": _ism_prop_values(props, "essential-eight-applicability"),
+            "metadata": {"authority": None, "sort_id": _prop(props, "sort-id")},
+        }
 
-    def group_id(group: dict[str, Any], path_parts: tuple[int, ...], title: str) -> str:
-        if len(path_parts) == 1:
-            return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
-        sort_id = _prop(group.get("props", []), "sort-id")
-        identity = sort_id or "group-" + "-".join(str(part) for part in path_parts)
-        return re.sub(r"[^a-z0-9]+", "-", identity.lower()).strip("-")
+    def traverse(items: list[dict[str, Any]], parent_id: str | None = None,
+                 guideline: str | None = None) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+        retained_groups: list[dict[str, Any]] = []
+        retained_controls: dict[str, dict[str, Any]] = {}
+        for group in items:
+            raw_title = _text(group.get("title"))
+            raw_id = str(group.get("id") or "")
+            current_id = raw_id or (f"{parent_id}/{_slug(raw_title)}" if parent_id else _slug(raw_title))
+            current_id = current_id.replace("cyber-security", "cybersecurity")
+            stored_title = _ism_root_title(raw_title) if parent_id is None else raw_title
+            current_guideline = guideline or _ism_guideline_title(raw_title)
 
-    def walk(items: list[dict[str, Any]], parent_id: str | None = None,
-             path_parts: tuple[int, ...] = (), chapter_id: str = "", chapter_title: str = "") -> None:
-        for ordinal, group in enumerate(items, start=1):
-            current_path = (*path_parts, ordinal)
-            title = _text(group.get("title"))
-            if len(current_path) == 1 and title.lower().startswith("guidelines for "):
-                title = title[len("Guidelines for "):].rstrip(".").title()
-            current_id = group_id(group, current_path, title)
-            current_chapter_id = current_id if len(current_path) == 1 else chapter_id
-            current_chapter_title = title if len(current_path) == 1 else chapter_title
-            groups.append({
-                "id": current_id,
-                "title": title,
-                "overview": _part_prose(group.get("parts", []), "overview") or None,
-                "parent_id": parent_id,
-            })
-            for item in group.get("controls", []):
-                raw_id = str(item.get("id", "")).lower()
-                if not raw_id or raw_id in controls:
-                    raise ValueError(f"duplicate or empty ISM OSCAL control id in {path}: {raw_id!r}")
-                props = item.get("props", [])
-                applicability_raw = values(props, "applicability")
-                applicability = (["NC", "OS", "P", "S", "TS"]
-                                 if "ALL" in applicability_raw else applicability_raw)
-                e8_levels = values(props, "essential-eight-applicability")
-                control_class = str(item.get("class") or "ISM-control")
-                is_principle = control_class == "ISM-principle"
-                display_id = _prop(props, "label") if is_principle else raw_id.upper()
-                controls[raw_id] = {
-                    "id": raw_id,
-                    "display_id": display_id or raw_id.upper(),
-                    "label": display_id or raw_id.upper(),
-                    "title": (_text(item.get("title")) or None) if is_principle else None,
-                    "statement": _text(_part_prose(item.get("parts", []), "statement")),
-                    "section_id": current_chapter_id,
-                    "section_title": current_chapter_title,
-                    "control_class": control_class,
-                    "source": "oscal",
-                    "applicability": applicability,
-                    "applicability_raw": applicability_raw,
-                    "revision": _prop(props, "revision") or "0",
-                    "updated": _prop(props, "updated") or "",
-                    "guideline": current_chapter_title,
-                    "e8_levels": e8_levels,
-                    "metadata": {"authority": None},
-                }
-            walk(group.get("groups", []), current_id, current_path, current_chapter_id, current_chapter_title)
+            child_groups, child_controls = traverse(group.get("groups", []), current_id, current_guideline)
+            direct_controls: dict[str, dict[str, Any]] = {}
 
-    walk(catalog.get("groups", []))
+            def add_controls(controls: list[dict[str, Any]]) -> None:
+                for item in controls:
+                    parsed = parse_control(item, current_id, stored_title, current_guideline)
+                    direct_controls[parsed["id"]] = parsed
+                    add_controls(item.get("controls", []))
+
+            add_controls(group.get("controls", []))
+            if direct_controls or child_controls:
+                retained_groups.append({
+                    "id": current_id,
+                    "title": stored_title,
+                    "overview": _text(_strip_oscal_uuid_links(
+                        _part_prose(group.get("parts", []), "overview")
+                    )) or None,
+                    "parent_id": parent_id,
+                })
+                retained_groups.extend(child_groups)
+                retained_controls.update(child_controls)
+                retained_controls.update(direct_controls)
+        return retained_groups, retained_controls
+
+    groups, controls = traverse(catalog.get("groups", []))
     if not controls:
         raise ValueError(f"no ISM controls parsed from {path}")
-    return {"groups": groups, "controls": controls}
+    return {"groups": groups, "controls": controls, "terms": _parse_ism_terms(catalog.get("groups", []))}
 
 
 def build_all_histories(root: Path) -> list[Snapshot]:

@@ -8,7 +8,13 @@ import unittest
 from pathlib import Path
 
 from rule1_ingest.build import build_database
-from rule1_ingest.parsers import _parse_ce, build_all_histories
+from rule1_ingest.parsers import (
+    _changed,
+    _ism_guideline_title,
+    _parse_ce,
+    _parse_ism_oscal,
+    build_all_histories,
+)
 from rule1_ingest.validate import validate_database, write_contract
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,6 +56,10 @@ class ParserTests(unittest.TestCase):
         ism = self.by_framework["ism"]
         self.assertEqual(sum(len(item["controls"]) for item in ism), 52_836)
         self.assertEqual(len(ism[-1]["controls"]), 1_150)
+        self.assertEqual(sum(len(item["terms"]) for item in ism), 3_810)
+        self.assertEqual(len(ism[-1]["terms"]), 248)
+        self.assertEqual(len(ism[-17]["groups"]), 481)
+        self.assertEqual(len(ism[-1]["groups"]), 550)
         self.assertTrue(any(item["groups"] for item in ism))
         self.assertLessEqual(max(len(control["statement"]) for item in ism for control in item["controls"].values()), 2_000)
         self.assertTrue(any("C" in (control.get("applicability") or []) for item in ism for control in item["controls"].values()))
@@ -93,15 +103,133 @@ class ParserTests(unittest.TestCase):
             "2025-06": "2025.07.16", "2025-09": "2025.10.8", "2025-12": "2025.12.9",
             "2026-03": "2026.03.24", "2026-06": "2026.06.18",
         }
+        profile_verified_e8_digests = {
+            "2022-06": "06513f48efc0570ab68e79061ebb98bde95ce87f77e53ec59e3b3853496f07e2",
+            "2022-09": "06513f48efc0570ab68e79061ebb98bde95ce87f77e53ec59e3b3853496f07e2",
+            "2022-12": "1ab48760ef3d400ac2efdd4a3ddeedd9d8a5ad401343b7c2b7816bab4e5be3d4",
+            "2023-03": "9ede27a2ce8fbaca6ab82fa0a3f5608d4f3fc66926a1aba6d3efe24f908d32e5",
+            "2023-06": "fd7c97e6f4063402076f5cf2f89ad06e14ccbd5ea46c81a6b747153da827e1cf",
+            "2023-09": "3962fe899a1ec48ce9cf09868d7324af55f5b6ff3cdfb0b5c9da39e2214a645a",
+            "2023-12": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2024-03": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2024-06": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2024-09": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2024-12": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2025-03": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2025-06": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2025-09": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2025-12": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2026-03": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2026-06": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+        }
         for directory, version in expected.items():
             path = ROOT / "data/ism-oscal" / directory / "ISM_catalog.json"
             catalog = json.loads(path.read_text(encoding="utf-8"))["catalog"]
             self.assertEqual(catalog["metadata"]["version"], version)
+            parsed = _parse_ism_oscal(path)
+            mapping = {
+                control_id: control["e8_levels"]
+                for control_id, control in sorted(parsed["controls"].items())
+                if control["e8_levels"]
+            }
+            mapping_digest = hashlib.sha256(
+                json.dumps(mapping, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            self.assertEqual(mapping_digest, profile_verified_e8_digests[directory])
         ledger = json.loads((ROOT / "data/source-ledger.json").read_text(encoding="utf-8"))["sources"]
         retained_pdfs = [item for item in ledger if item["framework"] == "ism" and item["path"].endswith(".pdf")]
         self.assertEqual(retained_pdfs[-1]["version"], "ISM-PDF-2022-03")
         self.assertEqual(len(expected), sum(item["framework"] == "ism" and item["path"].endswith(".json")
                                             for item in ledger))
+
+    def test_original_oscal_parser_behaviour_is_retained(self) -> None:
+        ism_ns_v1 = "https://cyber.gov.au/ns/ism/oscal/1.0"
+        ism_ns_v2 = "https://cyber.gov.au/ns/ism/oscal/2.0"
+        ism_ns_v3 = "https://cyber.gov.au/ns/ism/oscal/3.0"
+        uuid = "11111111-2222-3333-4444-555555555555"
+        catalog = {
+            "catalog": {
+                "groups": [
+                    {
+                        "title": "Guidelines for network management",
+                        "groups": [
+                            {"title": "Purpose"},
+                            {
+                                "title": "Cyber Security Policy",
+                                "controls": [
+                                    {
+                                        "id": "ism-0001",
+                                        "class": "ISM-control",
+                                        "props": [
+                                            {"name": "sort-id", "value": "catalog[1].group[2].control[1]"},
+                                            {"name": "applicability", "value": "P", "ns": "https://example.com"},
+                                            {"name": "revision", "value": "2", "ns": ism_ns_v1},
+                                            {"name": "updated", "value": "Sep-22", "ns": ism_ns_v2},
+                                            {"name": "essential-eight-applicability", "value": "ML2", "ns": ism_ns_v3},
+                                            {"name": "essential-eight-applicability", "value": "ML3", "ns": "https://example.com"},
+                                        ],
+                                        "parts": [{
+                                            "name": "statement",
+                                            "prose": f"Use [this control](#{uuid}) and [external guidance](https://example.com).",
+                                        }],
+                                        "controls": [{
+                                            "id": "ism-0002",
+                                            "class": "ISM-control",
+                                            "props": [
+                                                {"name": "applicability", "value": "P", "ns": ism_ns_v3},
+                                            ],
+                                            "parts": [{"name": "statement", "prose": "Nested control."}],
+                                        }],
+                                    }
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        "title": "Glossary of Cyber Security Terms",
+                        "parts": [{
+                            "name": "overview",
+                            "prose": "| Term | Meaning |\n|---|---|\n| Access Control | Restricts access. |\n",
+                        }],
+                    },
+                ]
+            }
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "ISM_catalog.json"
+            path.write_text(json.dumps(catalog), encoding="utf-8")
+            parsed = _parse_ism_oscal(path)
+
+        self.assertEqual(set(parsed["controls"]), {"ism-0001", "ism-0002"})
+        control = parsed["controls"]["ism-0001"]
+        self.assertEqual(control["applicability"], ["NC", "OS", "P", "S", "TS"])
+        self.assertEqual(control["applicability_raw"], [])
+        self.assertEqual(control["revision"], "2")
+        self.assertEqual(control["updated"], "Sep-22")
+        self.assertEqual(control["guideline"], "Network Management")
+        self.assertEqual(control["e8_levels"], ["ML2"])
+        self.assertEqual(control["metadata"]["sort_id"], "catalog[1].group[2].control[1]")
+        self.assertIn("this control", control["statement"])
+        self.assertNotIn(f"](#{uuid})", control["statement"])
+        self.assertIn("[external guidance](https://example.com)", control["statement"])
+        self.assertEqual(parsed["controls"]["ism-0002"]["applicability"], ["P"])
+        group_ids = {group["id"] for group in parsed["groups"]}
+        self.assertIn("guidelines-for-network-management/cybersecurity-policy", group_ids)
+        self.assertNotIn("guidelines-for-network-management/purpose", group_ids)
+        self.assertEqual(parsed["groups"][0]["title"], "Network Management")
+        self.assertEqual(parsed["terms"]["access-control"]["meaning"], "Restricts access.")
+
+    def test_revision_only_metadata_change_is_unchanged(self) -> None:
+        current = {
+            "source": "oscal", "statement": "Do this.", "applicability": ["OS"],
+            "revision": "2", "updated": "Jun-26",
+        }
+        previous = {**current, "revision": "1", "updated": "Mar-26"}
+        self.assertEqual(_changed(current, previous), "unchanged")
+        self.assertEqual(
+            _ism_guideline_title("Guidelines for cyber security incidents"),
+            "Cybersecurity Incidents",
+        )
 
     def test_duplicate_source_control_ids_fail(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -141,9 +269,17 @@ class DatabaseTests(unittest.TestCase):
             )
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 79)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 81)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 3_810)
             self.assertEqual(connection.execute(
                 "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-OSCAL-2026.06.18'"
             ).fetchone()[0], 256)
+            ordered_controls = connection.execute(
+                "SELECT control_id FROM control_history WHERE framework='ism' "
+                "AND catalog_version='ISM-OSCAL-2026.06.18' ORDER BY ordinal LIMIT 3"
+            ).fetchall()
+            self.assertEqual(ordered_controls, [
+                ("ism-principle-gov-01",), ("ism-principle-gov-08",), ("ism-principle-gov-02",),
+            ])
         with tempfile.TemporaryDirectory() as directory:
             generated_contract = Path(directory) / "validation-contract.json"
             write_contract(ROOT, database, generated_contract)

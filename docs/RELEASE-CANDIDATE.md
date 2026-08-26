@@ -19,7 +19,7 @@ Parity is assessed against the reviewed old desktop product and the route/capabi
 | `/rule1/` | Recognisable Rule1 landing and all five retained framework entry points; availability comes from local SQLite. | Retained |
 | `/rule1/explorer/` | Hierarchy, search, filters, deep links, details, history, E8 maturity mappings, context graph, local favourites, and JSON/CSV/Markdown control exports. | Retained and reviewed |
 | `/rule1/compare/` | Framework/version selection, refresh-safe state, change filtering, and formula-safe CSV export. | Retained and reviewed |
-| `/rule1/glossary/` | Framework navigation, search, and term detail states work; the retained database currently contains no glossary rows. | Retained with explicit empty state |
+| `/rule1/glossary/` | Framework navigation, search, and term detail states work; ISM glossary terms and their retained OSCAL history are available locally. | Retained and reviewed |
 | `/rule1/guide/` | Static standalone usage, data, and interpretation guidance. | Retained and corrected |
 | `/rule1/privacy/` | Static, accurate browser-local privacy statement. | Retained and corrected |
 | `/rule1/about/`, `/rule1/api/`, `/rule1/licence/` | Base-path-aware static destinations to the guide. `/api/` explicitly states that there is no runtime API. | Static compatibility routes |
@@ -59,7 +59,7 @@ The shared, local UI package still contains dormant platform URL constants in it
 ## Current data and retained gaps
 
 - The Australian ISM now ends at the authoritative `ISM-OSCAL-2026.06.18` catalog with 1,101 active controls and 49 cyber security principles. This closes the old candidate's December 2025 currency and missing-principles gaps.
-- `term_history` is empty, so the glossary is an honest empty state for every framework.
+- ISM OSCAL glossary history is retained from June 2022 onward; frameworks whose archived sources provide no glossary remain in an honest empty state.
 - AI annotations from the operated product are not retained.
 - The Essential Eight mapping rows retain maturity levels but contain no named strategy strings.
 - The Cyber Essentials 3.2 source PDF is missing from the archive. Its committed, checksum-verified 3.2 JSON source is ingested.
@@ -69,13 +69,14 @@ These are provenance/data differences, not UI defects. Framework decisions shoul
 
 ## Verification evidence
 
-`pnpm verify` passed on 22 August 2026:
+`pnpm verify` passed on 26 August 2026:
 
-- Biome: 58 files checked.
+- Biome: 71 files checked.
 - Svelte type checking: zero errors and zero warnings.
 - Node script tests: 6 passed.
-- Python ingestion/parser/database tests: 9 passed, including two clean byte-identical database builds, OSCAL metadata checks, and June 2026 catalogue regressions.
-- Web tests: 18 files and 150 tests passed.
+- Python ingestion/parser/database tests: 11 passed, including two clean byte-identical database builds, OSCAL metadata and original-parser parity, and June 2026 catalogue regressions.
+- Web tests: 18 files and 151 tests passed.
+- Browser tests: 2 passed across responsive, accessibility, loading, and local-only interaction coverage.
 - Database validation: provenance, checksums, expected schema, 79 catalogue versions, 81 source files, recorded row counts, and `PRAGMA integrity_check` passed.
 - Static production build: 11 routes plus `404.html` generated beneath `/rule1/`; no rendered root-path escape or retired operated-host link was found.
 - Workflow audit: `.github/workflows/build-sqlite.yml` remains the only workflow. Its Pages artifact and deployment steps are restricted to `main` pushes and manually dispatched runs from `main`; the separate deployment job alone receives `pages: write` and `id-token: write` permissions.
@@ -83,13 +84,15 @@ These are provenance/data differences, not UI defects. Framework decisions shoul
 The canonical macOS local build SHA-256 is:
 
 ```text
-d122eb5cb62260173d9a78826b7b746fde11147b2f49cedbeac9913f26641d9e  build/rule1.sqlite3
-d122eb5cb62260173d9a78826b7b746fde11147b2f49cedbeac9913f26641d9e  apps/web/build/data/rule1.sqlite3
+5a1ad1752fc9f4f0e6914d64ddd4c358c7dd2fa34b91cc806c6250d1e1511ab7  build/rule1.sqlite3
+5a1ad1752fc9f4f0e6914d64ddd4c358c7dd2fa34b91cc806c6250d1e1511ab7  apps/web/build/data/rule1.sqlite3
 ```
 
 The current catalogue heads are `CE-3.3`, `ISM-OSCAL-2026.06.18`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
 
-### Live publication verification
+### Initial live publication verification
+
+The following immutable checksums and counts record the initial 22 August publication rather than the current rolling database:
 
 - The GitHub Actions artifact and deployed database both have SHA-256 `b78e17b880f84db97d60f2f571366f333915fd83da19eeb31b6674f1a30f78d0`; the deployed artifact manifest has SHA-256 `347daff73e8503dbacb11b5c1ab2b5645bbf9ff74c4d6a83729b6bac0cf08d7d`.
 - This Linux CI checksum is intentionally recorded separately from the macOS local checksum `d122eb5cb62260173d9a78826b7b746fde11147b2f49cedbeac9913f26641d9e`. Determinism is verified within each build environment; no unsupported cross-platform byte-identity claim is made.
