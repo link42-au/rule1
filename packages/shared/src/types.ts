@@ -136,6 +136,8 @@ export interface ChangeRow {
   old_statement: string | null;
   new_applicability: string[] | null;
   old_applicability: string[] | null;
+  new_e8_levels: string[] | null;
+  old_e8_levels: string[] | null;
   change_complexity?: string | null;
   metadata?: Record<string, unknown>;
 }

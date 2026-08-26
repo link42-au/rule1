@@ -15,6 +15,9 @@ export interface ComparisonPresentation {
   oldApplicability: string[];
   newApplicability: string[];
   applicabilityChanged: boolean;
+  oldE8Levels: string[];
+  newE8Levels: string[];
+  e8Changed: boolean;
 }
 
 export function hasRetainedComplexity(rows: readonly ChangeRow[]): boolean {
@@ -29,7 +32,7 @@ const COMPLEXITY_LABELS: Record<string, string> = {
   high: "High",
 };
 
-function sameApplicability(before: readonly string[], after: readonly string[]): boolean {
+function sameValues(before: readonly string[], after: readonly string[]): boolean {
   return [...before].sort().join("\u0000") === [...after].sort().join("\u0000");
 }
 
@@ -70,6 +73,8 @@ export function presentComparison(row: ChangeRow, framework: string): Comparison
   const { context, tag } = frameworkContext(row, framework);
   const oldApplicability = [...(row.old_applicability ?? [])];
   const newApplicability = [...(row.new_applicability ?? [])];
+  const oldE8Levels = [...(row.old_e8_levels ?? [])];
+  const newE8Levels = [...(row.new_e8_levels ?? [])];
   const complexityValue = row.change_complexity?.trim().toLowerCase() ?? "";
   return {
     row,
@@ -84,7 +89,10 @@ export function presentComparison(row: ChangeRow, framework: string): Comparison
     statement: statementParts(row),
     oldApplicability,
     newApplicability,
-    applicabilityChanged: !sameApplicability(oldApplicability, newApplicability),
+    applicabilityChanged: !sameValues(oldApplicability, newApplicability),
+    oldE8Levels,
+    newE8Levels,
+    e8Changed: !sameValues(oldE8Levels, newE8Levels),
   };
 }
 
@@ -113,6 +121,8 @@ export function comparisonRows(
         item.context,
         item.row.old_statement,
         item.row.new_statement,
+        item.oldE8Levels.join(" "),
+        item.newE8Levels.join(" "),
       ]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalized));
@@ -131,13 +141,15 @@ function csvCell(value: string): string {
   return `"${formulaSafe.replaceAll('"', '""')}"`;
 }
 
-export function comparisonCsv(rows: readonly ComparisonPresentation[]): string {
+export function comparisonCsv(rows: readonly ComparisonPresentation[], framework: string): string {
+  const includeE8 = framework === "ism";
   const header = [
     "ID",
     "Change Type",
     "Complexity",
     "Context",
     ...APPLICABILITY_CODES.flatMap((code) => [`Old ${code}`, `New ${code}`]),
+    ...(includeE8 ? ["Old Essential Eight", "New Essential Eight"] : []),
     "Old Description",
     "New Description",
   ];
@@ -153,6 +165,7 @@ export function comparisonCsv(rows: readonly ComparisonPresentation[]): string {
         oldApplicability.has(code) ? "Yes" : "",
         newApplicability.has(code) ? "Yes" : "",
       ]),
+      ...(includeE8 ? [item.oldE8Levels.join("; "), item.newE8Levels.join("; ")] : []),
       item.row.old_statement ?? "",
       item.row.new_statement ?? "",
     ]

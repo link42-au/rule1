@@ -39,7 +39,7 @@ describe("responsive shell and retained routes", () => {
 
   it("contains wide comparison data inside its own scroll region", () => {
     expect(compare).toMatch(/\.cmp-results\s*{[^}]*overflow-x:\s*auto/s);
-    expect(compare).toContain("min-width: 1120px");
+    expect(compare).toContain("min-width: 1300px");
     expect(compare).toMatch(/@media \(max-width: 720px\)[\s\S]*\.cmp-results\s*{\s*max-width:\s*100%/);
     expect(compare).not.toMatch(/\.compare-page\s*{[^}]*overflow-x:\s*auto/s);
   });

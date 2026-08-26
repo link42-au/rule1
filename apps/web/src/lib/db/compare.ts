@@ -22,6 +22,7 @@ const comparable = (row: ComparisonRecord): string =>
     row.title,
     row.statement,
     jsonArray(row.applicability),
+    [...jsonArray(row.e8_levels)].sort(),
     row.guideline,
     row.section_id,
     row.section_title,
@@ -47,6 +48,8 @@ function changeRow(
     old_statement: kind === "new" ? null : nullableText(before?.statement),
     new_applicability: kind === "withdrawn" ? null : jsonArray(after?.applicability),
     old_applicability: kind === "new" ? null : jsonArray(before?.applicability),
+    new_e8_levels: kind === "withdrawn" ? null : jsonArray(after?.e8_levels),
+    old_e8_levels: kind === "new" ? null : jsonArray(before?.e8_levels),
     change_complexity: nullableText(after?.change_complexity ?? before?.change_complexity),
     metadata: jsonObject(visible.metadata),
   };

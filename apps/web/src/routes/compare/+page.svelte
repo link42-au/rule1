@@ -118,7 +118,7 @@
   }
 
   function downloadCsv(): void {
-    const blob = new Blob([comparisonCsv(filtered)], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([comparisonCsv(filtered, framework)], { type: "text/csv;charset=utf-8" });
     const objectUrl = URL.createObjectURL(blob);
     Object.assign(document.createElement("a"), { href: objectUrl, download: `${framework}-compare-${from}-${to}.csv` }).click();
     URL.revokeObjectURL(objectUrl);
@@ -201,13 +201,13 @@
     {:else}
       <div class="cmp-results" role="region" aria-label="Comparison results">
         <table class="cmp-table">
-          <colgroup><col class="col-id" /><col class="col-change" />{#if showComplexity}<col class="col-complexity" />{/if}<col class="col-context" />{#if isISM}<col class="col-applicability" />{/if}<col class="col-description" /></colgroup>
+          <colgroup><col class="col-id" /><col class="col-change" />{#if showComplexity}<col class="col-complexity" />{/if}<col class="col-context" />{#if isISM}<col class="col-applicability" /><col class="col-e8" /><col class="col-e8" />{/if}<col class="col-description" /></colgroup>
           <thead><tr>
             <th aria-sort={sortColumn === "display_id" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}><button class:active={sortColumn === "display_id"} onclick={() => toggleSort("display_id")}>ID <span aria-hidden="true">{sortArrow("display_id")}</span></button></th>
             <th aria-sort={sortColumn === "change_type" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}><button class:active={sortColumn === "change_type"} onclick={() => toggleSort("change_type")}>Change <span aria-hidden="true">{sortArrow("change_type")}</span></button></th>
             {#if showComplexity}<th>Complexity <span class="column-help" title="Values are shown exactly as retained in the comparison data." aria-label="Complexity values are shown exactly as retained in the comparison data.">?</span></th>{/if}
             <th aria-sort={sortColumn === "context" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}><button class:active={sortColumn === "context"} onclick={() => toggleSort("context")}>Context <span aria-hidden="true">{sortArrow("context")}</span></button></th>
-            {#if isISM}<th>Applicability</th>{/if}<th>Description</th>
+            {#if isISM}<th>Applicability</th><th>Old E8</th><th>New E8</th>{/if}<th>Description</th>
           </tr></thead>
           <tbody>{#each filtered as item (item.row.id)}<tr>
             <td class="id-cell"><a href={`${base}/explorer/?framework=${framework}&id=${encodeURIComponent(item.row.id)}`}>{item.row.display_id}</a>{#if item.row.label && item.row.label !== item.row.display_id}<div class="control-label">{item.row.label}</div>{/if}</td>
@@ -221,7 +221,8 @@
                 <div class="applic-old">{#each item.oldApplicability as code}<span class="chip chip-{code.toLowerCase()}">{code}</span>{:else}<span class="none">—</span>{/each}</div>
                 <div>{#each item.newApplicability as code}<span class="chip chip-{code.toLowerCase()}">{code}</span>{:else}<span class="none">—</span>{/each}</div>
               {:else}<div>{#each item.newApplicability as code}<span class="chip chip-{code.toLowerCase()}">{code}</span>{:else}<span class="none">—</span>{/each}</div>{/if}
-            </td>{/if}
+            </td><td class="e8-cell e8-old">{#each item.oldE8Levels as level}<span class="chip e8-chip">{level}</span>{:else}<span class="none">—</span>{/each}</td>
+            <td class="e8-cell">{#each item.newE8Levels as level}<span class="chip e8-chip">{level}</span>{:else}<span class="none">—</span>{/each}</td>{/if}
             <td class="description-cell" class:withdrawn={item.row.change_type === "withdrawn"}>{#each item.statement as part}{#if part.kind === "deleted"}<del>{part.text}</del>{:else if part.kind === "inserted"}<ins>{part.text}</ins>{:else}{part.text}{/if}{/each}</td>
           </tr>{/each}</tbody>
         </table>
@@ -253,8 +254,8 @@
   .cmp-toolbar-right > span { color: var(--text-dim); font-family: var(--font-mono); font-size: 11px; }
   .export { color: var(--accent); white-space: nowrap; }
   .cmp-results { width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; border: 1px solid var(--border); border-radius: 9px; }
-  .cmp-table { width: 100%; min-width: 1120px; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
-  .col-id { width: 110px; } .col-change { width: 105px; } .col-complexity { width: 105px; } .col-context { width: 190px; } .col-applicability { width: 170px; }
+  .cmp-table { width: 100%; min-width: 1300px; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
+  .col-id { width: 110px; } .col-change { width: 105px; } .col-complexity { width: 105px; } .col-context { width: 190px; } .col-applicability { width: 170px; } .col-e8 { width: 90px; }
   th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
   th { background: var(--bg-subtle); color: var(--text-dim); font-size: 10px; text-transform: uppercase; }
   th button { padding: 0; border: 0; background: transparent; color: inherit; font-size: inherit; font-weight: 700; text-transform: uppercase; }
@@ -279,6 +280,8 @@
   .chip-nc { border-color: #c8c8c8; background: #fff; color: #1a1a1a; } .chip-os { border-color: #4b5563; background: #6b7280; color: #fff; }
   .chip-p { border-color: #1e40af; background: #1d4ed8; color: #fff; } .chip-c { border-color: #15803d; background: #16a34a; color: #fff; }
   .chip-s { border-color: #be185d; background: #db2777; color: #fff; } .chip-ts { border-color: #b91c1c; background: #dc2626; color: #fff; }
+  .e8-chip { border-color: var(--accent-border); background: var(--accent-bg); color: var(--accent); }
+  .e8-old { opacity: 0.65; }
   .none { color: var(--text-dim); }
   .description-cell { color: var(--text-mid); line-height: 1.6; white-space: pre-line; }
   .description-cell del { padding: 0 2px; border-radius: 2px; background: var(--red-bg); color: var(--red); }

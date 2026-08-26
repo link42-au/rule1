@@ -76,6 +76,14 @@ describe("Rule1 domain helpers", () => {
       ["ism-3", "withdrawn"],
       ["ism-4", "new"],
     ]);
+    expect(result.changes.find((row) => row.id === "ism-3")).toMatchObject({
+      old_e8_levels: [],
+      new_e8_levels: null,
+    });
+    expect(result.changes.find((row) => row.id === "ism-4")).toMatchObject({
+      old_e8_levels: null,
+      new_e8_levels: [],
+    });
   });
 
   it("compares visible control content rather than revision and sort bookkeeping", () => {
@@ -95,6 +103,64 @@ describe("Rule1 domain helpers", () => {
       metadata: { authority: "ASD", sort_id: "catalog[1].control[2]" },
     };
     expect(compareSnapshots("ism", "v1", "v2", [before], [bookkeepingOnly]).changes).toEqual([]);
+  });
+
+  it("retains Essential Eight-only, mixed, and removed mapping changes", () => {
+    const before: ComparisonRecord[] = [
+      {
+        control_id: "ism-1",
+        display_id: "ISM-1",
+        statement: "Same statement",
+        change_type: "unchanged",
+        e8_levels: ["ML1"],
+      },
+      {
+        control_id: "ism-2",
+        display_id: "ISM-2",
+        statement: "Before",
+        change_type: "unchanged",
+        e8_levels: ["ML2"],
+      },
+      {
+        control_id: "ism-3",
+        display_id: "ISM-3",
+        statement: "No mapping",
+        change_type: "unchanged",
+        e8_levels: [],
+      },
+      {
+        control_id: "ism-4",
+        display_id: "ISM-4",
+        statement: "Same mapping order does not matter",
+        change_type: "unchanged",
+        e8_levels: ["ML1", "ML3"],
+      },
+    ];
+    const after: ComparisonRecord[] = [
+      { ...before[0], e8_levels: ["ML3"] },
+      { ...before[1], statement: "After", e8_levels: [] },
+      { ...before[2], e8_levels: [] },
+      { ...before[3], e8_levels: ["ML3", "ML1"] },
+    ];
+
+    expect(compareSnapshots("ism", "v1", "v2", before, after).changes).toMatchObject([
+      {
+        id: "ism-1",
+        change_type: "modified",
+        old_statement: "Same statement",
+        new_statement: "Same statement",
+        old_e8_levels: ["ML1"],
+        new_e8_levels: ["ML3"],
+      },
+      {
+        id: "ism-2",
+        change_type: "modified",
+        old_statement: "Before",
+        new_statement: "After",
+        old_e8_levels: ["ML2"],
+        new_e8_levels: [],
+      },
+    ]);
   });
 });
 
@@ -274,6 +340,7 @@ describe("Rule1 query dispatcher", () => {
     await expect(
       dispatchRule1Query(executor, "compare", { framework: "nzism", from: "v1", to: "v2" }),
     ).resolves.toMatchObject({ total: 1, changes: [{ change_type: "modified" }] });
+    expect(executor.calls.find((call) => call.name === "compare-snapshot")?.sql).toContain("e8_levels");
     await expect(
       dispatchRule1Query(executor, "compare", { framework: "nzism", from: "bad", to: "v2" }),
     ).rejects.toThrow(RangeError);

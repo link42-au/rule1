@@ -13,6 +13,8 @@ const modified: ChangeRow = {
   new_statement: "Systems are regularly verified.",
   old_applicability: ["P"],
   new_applicability: ["P", "S"],
+  old_e8_levels: ["ML1"],
+  new_e8_levels: ["ML3"],
   change_complexity: "medium",
 };
 
@@ -31,6 +33,9 @@ describe("comparison presentation", () => {
       { kind: "inserted", text: "verified." },
     ]);
     expect(item.applicabilityChanged).toBe(true);
+    expect(item.e8Changed).toBe(true);
+    expect(item.oldE8Levels).toEqual(["ML1"]);
+    expect(item.newE8Levels).toEqual(["ML3"]);
     expect(item.complexity?.label).toBe("Medium");
   });
 
@@ -79,12 +84,27 @@ describe("comparison presentation", () => {
       "ism-0010",
       "ism-0009",
     ]);
+    expect(comparisonRows(rows, "ism", "ml3", "modified", "", "display_id", "asc")).toHaveLength(1);
   });
 
-  it("exports old/new applicability and formula-safe descriptions", () => {
-    const csv = comparisonCsv([presentComparison({ ...modified, new_statement: '=HYPERLINK("bad")' }, "ism")]);
+  it("exports old/new applicability and E8 mappings with formula-safe cells", () => {
+    const csv = comparisonCsv(
+      [presentComparison({ ...modified, new_statement: '=HYPERLINK("bad")', new_e8_levels: ["=DANGEROUS"] }, "ism")],
+      "ism",
+    );
     expect(csv).toContain("Old P,New P");
+    expect(csv).toContain("Old Essential Eight,New Essential Eight");
     expect(csv).toContain("Old Description,New Description");
+    expect(csv).toContain("ML1");
+    expect(csv).toContain("'=DANGEROUS");
     expect(csv).toContain("'=HYPERLINK");
+  });
+
+  it("keeps Essential Eight columns out of non-ISM exports", () => {
+    const csv = comparisonCsv(
+      [presentComparison({ ...modified, old_e8_levels: [], new_e8_levels: [] }, "nzism")],
+      "nzism",
+    );
+    expect(csv).not.toContain("Essential Eight");
   });
 });

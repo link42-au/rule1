@@ -20,6 +20,8 @@ const changes: ChangeRow[] = [
     old_statement: "Review updates",
     new_applicability: [],
     old_applicability: [],
+    new_e8_levels: [],
+    old_e8_levels: [],
   },
   {
     id: "two",
@@ -32,6 +34,8 @@ const changes: ChangeRow[] = [
     old_statement: null,
     new_applicability: [],
     old_applicability: null,
+    new_e8_levels: [],
+    old_e8_levels: null,
   },
 ];
 

@@ -23,13 +23,13 @@ describe("standalone comparison route", () => {
     expect(compare).toContain('url.searchParams.set("from", from)');
     expect(compare).toContain('url.searchParams.set("to", to)');
     expect(compare).toContain("versionPairFromUrl(requestedUrl ?? new URL(window.location.href), result)");
-    expect(compare).toContain("comparisonCsv(filtered)");
+    expect(compare).toContain("comparisonCsv(filtered, framework)");
     expect(compare).toContain("URL.revokeObjectURL(objectUrl)");
   });
 
   it("keeps comparison tables horizontally scrollable and other routes vertically scrollable", () => {
     expect(compare).toContain("overflow-x: auto");
-    expect(compare).toContain("min-width: 1120px");
+    expect(compare).toContain("min-width: 1300px");
     expect(compare).not.toContain("overflow: hidden");
     expect(explorer).not.toContain(":global(body)");
   });
@@ -38,6 +38,12 @@ describe("standalone comparison route", () => {
     expect(compare).toContain("<del>{part.text}</del>");
     expect(compare).toContain("<ins>{part.text}</ins>");
     expect(compare).not.toContain("{@html");
+  });
+
+  it("shows explicit old and new Essential Eight mappings for ISM rows", () => {
+    expect(compare).toContain("<th>Old E8</th><th>New E8</th>");
+    expect(compare).toContain("item.oldE8Levels");
+    expect(compare).toContain("item.newE8Levels");
   });
 
   it("only renders retained complexity with a provenance-neutral explanation", () => {

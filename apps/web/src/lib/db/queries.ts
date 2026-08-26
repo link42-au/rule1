@@ -436,7 +436,7 @@ async function compare(executor: QueryExecutor, params: CompareParams) {
     throw new RangeError("Comparison version does not belong to framework");
   if (params.from === params.to) return compareSnapshots(framework, params.from, params.to, [], []);
   const sql = `/* rule1:compare-snapshot */
-    SELECT control_id, display_id, label, title, statement, change_type, applicability,
+    SELECT control_id, display_id, label, title, statement, change_type, applicability, e8_levels,
       guideline, section_id, section_title, metadata, compliance, revision, change_complexity
     FROM control_history WHERE framework = ? AND catalog_version = ?
       AND (? != 'ism' OR control_class = 'ISM-control') ORDER BY ordinal`;
