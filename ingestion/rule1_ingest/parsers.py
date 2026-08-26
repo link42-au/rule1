@@ -31,7 +31,7 @@ def _changed(current: dict[str, Any], previous: dict[str, Any] | None) -> str:
         return "modified" if any(current.get(key) != previous.get(key) for key in boundary_visible) else "unchanged"
     visible = (
         "display_id", "label", "title", "statement", "section_id", "section_title",
-        "applicability", "applicability_raw", "compliance", "revision", "metadata",
+        "applicability", "compliance", "revision", "metadata",
         "control_class", "e8_levels",
     )
     for key in visible:
@@ -351,7 +351,9 @@ def _parse_ism_oscal(path: Path) -> Snapshot:
                 if not raw_id or raw_id in controls:
                     raise ValueError(f"duplicate or empty ISM OSCAL control id in {path}: {raw_id!r}")
                 props = item.get("props", [])
-                applicability = values(props, "applicability")
+                applicability_raw = values(props, "applicability")
+                applicability = (["NC", "OS", "P", "S", "TS"]
+                                 if "ALL" in applicability_raw else applicability_raw)
                 e8_levels = values(props, "essential-eight-applicability")
                 control_class = str(item.get("class") or "ISM-control")
                 is_principle = control_class == "ISM-principle"
@@ -367,7 +369,7 @@ def _parse_ism_oscal(path: Path) -> Snapshot:
                     "control_class": control_class,
                     "source": "oscal",
                     "applicability": applicability,
-                    "applicability_raw": applicability,
+                    "applicability_raw": applicability_raw,
                     "revision": _prop(props, "revision") or "0",
                     "updated": _prop(props, "updated") or "",
                     "guideline": current_chapter_title,

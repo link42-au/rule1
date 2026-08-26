@@ -63,7 +63,7 @@ The shared, local UI package still contains dormant platform URL constants in it
 - AI annotations from the operated product are not retained.
 - The Essential Eight mapping rows retain maturity levels but contain no named strategy strings.
 - The Cyber Essentials 3.2 source PDF is missing from the archive. Its committed, checksum-verified 3.2 JSON source is ingested.
-- Australian ISM Excel history is not committed; ingestion uses 58 historical PDFs followed by the official March and June 2026 OSCAL catalogs.
+- Australian ISM Excel history is not committed; ingestion uses 45 historical PDFs through March 2022 followed by 17 official ASD OSCAL catalogs covering the June 2022 through June 2026 editions.
 
 These are provenance/data differences, not UI defects. Framework decisions should be checked against the current authoritative publisher source.
 
@@ -75,8 +75,8 @@ These are provenance/data differences, not UI defects. Framework decisions shoul
 - Svelte type checking: zero errors and zero warnings.
 - Node script tests: 6 passed.
 - Python ingestion/parser/database tests: 9 passed, including two clean byte-identical database builds, OSCAL metadata checks, and June 2026 catalogue regressions.
-- Web tests: 11 files and 74 tests passed.
-- Database validation: provenance, checksums, expected schema, 77 catalogue versions, 79 source files, recorded row counts, and `PRAGMA integrity_check` passed.
+- Web tests: 18 files and 150 tests passed.
+- Database validation: provenance, checksums, expected schema, 79 catalogue versions, 81 source files, recorded row counts, and `PRAGMA integrity_check` passed.
 - Static production build: 11 routes plus `404.html` generated beneath `/rule1/`; no rendered root-path escape or retired operated-host link was found.
 - Workflow audit: `.github/workflows/build-sqlite.yml` remains the only workflow. Its Pages artifact and deployment steps are restricted to `main` pushes and manually dispatched runs from `main`; the separate deployment job alone receives `pages: write` and `id-token: write` permissions.
 

@@ -49,19 +49,21 @@
       "ISM-PDF-2021-09",
       "ISM-PDF-2021-12",
       "ISM-PDF-2022-03",
-      "ISM-PDF-2022-06",
-      "ISM-PDF-2022-09",
-      "ISM-PDF-2022-12",
-      "ISM-PDF-2023-03",
-      "ISM-PDF-2023-09",
-      "ISM-PDF-2023-12",
-      "ISM-PDF-2024-03",
-      "ISM-PDF-2024-06",
-      "ISM-PDF-2024-09",
-      "ISM-PDF-2024-12",
-      "ISM-PDF-2025-06",
-      "ISM-PDF-2025-09",
-      "ISM-PDF-2025-12",
+      "ISM-OSCAL-2022.09.14",
+      "ISM-OSCAL-2022.09.15",
+      "ISM-OSCAL-2022.12.1",
+      "ISM-OSCAL-2023.04.12",
+      "ISM-OSCAL-2023.08.3",
+      "ISM-OSCAL-2023.09.25",
+      "ISM-OSCAL-2023.12.1",
+      "ISM-OSCAL-2024.03.12",
+      "ISM-OSCAL-2024.06.18",
+      "ISM-OSCAL-2024.10.4",
+      "ISM-OSCAL-2024.12.19",
+      "ISM-OSCAL-2025.03.31",
+      "ISM-OSCAL-2025.07.16",
+      "ISM-OSCAL-2025.10.8",
+      "ISM-OSCAL-2025.12.9",
       "ISM-OSCAL-2026.03.24",
       "ISM-OSCAL-2026.06.18"
     ],
@@ -71,16 +73,16 @@
   },
   "page_size": 4096,
   "row_counts": {
-    "catalog_versions": 77,
-    "control_groups": 4664,
-    "control_history": 66586,
-    "e8_mappings": 2837,
+    "catalog_versions": 79,
+    "control_groups": 12251,
+    "control_history": 68798,
+    "e8_mappings": 3957,
     "frameworks": 5,
-    "source_files": 79,
+    "source_files": 81,
     "term_history": 0
   },
   "schema_sha256": "4553b9115d826aebb646bc8fcef05328f01fdbc09eada31433cf50a8da40c073",
-  "source_ledger_sha256": "9a51f5d066afec54fab7cbe7071d8abecde334d3d0a044bad7145cff0621145b",
+  "source_ledger_sha256": "46e2fd0a6c6a474d794cc78967e27f6f2a81b390b54430976fb8e93387bd0d27",
   "tables": [
     "build_counts",
     "build_metadata",
@@ -112,9 +114,84 @@
       }
     },
     "ism": {
+      "ISM-OSCAL-2022.09.14": {
+        "control_groups": 501,
+        "control_history": 847,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2022.09.15": {
+        "control_groups": 507,
+        "control_history": 863,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2022.12.1": {
+        "control_groups": 508,
+        "control_history": 877,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2023.04.12": {
+        "control_groups": 514,
+        "control_history": 907,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2023.08.3": {
+        "control_groups": 513,
+        "control_history": 913,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2023.09.25": {
+        "control_groups": 517,
+        "control_history": 923,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2023.12.1": {
+        "control_groups": 518,
+        "control_history": 955,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2024.03.12": {
+        "control_groups": 518,
+        "control_history": 933,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2024.06.18": {
+        "control_groups": 519,
+        "control_history": 962,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2024.10.4": {
+        "control_groups": 526,
+        "control_history": 978,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2024.12.19": {
+        "control_groups": 531,
+        "control_history": 1009,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2025.03.31": {
+        "control_groups": 541,
+        "control_history": 1029,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2025.07.16": {
+        "control_groups": 547,
+        "control_history": 1112,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2025.10.8": {
+        "control_groups": 555,
+        "control_history": 1093,
+        "term_history": 0
+      },
+      "ISM-OSCAL-2025.12.9": {
+        "control_groups": 562,
+        "control_history": 1113,
+        "term_history": 0
+      },
       "ISM-OSCAL-2026.03.24": {
         "control_groups": 564,
-        "control_history": 1131,
+        "control_history": 1134,
         "term_history": 0
       },
       "ISM-OSCAL-2026.06.18": {
@@ -345,71 +422,6 @@
       "ISM-PDF-2022-03": {
         "control_groups": 22,
         "control_history": 851,
-        "term_history": 0
-      },
-      "ISM-PDF-2022-06": {
-        "control_groups": 22,
-        "control_history": 823,
-        "term_history": 0
-      },
-      "ISM-PDF-2022-09": {
-        "control_groups": 22,
-        "control_history": 839,
-        "term_history": 0
-      },
-      "ISM-PDF-2022-12": {
-        "control_groups": 22,
-        "control_history": 853,
-        "term_history": 0
-      },
-      "ISM-PDF-2023-03": {
-        "control_groups": 22,
-        "control_history": 883,
-        "term_history": 0
-      },
-      "ISM-PDF-2023-09": {
-        "control_groups": 22,
-        "control_history": 954,
-        "term_history": 0
-      },
-      "ISM-PDF-2023-12": {
-        "control_groups": 22,
-        "control_history": 1002,
-        "term_history": 0
-      },
-      "ISM-PDF-2024-03": {
-        "control_groups": 22,
-        "control_history": 909,
-        "term_history": 0
-      },
-      "ISM-PDF-2024-06": {
-        "control_groups": 23,
-        "control_history": 913,
-        "term_history": 0
-      },
-      "ISM-PDF-2024-09": {
-        "control_groups": 23,
-        "control_history": 953,
-        "term_history": 0
-      },
-      "ISM-PDF-2024-12": {
-        "control_groups": 23,
-        "control_history": 984,
-        "term_history": 0
-      },
-      "ISM-PDF-2025-06": {
-        "control_groups": 23,
-        "control_history": 1055,
-        "term_history": 0
-      },
-      "ISM-PDF-2025-09": {
-        "control_groups": 22,
-        "control_history": 1058,
-        "term_history": 0
-      },
-      "ISM-PDF-2025-12": {
-        "control_groups": 22,
-        "control_history": 1079,
         "term_history": 0
       }
     },

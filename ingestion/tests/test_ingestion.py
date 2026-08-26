@@ -24,9 +24,9 @@ class ParserTests(unittest.TestCase):
         }
 
     def test_all_retained_versions_have_stable_unique_controls(self) -> None:
-        expected = {"cyber-essentials": 3, "ism": 60, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
+        expected = {"cyber-essentials": 3, "ism": 62, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
         self.assertEqual({key: len(value) for key, value in self.by_framework.items()}, expected)
-        self.assertEqual(len(self.snapshots), 77)
+        self.assertEqual(len(self.snapshots), 79)
         for snapshot in self.snapshots:
             controls = snapshot["controls"]
             self.assertTrue(controls, snapshot["catalog_version"])
@@ -48,7 +48,7 @@ class ParserTests(unittest.TestCase):
 
     def test_reviewed_parser_regressions(self) -> None:
         ism = self.by_framework["ism"]
-        self.assertEqual(sum(len(item["controls"]) for item in ism), 50_624)
+        self.assertEqual(sum(len(item["controls"]) for item in ism), 52_836)
         self.assertEqual(len(ism[-1]["controls"]), 1_150)
         self.assertTrue(any(item["groups"] for item in ism))
         self.assertLessEqual(max(len(control["statement"]) for item in ism for control in item["controls"].values()), 2_000)
@@ -71,22 +71,37 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(current["controls"]["ism-0123"]["e8_levels"], ["ML2", "ML3"])
 
     def test_pdf_to_oscal_boundary_records_real_changes(self) -> None:
-        march = self.by_framework["ism"][-2]
-        controls = list(march["controls"].values())
-        self.assertEqual(sum(control["change_type"] == "modified" for control in controls), 17)
+        june_2022 = next(item for item in self.by_framework["ism"]
+                         if item["catalog_version"] == "ISM-OSCAL-2022.09.14")
+        controls = list(june_2022["controls"].values())
+        self.assertEqual(sum(control["change_type"] == "modified" for control in controls), 28)
         self.assertEqual(sum(control["change_type"] == "new" and control["control_class"] == "ISM-control"
-                             for control in controls), 9)
+                             for control in controls), 6)
         self.assertEqual(sum(control["change_type"] == "new" and control["control_class"] == "ISM-principle"
-                             for control in controls), 49)
-        self.assertEqual(sum(control["change_type"] == "withdrawn" for control in controls), 1)
-        self.assertEqual(march["controls"]["ism-1906"]["change_type"], "unchanged")
+                             for control in controls), 24)
+        self.assertEqual(sum(control["change_type"] == "withdrawn" for control in controls), 3)
+        self.assertEqual(june_2022["controls"]["ism-0027"]["change_type"], "unchanged")
+        all_applicability = next(control for control in controls if control["applicability_raw"] == ["ALL"])
+        self.assertEqual(all_applicability["applicability"], ["NC", "OS", "P", "S", "TS"])
 
     def test_official_ism_oscal_metadata_versions(self) -> None:
-        expected = {"2026-03": "2026.03.24", "2026-06": "2026.06.18"}
+        expected = {
+            "2022-06": "2022.09.14", "2022-09": "2022.09.15", "2022-12": "2022.12.1",
+            "2023-03": "2023.04.12", "2023-06": "2023.08.3", "2023-09": "2023.09.25",
+            "2023-12": "2023.12.1", "2024-03": "2024.03.12", "2024-06": "2024.06.18",
+            "2024-09": "2024.10.4", "2024-12": "2024.12.19", "2025-03": "2025.03.31",
+            "2025-06": "2025.07.16", "2025-09": "2025.10.8", "2025-12": "2025.12.9",
+            "2026-03": "2026.03.24", "2026-06": "2026.06.18",
+        }
         for directory, version in expected.items():
             path = ROOT / "data/ism-oscal" / directory / "ISM_catalog.json"
             catalog = json.loads(path.read_text(encoding="utf-8"))["catalog"]
             self.assertEqual(catalog["metadata"]["version"], version)
+        ledger = json.loads((ROOT / "data/source-ledger.json").read_text(encoding="utf-8"))["sources"]
+        retained_pdfs = [item for item in ledger if item["framework"] == "ism" and item["path"].endswith(".pdf")]
+        self.assertEqual(retained_pdfs[-1]["version"], "ISM-PDF-2022-03")
+        self.assertEqual(len(expected), sum(item["framework"] == "ism" and item["path"].endswith(".json")
+                                            for item in ledger))
 
     def test_duplicate_source_control_ids_fail(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -124,8 +139,8 @@ class DatabaseTests(unittest.TestCase):
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
                 sqlite3.sqlite_version,
             )
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 77)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 79)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 79)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 81)
             self.assertEqual(connection.execute(
                 "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-OSCAL-2026.06.18'"
             ).fetchone()[0], 256)
