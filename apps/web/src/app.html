@@ -4,6 +4,72 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon.svg" />
+    <script data-rule1-preload-recovery>
+      (() => {
+        const guardKey = "rule1:preload-retries";
+        const retryParameter = "__rule1_retry";
+        const retryDelay = 250;
+        const successfulLifecycleDelay = 1500;
+        let preloadFailed = false;
+        let retryScheduled = false;
+        let guardResetTimer = null;
+
+        const currentRelease = () => document
+          .querySelector('link[rel="modulepreload"][href*="/_app/immutable/entry/app."]')
+          ?.getAttribute("href") ?? "unknown-release";
+
+        const failedAsset = (payload) => {
+          if (payload && typeof payload === "object") {
+            if (typeof payload.url === "string") return payload.url;
+            if (typeof payload.message === "string") return payload.message;
+          }
+          return String(payload ?? "unknown-asset");
+        };
+
+        window.addEventListener("vite:preloadError", (event) => {
+          event.preventDefault();
+          preloadFailed = true;
+          if (guardResetTimer !== null) clearTimeout(guardResetTimer);
+          if (retryScheduled) return;
+
+          const retryToken = JSON.stringify([currentRelease(), failedAsset(event.payload)]);
+          try {
+            const stored = JSON.parse(sessionStorage.getItem(guardKey) ?? "[]");
+            const retries = Array.isArray(stored) ? stored : [];
+            if (retries.includes(retryToken)) return;
+            retries.push(retryToken);
+            sessionStorage.setItem(guardKey, JSON.stringify(retries));
+          } catch {
+            // Without a persistent tab-scoped guard, reloading could loop forever.
+            return;
+          }
+
+          retryScheduled = true;
+          setTimeout(() => {
+            const target = new URL(window.location.href);
+            target.searchParams.set(retryParameter, Date.now().toString(36));
+            window.location.replace(target.href);
+          }, retryDelay);
+        });
+
+        window.addEventListener("load", () => {
+          if (preloadFailed) return;
+          guardResetTimer = setTimeout(() => {
+            if (preloadFailed) return;
+            try {
+              sessionStorage.removeItem(guardKey);
+            } catch {
+              // A successful page does not depend on storage being available.
+            }
+            const cleanUrl = new URL(window.location.href);
+            if (cleanUrl.searchParams.has(retryParameter)) {
+              cleanUrl.searchParams.delete(retryParameter);
+              window.history.replaceState(window.history.state, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
+            }
+          }, successfulLifecycleDelay);
+        }, { once: true });
+      })();
+    </script>
     <script>
       (() => {
         let saved = null;
