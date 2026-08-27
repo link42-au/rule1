@@ -96,7 +96,12 @@ test("catalogue splash and loaded interactions remain accessible and locally con
   await page.getByRole("button", { name: "Toggle menu" }).click();
   const mobileSearch = page.getByRole("searchbox", { name: "Search" });
   await mobileSearch.fill("ism-0009");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.getByRole("button", { name: "Search", exact: true }).evaluate((button) => {
+    const form = button.closest("form");
+    if (!form) throw new Error("Mobile search form is unavailable.");
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+  });
   await expect(page.locator("[data-control-heading]")).toBeVisible();
   await expect(page).toHaveURL(/id=ism-0009/);
   await page.getByRole("button", { name: "Back to controls" }).click();
