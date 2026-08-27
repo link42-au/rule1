@@ -1,6 +1,6 @@
 # Rule1 standalone port plan
 
-Status: **In progress**
+Status: **Complete**
 
 Repository: [`wan0net/rule1`](https://github.com/wan0net/rule1) (**public**)
 Reference source: `/Users/icd/Workspace/link42-rule1/rule1`
@@ -66,7 +66,7 @@ The application will query a browser-local SQLite database generated from source
 | 35 | Release-gated Pages deployment | Require the complete verification command before publishing Pages, retain least-privilege deployment permissions, and add a deployed-origin canary that verifies current HTML assets and the database manifest. | 33, 34 | Pull requests and main run the same lint, type, unit, ingestion, deterministic database, static-route, and browser checks; only verified main builds deploy; the post-deploy canary rejects missing immutable assets or a mismatched manifest. | done |
 | 35a | Latest-only Explorer navigation | Repair the duplicate header-search navigation race exposed by the complete hosted browser gate so only the latest URL state can select or clear a control. | 35 | Focused navigation regressions and repeated production-browser searches pass; a complete hosted verification run reaches deployment and its post-deploy canary. | done |
 | 35b | Essential Eight comparison contrast | Correct the dark-theme contrast of the new old/new Essential Eight comparison chips without changing the restored table layout. | 33, 35a | The focused comparison presentation checks and complete rendered accessibility browser test pass in light and dark themes. | done |
-| 36 | Public-release hardening | Correct catalogue-size and release documentation, refresh compatible dependencies, enable appropriate public-repository protections, and complete clean/stale-client live verification without restoring the retired redesign. | 35, 35a, 35b | AGPL compatibility remains documented; dependency audit is reviewed; branch and secret protections are enabled where supported; current and cache-busted live routes expose the restored interface and verified catalogue. | pending |
+| 36 | Public-release hardening | Correct catalogue-size and release documentation, refresh compatible dependencies, enable appropriate public-repository protections, and complete clean/stale-client live verification without restoring the retired redesign. | 35, 35a, 35b | AGPL compatibility remains documented; dependency audit is reviewed; branch and secret protections are enabled where supported; current and cache-busted live routes expose the restored interface and verified catalogue. | done |
 
 ## Discovered dependencies
 

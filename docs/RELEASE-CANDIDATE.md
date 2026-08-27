@@ -94,6 +94,14 @@ The canonical macOS local build SHA-256 is:
 
 The current catalogue heads are `CE-3.3`, `ISM-OSCAL-2026.06.18`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
 
+### Current live-release verification
+
+On 27 August 2026, [GitHub Actions run 33039711058](https://github.com/wan0net/rule1/actions/runs/33039711058) completed the full build job, deterministic repeat build, Pages deployment, and post-deployment canary successfully. The canary verified 25 current immutable assets and 65,613,824 deployed database bytes. The CI database SHA-256 is `a9e77655195a6000af511011144ca2dd6a6c4c859134f99abc0a4e62cabf4101`.
+
+Independent cache-busted origin checks confirmed that current `app.DYuXl1GC.js` returned HTTP 200, the deleted redesign asset `app.DQeL95Q0.js` returned HTTP 404, and cache-busted Explorer HTML referenced the current application asset. This establishes the current hosted-CI, deployment, and origin state.
+
+One persistent in-app browser profile still rendered obsolete redesign HTML from its disk cache. That client-local state does not change the verified origin status: no browser-local favourites, OPFS catalogue, or site data was cleared during verification, and a static origin cannot remotely erase an HTML document that a browser has already cached. Refreshing that profile's cached document remains an honest client-local gap.
+
 ### Initial live publication verification
 
 The following immutable checksums and counts record the initial 22 August publication rather than the current rolling database:
