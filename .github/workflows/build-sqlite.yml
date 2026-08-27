@@ -40,23 +40,25 @@ jobs:
           pnpm install --frozen-lockfile
           uv sync --frozen --python 3.12.13
 
+      - name: Install browser test runtime
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Validate committed sources
         run: pnpm validate:sources
 
-      - name: Build and validate SQLite twice
+      - name: Run complete verification suite
+        env:
+          UV_FROZEN: "true"
+        run: pnpm verify
+
+      - name: Confirm deterministic SQLite build
+        env:
+          UV_FROZEN: "true"
         run: |
-          PYTHONPATH=ingestion uv run --frozen --python 3.12.13 python -m rule1_ingest.build --root . --output build/rule1.sqlite3
-          PYTHONPATH=ingestion uv run --frozen --python 3.12.13 python -m rule1_ingest.validate --root . --database build/rule1.sqlite3
           PYTHONPATH=ingestion uv run --frozen --python 3.12.13 python -m rule1_ingest.build --root . --output build/rule1-repeat.sqlite3
           PYTHONPATH=ingestion uv run --frozen --python 3.12.13 python -m rule1_ingest.validate --root . --database build/rule1-repeat.sqlite3
           cmp --silent build/rule1.sqlite3 build/rule1-repeat.sqlite3
-
-      - name: Place database in the static site
-        run: |
-          mkdir -p apps/web/static/data
-          cp build/rule1.sqlite3 apps/web/static/data/rule1.sqlite3
-          node scripts/write-artifact-manifest.mjs apps/web/static/data/rule1.sqlite3 ingestion/validation-contract.json apps/web/static/data/rule1-artifact-manifest.json
-          pnpm build
+          cmp --silent build/rule1.sqlite3 apps/web/static/data/rule1.sqlite3
           cmp --silent build/rule1.sqlite3 apps/web/build/data/rule1.sqlite3
           cmp --silent apps/web/static/data/rule1-artifact-manifest.json apps/web/build/data/rule1-artifact-manifest.json
 
@@ -68,6 +70,7 @@ jobs:
             apps/web/build/data/rule1.sqlite3
             apps/web/build/data/rule1-artifact-manifest.json
             ingestion/validation-contract.json
+            scripts/post-deploy-canary.mjs
           if-no-files-found: error
           retention-days: 14
 
@@ -86,6 +89,7 @@ jobs:
     needs: build-sqlite
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       pages: write
       id-token: write
     environment:
@@ -95,3 +99,20 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+      - name: Install Node.js for deployment canary
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.1
+
+      - name: Download verified canary inputs
+        uses: actions/download-artifact@v4
+        with:
+          name: rule1-sqlite
+          path: .canary
+
+      - name: Verify deployed Pages release
+        run: >-
+          node .canary/scripts/post-deploy-canary.mjs
+          "${{ steps.deployment.outputs.page_url }}"
+          .canary/apps/web/build/data/rule1-artifact-manifest.json
