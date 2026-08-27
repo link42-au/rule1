@@ -8,9 +8,11 @@ Standalone release: public repository; live at [`wan0.net/rule1`](https://wan0.n
 
 ## Status and scope
 
-The standalone application is source-complete and live on GitHub Pages. Publication was approved and completed on 22 August 2026: the repository is public, Pages is enabled, and [workflow run 32555995535](https://github.com/wan0net/rule1/actions/runs/32555995535) succeeded. Pull requests still build and test without uploading or deploying a Pages artifact; only eligible runs from `main` can publish.
+The initial standalone application was published on GitHub Pages on 22 August 2026: the repository is public, Pages is enabled, and [workflow run 32555995535](https://github.com/wan0net/rule1/actions/runs/32555995535) succeeded. The repository has continued to change since that publication checkpoint.
 
-Parity is assessed against the reviewed old desktop product and the route/capability dispositions in [REVIEW.md](REVIEW.md). Mobile-specific and accessibility work were explicitly excluded from this port.
+This record distinguishes four states: source-complete means the change is present in the repository; CI-verified means a named workflow run passed; deployed means that verified artifact was published; live-verified means the deployed origin was checked after publication. A source or local test result is not evidence of the later states unless this document names that evidence.
+
+Parity is assessed against the reviewed old desktop product and the route/capability dispositions in [REVIEW.md](REVIEW.md). Subsequent work added deliberate phone and tablet layouts, keyboard interaction, WCAG-oriented fixes, and rendered accessibility regression coverage without changing the retained desktop visual language.
 
 ## Route and capability matrix
 
@@ -52,7 +54,8 @@ Each state or race fix has a focused regression test in the explorer, catalogue,
 - `/about`, `/api`, `/changelog`, `/licence`, and `/bypass-eligibility` are static compatibility destinations rather than server redirects.
 - AI-generated annotations and summaries are absent; the application does not fabricate them.
 - Geist and Geist Mono are self-hosted from pinned, checksum-recorded official v1.7.1 WOFF2 files. The reviewed typography is restored without an external font request; system fonts remain fallbacks if local font loading fails.
-- Mobile-specific and accessibility parity were outside the approved desktop scope.
+
+Responsive phone/tablet behaviour and accessibility repairs are retained additions made after the initial desktop port. They do not restore authentication, operated services, or community-write features.
 
 The shared, local UI package still contains dormant platform URL constants in its compiled JavaScript because the reviewed platform bar and footer are retained. They are not rendered as retired Rule1/account links and are not request targets. The only production `fetch` targets are same-origin SvelteKit version metadata, the SQLite module, the database artifact manifest, and the checksummed database. The static verifier requires the local font assets and rejects external Google Fonts requests.
 
@@ -69,17 +72,18 @@ These are provenance/data differences, not UI defects. Framework decisions shoul
 
 ## Verification evidence
 
-`pnpm verify` passed on 26 August 2026:
+The following is a dated local source-verification checkpoint. It is not hosted-CI, deployment, or live-origin evidence. `pnpm verify` passed on 27 August 2026:
 
-- Biome: 71 files checked.
+- Biome: 73 files checked.
 - Svelte type checking: zero errors and zero warnings.
-- Node script tests: 6 passed.
+- Node script tests: 10 passed.
 - Python ingestion/parser/database tests: 11 passed, including two clean byte-identical database builds, OSCAL metadata and original-parser parity, and June 2026 catalogue regressions.
-- Web tests: 18 files and 151 tests passed.
+- Web tests: 18 files and 160 tests passed.
 - Browser tests: 2 passed across responsive, accessibility, loading, and local-only interaction coverage.
-- Database validation: provenance, checksums, expected schema, 79 catalogue versions, 81 source files, recorded row counts, and `PRAGMA integrity_check` passed.
-- Static production build: 11 routes plus `404.html` generated beneath `/rule1/`; no rendered root-path escape or retired operated-host link was found.
-- Workflow audit: `.github/workflows/build-sqlite.yml` remains the only workflow. Its Pages artifact and deployment steps are restricted to `main` pushes and manually dispatched runs from `main`; the separate deployment job alone receives `pages: write` and `id-token: write` permissions.
+- Database build and validation passed locally; `build/rule1.sqlite3` has SHA-256 `5a1ad1752fc9f4f0e6914d64ddd4c358c7dd2fa34b91cc806c6250d1e1511ab7`.
+- Static verifier: 11 routes plus the fallback passed beneath `/rule1/`; no rendered root-path escape or retired operated-host link was found.
+
+The current source-controlled release gate runs the same complete verification command for pull requests and `main`, performs a second deterministic database build, and permits only a verified `main` build to publish. Its post-deployment canary checks the current HTML-referenced immutable assets, the deployed artifact manifest, and the database bytes. These workflow controls describe repository source; a named completed workflow and canary are still required before claiming a new deployment is CI-verified or live-verified.
 
 The canonical macOS local build SHA-256 is:
 
@@ -106,5 +110,5 @@ The old landing, explorer, and long comparison references remain in `docs/refere
 
 ## Publication outcome
 
-- Feature 13 is complete. The public GitHub Pages deployment and its database have been verified live.
-- `rule1.link42.app` was not modified and continued to return HTTP 200 during publication verification.
+- The initial Feature 13 public GitHub Pages deployment and its database were verified live at the publication checkpoint above.
+- `rule1.link42.app` was not modified and continued to return HTTP 200 during that publication verification.

@@ -91,8 +91,8 @@
         <p class="progress-copy">Starting SQLite inside your browser.</p>
       {/if}
       <p id="database-loading-retention" class="retention-copy">
-        The first visit downloads about 51 MiB. When browser storage is available, Rule1 retains the checked copy locally so
-        later visits normally open without downloading it again.
+        The first visit downloads the current catalogue. When browser storage is available, Rule1 retains the checked copy
+        locally so later visits normally open without downloading it again.
       </p>
     </div>
   </div>

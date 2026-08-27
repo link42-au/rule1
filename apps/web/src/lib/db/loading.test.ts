@@ -14,11 +14,12 @@ describe("database loading splash", () => {
   });
 
   it("explains the initial download, unknown totals, verification, and browser retention", () => {
-    expect(splashSource).toContain("The first visit downloads about 51 MiB.");
+    expect(splashSource).toContain("The first visit downloads the current catalogue.");
+    expect(splashSource).not.toMatch(/first visit[^.]*\b\d+(?:\.\d+)?\s+(?:KiB|MiB|GiB)/i);
     expect(splashSource).toContain("Total size unavailable");
     expect(splashSource).toContain("Verifying catalogue integrity");
     expect(splashSource).toContain("Opening the local catalogue");
-    expect(splashSource).toContain("retains the checked copy locally");
+    expect(splashSource).toMatch(/retains the checked copy\s+locally/);
     expect(splashSource).not.toMatch(/setTimeout|setInterval/);
   });
 
