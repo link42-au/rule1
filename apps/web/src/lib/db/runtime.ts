@@ -1,4 +1,4 @@
-import type { Database, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
+import type { Database, SAHPoolUtil, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import type { QueryExecutor } from "./queries";
 
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
@@ -169,6 +169,27 @@ const createExecutor = (db: Database): QueryExecutor => ({
   all: async <T extends Record<string, unknown>>(sql: string, bind): Promise<T[]> => db.selectObjects(sql, bind) as T[],
 });
 
+const openAndValidateCachedDatabase = (sqlite3: Sqlite3Static, filename: string, vfsName: string): Database => {
+  const db = new sqlite3.oo1.DB(filename, "r", vfsName);
+  try {
+    if (db.selectValue("PRAGMA quick_check") !== "ok") {
+      throw new Error(`The cached Rule1 database ${filename} failed its integrity check.`);
+    }
+    return db;
+  } catch (error) {
+    db.close();
+    throw error;
+  }
+};
+
+const unlinkCachedDatabase = (pool: SAHPoolUtil, filename: string): void => {
+  try {
+    pool.unlink(filename);
+  } catch {
+    // Cache cleanup must not make an already validated catalogue unavailable.
+  }
+};
+
 const openCachedDatabase = async (
   sqlite3: Sqlite3Static,
   manifest: DatabaseArtifactManifest,
@@ -182,18 +203,61 @@ const openCachedDatabase = async (
   });
   const filename = `${CACHE_FILE_PREFIX}${manifest.database.sha256}.sqlite3`;
 
-  for (const existing of pool.getFileNames()) {
-    if (existing.startsWith(CACHE_FILE_PREFIX) && existing !== filename) {
-      pool.unlink(existing);
+  const cachedFilenames = pool.getFileNames().filter((existing) => existing.startsWith(CACHE_FILE_PREFIX));
+  if (cachedFilenames.includes(filename)) {
+    let current: Database | undefined;
+    try {
+      current = openAndValidateCachedDatabase(sqlite3, filename, pool.vfsName);
+    } catch {
+      unlinkCachedDatabase(pool, filename);
+    }
+    if (current) {
+      for (const existing of cachedFilenames) {
+        if (existing !== filename) unlinkCachedDatabase(pool, existing);
+      }
+      return current;
     }
   }
-  if (!pool.getFileNames().includes(filename)) {
-    const bytes = await getBytes();
-    onProgress({ stage: "opening" });
-    pool.importDb(filename, bytes);
+
+  let previous: { db: Database; filename: string } | undefined;
+  for (const existing of cachedFilenames) {
+    if (existing === filename) continue;
+    try {
+      previous = {
+        db: openAndValidateCachedDatabase(sqlite3, existing, pool.vfsName),
+        filename: existing,
+      };
+      break;
+    } catch {
+      unlinkCachedDatabase(pool, existing);
+    }
   }
 
-  return new sqlite3.oo1.DB(filename, "r", pool.vfsName);
+  let replacement: Database;
+  try {
+    const bytes = await getBytes();
+    onProgress({ stage: "opening" });
+    await pool.importDb(filename, bytes);
+    replacement = openAndValidateCachedDatabase(sqlite3, filename, pool.vfsName);
+  } catch (error) {
+    if (pool.getFileNames().includes(filename)) unlinkCachedDatabase(pool, filename);
+    if (previous) return previous.db;
+    throw error;
+  }
+
+  if (previous) {
+    try {
+      previous.db.close();
+      unlinkCachedDatabase(pool, previous.filename);
+    } catch {
+      // The replacement is already active; leave the old cache in place if it
+      // cannot be safely closed and retired during this load.
+    }
+  }
+  for (const existing of cachedFilenames) {
+    if (existing !== filename && existing !== previous?.filename) unlinkCachedDatabase(pool, existing);
+  }
+  return replacement;
 };
 
 const openMemoryDatabase = (sqlite3: Sqlite3Static, bytes: ArrayBuffer): Database => {

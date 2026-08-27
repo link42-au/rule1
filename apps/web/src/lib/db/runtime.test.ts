@@ -28,18 +28,26 @@ class FakeDatabase {
   pointer = 7;
   close = vi.fn();
   checkRc = vi.fn();
+  selectValue: ReturnType<typeof vi.fn>;
   exec = vi.fn((options: { resultRows?: Record<string, unknown>[] }) => {
     options.resultRows?.push({ value: "ok" });
     return this;
   });
   selectObjects = vi.fn(() => [{ value: "ok" }]);
+
+  constructor(
+    readonly filename: string,
+    quickCheck: (filename: string) => unknown,
+  ) {
+    this.selectValue = vi.fn((sql: string) => (sql === "PRAGMA quick_check" ? quickCheck(filename) : undefined));
+  }
 }
 
-const sqliteMock = (install: () => Promise<unknown>) => {
+const sqliteMock = (install: () => Promise<unknown>, quickCheck: (filename: string) => unknown = () => "ok") => {
   const databases: FakeDatabase[] = [];
   class DB extends FakeDatabase {
-    constructor(..._args: unknown[]) {
-      super();
+    constructor(filename = ":memory:") {
+      super(filename, quickCheck);
       databases.push(this);
     }
   }
@@ -56,6 +64,25 @@ const sqliteMock = (install: () => Promise<unknown>) => {
     },
   } as unknown as Sqlite3Static;
   return { sqlite, databases, deserialize };
+};
+
+const opfsPool = (initialFilenames: string[]) => {
+  const filenames = [...initialFilenames];
+  const pool = {
+    getFileNames: vi.fn(() => [...filenames]),
+    unlink: vi.fn((filename: string) => {
+      const index = filenames.indexOf(filename);
+      if (index === -1) return false;
+      filenames.splice(index, 1);
+      return true;
+    }),
+    importDb: vi.fn(async (filename: string, bytes: ArrayBuffer) => {
+      if (!filenames.includes(filename)) filenames.push(filename);
+      return bytes.byteLength;
+    }),
+    vfsName: "rule1-opfs-sahpool",
+  };
+  return { filenames, pool };
 };
 
 const response = (body: unknown) =>
@@ -112,12 +139,7 @@ describe("browser SQLite runtime", () => {
 
   it("reuses the checksum-keyed OPFS database without downloading it", async () => {
     const filename = `/rule1-${SHA}.sqlite3`;
-    const pool = {
-      getFileNames: vi.fn(() => [filename]),
-      unlink: vi.fn(),
-      importDb: vi.fn(),
-      vfsName: "rule1-opfs-sahpool",
-    };
+    const { pool } = opfsPool([filename]);
     const { sqlite } = sqliteMock(async () => pool);
     const fetchMock = vi.fn(async () => response(manifest));
 
@@ -137,6 +159,119 @@ describe("browser SQLite runtime", () => {
     expect(pool.importDb).not.toHaveBeenCalled();
     expect(onProgress).not.toHaveBeenCalled();
     await expect(runtime.executor.all("select 1")).resolves.toEqual([{ value: "ok" }]);
+  });
+
+  it("replaces a cached database which fails its integrity check", async () => {
+    const filename = `/rule1-${SHA}.sqlite3`;
+    const bytes = new Uint8Array([1, 2, 3]).buffer;
+    const { filenames, pool } = opfsPool([filename]);
+    let checks = 0;
+    const { sqlite, databases } = sqliteMock(
+      async () => pool,
+      () => (++checks === 1 ? "database disk image is malformed" : "ok"),
+    );
+    const fetchMock = vi.fn().mockResolvedValueOnce(response(manifest)).mockResolvedValueOnce(response(bytes));
+
+    const runtime = await initializeRule1Database(sqlite, urls, {
+      fetch: fetchMock as unknown as typeof fetch,
+      subtle: { digest: vi.fn(async () => digest(SHA)) } as unknown as SubtleCrypto,
+    });
+
+    expect(databases[0]?.close).toHaveBeenCalledOnce();
+    expect(pool.unlink).toHaveBeenCalledWith(filename);
+    expect(pool.importDb).toHaveBeenCalledWith(filename, bytes);
+    expect(filenames).toEqual([filename]);
+    expect(runtime.storage).toBe("opfs");
+  });
+
+  it("retires the previous catalogue only after its replacement is verified and opened", async () => {
+    const previousFilename = `/rule1-${"22".repeat(32)}.sqlite3`;
+    const replacementFilename = `/rule1-${SHA}.sqlite3`;
+    const bytes = new Uint8Array([1, 2, 3]).buffer;
+    const { filenames, pool } = opfsPool([previousFilename]);
+    pool.importDb.mockImplementationOnce(async (filename: string, imported: ArrayBuffer) => {
+      expect(filenames).toContain(previousFilename);
+      expect(pool.unlink).not.toHaveBeenCalledWith(previousFilename);
+      filenames.push(filename);
+      return imported.byteLength;
+    });
+    const { sqlite, databases } = sqliteMock(async () => pool);
+    const fetchMock = vi.fn().mockResolvedValueOnce(response(manifest)).mockResolvedValueOnce(response(bytes));
+
+    const runtime = await initializeRule1Database(sqlite, urls, {
+      fetch: fetchMock as unknown as typeof fetch,
+      subtle: { digest: vi.fn(async () => digest(SHA)) } as unknown as SubtleCrypto,
+    });
+
+    expect(pool.importDb).toHaveBeenCalledWith(replacementFilename, bytes);
+    expect(databases.find((database) => database.filename === previousFilename)?.close).toHaveBeenCalledOnce();
+    expect(pool.unlink).toHaveBeenCalledWith(previousFilename);
+    expect(filenames).toEqual([replacementFilename]);
+    expect(runtime.storage).toBe("opfs");
+  });
+
+  it("keeps serving the previous verified catalogue when a replacement download fails", async () => {
+    const previousFilename = `/rule1-${"22".repeat(32)}.sqlite3`;
+    const { filenames, pool } = opfsPool([previousFilename]);
+    const { sqlite, databases } = sqliteMock(async () => pool);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response(manifest))
+      .mockResolvedValueOnce({ ok: false, status: 503 } as Response);
+
+    const runtime = await initializeRule1Database(sqlite, urls, {
+      fetch: fetchMock as unknown as typeof fetch,
+      subtle: { digest: vi.fn() } as unknown as SubtleCrypto,
+    });
+
+    expect(pool.importDb).not.toHaveBeenCalled();
+    expect(pool.unlink).not.toHaveBeenCalledWith(previousFilename);
+    expect(filenames).toEqual([previousFilename]);
+    expect(databases.find((database) => database.filename === previousFilename)?.close).not.toHaveBeenCalled();
+    expect(runtime.storage).toBe("opfs");
+    await expect(runtime.executor.all("select 1")).resolves.toEqual([{ value: "ok" }]);
+  });
+
+  it("keeps serving the previous verified catalogue when replacement import fails", async () => {
+    const previousFilename = `/rule1-${"22".repeat(32)}.sqlite3`;
+    const bytes = new Uint8Array([1, 2, 3]).buffer;
+    const { filenames, pool } = opfsPool([previousFilename]);
+    pool.importDb.mockRejectedValueOnce(new Error("OPFS write failed"));
+    const { sqlite } = sqliteMock(async () => pool);
+    const fetchMock = vi.fn().mockResolvedValueOnce(response(manifest)).mockResolvedValueOnce(response(bytes));
+
+    const runtime = await initializeRule1Database(sqlite, urls, {
+      fetch: fetchMock as unknown as typeof fetch,
+      subtle: { digest: vi.fn(async () => digest(SHA)) } as unknown as SubtleCrypto,
+    });
+
+    expect(pool.unlink).not.toHaveBeenCalledWith(previousFilename);
+    expect(filenames).toEqual([previousFilename]);
+    expect(runtime.storage).toBe("opfs");
+    await expect(runtime.executor.all("select 1")).resolves.toEqual([{ value: "ok" }]);
+  });
+
+  it("rejects an invalid imported replacement without retiring the previous catalogue", async () => {
+    const previousFilename = `/rule1-${"22".repeat(32)}.sqlite3`;
+    const replacementFilename = `/rule1-${SHA}.sqlite3`;
+    const bytes = new Uint8Array([1, 2, 3]).buffer;
+    const { filenames, pool } = opfsPool([previousFilename]);
+    const { sqlite, databases } = sqliteMock(
+      async () => pool,
+      (filename) => (filename === replacementFilename ? "database disk image is malformed" : "ok"),
+    );
+    const fetchMock = vi.fn().mockResolvedValueOnce(response(manifest)).mockResolvedValueOnce(response(bytes));
+
+    const runtime = await initializeRule1Database(sqlite, urls, {
+      fetch: fetchMock as unknown as typeof fetch,
+      subtle: { digest: vi.fn(async () => digest(SHA)) } as unknown as SubtleCrypto,
+    });
+
+    expect(databases.find((database) => database.filename === replacementFilename)?.close).toHaveBeenCalledOnce();
+    expect(pool.unlink).toHaveBeenCalledWith(replacementFilename);
+    expect(pool.unlink).not.toHaveBeenCalledWith(previousFilename);
+    expect(filenames).toEqual([previousFilename]);
+    expect(runtime.storage).toBe("opfs");
   });
 
   it("downloads, verifies, and deserializes read-only when OPFS is unavailable", async () => {
