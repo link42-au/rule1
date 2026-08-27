@@ -280,8 +280,8 @@
   .chip-nc { border-color: #c8c8c8; background: #fff; color: #1a1a1a; } .chip-os { border-color: #4b5563; background: #6b7280; color: #fff; }
   .chip-p { border-color: #1e40af; background: #1d4ed8; color: #fff; } .chip-c { border-color: #15803d; background: #16a34a; color: #fff; }
   .chip-s { border-color: #be185d; background: #db2777; color: #fff; } .chip-ts { border-color: #b91c1c; background: #dc2626; color: #fff; }
-  .e8-chip { border-color: var(--accent-border); background: var(--accent-bg); color: var(--accent); }
-  .e8-old { opacity: 0.65; }
+  .e8-chip { border-color: var(--accent-border); background: var(--accent-bg); color: var(--accent-text); }
+  .e8-old .e8-chip { border-style: dashed; background: transparent; }
   .none { color: var(--text-dim); }
   .description-cell { color: var(--text-mid); line-height: 1.6; white-space: pre-line; }
   .description-cell del { padding: 0 2px; border-radius: 2px; background: var(--red-bg); color: var(--red); }

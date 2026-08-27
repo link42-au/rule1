@@ -49,6 +49,8 @@ describe("WCAG interaction and presentation repairs", () => {
       ["#a78bfa", "#1e1730"],
       ["#60a5fa", "#2c2c2b"],
       ["#60a5fa", "#1e2e4a"],
+      ["#2563eb", "#eff6ff"],
+      ["#2563eb", "#ffffff"],
       ["#ffffff", "#2563eb"],
     ]) {
       expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5);
@@ -69,6 +71,9 @@ describe("WCAG interaction and presentation repairs", () => {
     expect(compare).toMatch(/\.fw-country\s*\{[^}]*color: var\(--text-dim\)[^}]*\}/);
     expect(compare).toContain(".fw-pill.active .fw-country { color: var(--accent-solid-text); }");
     expect(compare).not.toMatch(/\.fw-country\s*\{[^}]*opacity:/);
+    expect(compare).toMatch(/\.e8-chip\s*\{[^}]*color: var\(--accent-text\)[^}]*\}/);
+    expect(compare).toMatch(/\.e8-old \.e8-chip\s*\{[^}]*border-style: dashed[^}]*background: transparent[^}]*\}/);
+    expect(compare).not.toMatch(/\.e8-old\s*\{[^}]*opacity:/);
     expect(landing).toMatch(/\.landing-fw-country\s*\{[^}]*color: var\(--text-dim\)[^}]*\}/);
     expect(landing).toMatch(
       /\.landing-fw-pill\.active \.landing-fw-country\s*\{[^}]*color: var\(--accent-solid-text\)[^}]*\}/,
