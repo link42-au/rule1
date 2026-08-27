@@ -184,6 +184,18 @@ describe("reviewed Rule1 explorer", () => {
     expect(layoutSource).toContain('page.url.searchParams.get("search") ?? ""');
   });
 
+  it("deduplicates header search navigation and ignores stale URL applications", () => {
+    expect(layoutSource).toContain("pendingSearchTarget === target");
+    expect(layoutSource).toContain("page.url.pathname");
+    expect(layoutSource).toContain("page.url.search}` === target");
+    expect(layoutSource).toContain("if (pendingSearchTarget === target) pendingSearchTarget = null");
+    expect(explorerSource).toContain("const navigationRequests = new LatestRequest()");
+    expect(explorerSource).toContain("const request = navigationRequests.begin()");
+    expect(explorerSource).toContain("if (navigationRequests.isCurrent(request)) syncUrl()");
+    expect(explorerSource).toContain("await selectSearchResult(false)");
+    expect(explorerSource).toContain("navigationRequests.cancel()");
+  });
+
   it("controls hierarchy expansion from interactive breadcrumb ancestors", () => {
     expect(explorerSource).toContain("function revealBreadcrumbGroup(group: Group)");
     expect(explorerSource).toContain("openGroupIds = next");

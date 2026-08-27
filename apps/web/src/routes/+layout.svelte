@@ -12,6 +12,7 @@
 
   let { children } = $props();
   let headerSearchValue = $state("");
+  let pendingSearchTarget: string | null = null;
 
   const appPath = (path: string): string => `${base}${path}`;
   const navItems = [
@@ -24,18 +25,30 @@
   let catalogueBlocked = $state(page.route.id !== null && catalogueRouteIds.has(page.route.id));
   const catalogueBackedRoute = $derived(page.route.id !== null && catalogueRouteIds.has(page.route.id));
 
-  function searchControls(query: string): void {
+  async function navigateToSearch(query: string): Promise<void> {
     headerSearchValue = query;
     const params = page.url.pathname === appPath("/explorer/") ? new URLSearchParams(page.url.searchParams) : new URLSearchParams();
     params.delete("search");
     params.delete("id");
     params.delete("tab");
     if (query) params.set("search", query);
-    goto(`${appPath("/explorer/")}${params.size > 0 ? `?${params}` : ""}`, {
-      keepFocus: true,
-      noScroll: true,
-      replaceState: page.url.pathname === appPath("/explorer/"),
-    });
+    const target = `${appPath("/explorer/")}${params.size > 0 ? `?${params}` : ""}`;
+    if (pendingSearchTarget === target || `${page.url.pathname}${page.url.search}` === target) return;
+
+    pendingSearchTarget = target;
+    try {
+      await goto(target, {
+        keepFocus: true,
+        noScroll: true,
+        replaceState: page.url.pathname === appPath("/explorer/"),
+      });
+    } finally {
+      if (pendingSearchTarget === target) pendingSearchTarget = null;
+    }
+  }
+
+  function searchControls(query: string): void {
+    void navigateToSearch(query);
   }
 
   $effect(() => {

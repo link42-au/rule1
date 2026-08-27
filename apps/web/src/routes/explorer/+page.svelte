@@ -88,6 +88,7 @@
   const historyRequests = new LatestRequest();
   const graphRequests = new LatestRequest();
   const mappingRequests = new LatestRequest();
+  const navigationRequests = new LatestRequest();
   let filtered = $derived(filterControls(controls, filter, applicability, search, favourites));
   let bySection = $derived(controlsBySection(filtered));
   let isISM = $derived(framework === "ism");
@@ -518,6 +519,7 @@
 
   async function applyNavigatedUrl(url: URL): Promise<void> {
     if (!client || frameworks.length === 0) return;
+    const request = navigationRequests.begin();
     const next = readExplorerUrl(url, frameworks.map((item) => item.id));
     activeTab = tabFromUrl(url);
     filter = next.filter;
@@ -525,17 +527,17 @@
     search = next.search;
     if (next.framework !== framework) {
       await loadFramework(next.framework, next.selectedId);
-      syncUrl();
+      if (navigationRequests.isCurrent(request)) syncUrl();
     } else if (next.selectedId) {
       await selectControl(next.selectedId, false);
-      syncUrl();
+      if (navigationRequests.isCurrent(request)) syncUrl();
     } else if (next.search) {
       clearSelection();
-      syncUrl();
-      await selectSearchResult();
+      await selectSearchResult(false);
+      if (navigationRequests.isCurrent(request)) syncUrl();
     } else {
       clearSelection();
-      syncUrl();
+      if (navigationRequests.isCurrent(request)) syncUrl();
     }
   }
 
@@ -593,6 +595,7 @@
       historyRequests.cancel();
       graphRequests.cancel();
       mappingRequests.cancel();
+      navigationRequests.cancel();
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
       client = null;
