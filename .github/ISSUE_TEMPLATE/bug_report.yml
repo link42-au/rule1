@@ -1,0 +1,61 @@
+name: Bug report
+description: Report reproducible incorrect behaviour in Rule1.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Rule1. Search existing issues before reporting a bug. Do not include security-sensitive details here; use the private security reporting link instead.
+  - type: input
+    id: location
+    attributes:
+      label: Affected page, control, or framework
+      description: Include the URL, control identifier, framework, or source version where relevant.
+      placeholder: https://rule1.link42.app/explorer?id=ism-0009
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the incorrect behaviour and what you expected instead.
+      placeholder: Tell us what happened and what should have happened.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Give the smallest reliable sequence that demonstrates the problem.
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      description: Include browser name and version, operating system, and device type when relevant.
+      placeholder: Firefox 142 on macOS 15, desktop
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional non-sensitive context
+      description: Add screenshots, logs, source links, or other details that do not contain secrets or personal information.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: This report contains no exploit details, credentials, personal information, or other sensitive material.
+          required: true
