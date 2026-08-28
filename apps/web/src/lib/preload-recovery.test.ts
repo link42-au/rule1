@@ -10,7 +10,7 @@ type StoredValues = Map<string, string>;
 
 function createHarness(
   href: string,
-  release = "/rule1/_app/immutable/entry/app.RELEASE.js",
+  release = "/_app/immutable/entry/app.RELEASE.js",
   storedValues: StoredValues = new Map(),
 ) {
   const listeners = new Map<string, Array<(event: Record<string, unknown>) => void>>();
@@ -71,7 +71,7 @@ function createHarness(
   };
 }
 
-function preloadError(message = "Failed to fetch dynamically imported module: /rule1/chunk.js") {
+function preloadError(message = "Failed to fetch dynamically imported module: /chunk.js") {
   return { payload: new Error(message), preventDefault: vi.fn() };
 }
 
@@ -84,7 +84,7 @@ describe("deployment-edge module recovery", () => {
   });
 
   it("delays one retry and preserves the URL while replacing its cache buster", () => {
-    const harness = createHarness("https://wan0.net/rule1/explorer/?id=ISM-0009&__rule1_retry=old#history");
+    const harness = createHarness("https://rule1.link42.app/explorer/?id=ISM-0009&__rule1_retry=old#history");
     const error = preloadError();
 
     harness.dispatch("vite:preloadError", error);
@@ -97,7 +97,7 @@ describe("deployment-edge module recovery", () => {
 
     expect(harness.location.replace).toHaveBeenCalledOnce();
     const target = new URL(harness.location.replace.mock.calls[0]![0]);
-    expect(target.pathname).toBe("/rule1/explorer/");
+    expect(target.pathname).toBe("/explorer/");
     expect(target.searchParams.get("id")).toBe("ISM-0009");
     expect(target.searchParams.getAll("__rule1_retry")).toHaveLength(1);
     expect(target.searchParams.get("__rule1_retry")).not.toBe("old");
@@ -106,17 +106,17 @@ describe("deployment-edge module recovery", () => {
 
   it("allows one retry per failed asset and app release", () => {
     const storedValues = new Map<string, string>();
-    const first = createHarness("https://wan0.net/rule1/compare/", "/entry/app.A.js", storedValues);
+    const first = createHarness("https://rule1.link42.app/compare/", "/entry/app.A.js", storedValues);
     first.dispatch("vite:preloadError", preloadError("missing /nodes/8.A.js"));
     expect(first.timersAt(250)).toHaveLength(1);
 
-    const repeated = createHarness("https://wan0.net/rule1/compare/", "/entry/app.A.js", storedValues);
+    const repeated = createHarness("https://rule1.link42.app/compare/", "/entry/app.A.js", storedValues);
     const repeatedError = preloadError("missing /nodes/8.A.js");
     repeated.dispatch("vite:preloadError", repeatedError);
     expect(repeatedError.preventDefault).toHaveBeenCalledOnce();
     expect(repeated.timersAt(250)).toHaveLength(0);
 
-    const newRelease = createHarness("https://wan0.net/rule1/compare/", "/entry/app.B.js", storedValues);
+    const newRelease = createHarness("https://rule1.link42.app/compare/", "/entry/app.B.js", storedValues);
     newRelease.dispatch("vite:preloadError", preloadError("missing /nodes/8.A.js"));
     expect(newRelease.timersAt(250)).toHaveLength(1);
   });
@@ -124,7 +124,7 @@ describe("deployment-edge module recovery", () => {
   it("resets only its guard and cache buster after a successful lifecycle", () => {
     const storedValues = new Map([["rule1:preload-retries", '["prior-retry"]']]);
     const harness = createHarness(
-      "https://wan0.net/rule1/explorer/?id=ISM-0009&__rule1_retry=temporary#history",
+      "https://rule1.link42.app/explorer/?id=ISM-0009&__rule1_retry=temporary#history",
       undefined,
       storedValues,
     );
@@ -136,7 +136,7 @@ describe("deployment-edge module recovery", () => {
 
     expect(harness.sessionStorage.removeItem).toHaveBeenCalledWith("rule1:preload-retries");
     expect(storedValues.has("rule1:preload-retries")).toBe(false);
-    expect(harness.history.replaceState).toHaveBeenCalledWith(null, "", "/rule1/explorer/?id=ISM-0009#history");
+    expect(harness.history.replaceState).toHaveBeenCalledWith(null, "", "/explorer/?id=ISM-0009#history");
 
     harness.dispatch("vite:preloadError", preloadError());
     expect(harness.timersAt(250)).toHaveLength(1);

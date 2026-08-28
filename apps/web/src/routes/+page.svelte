@@ -130,7 +130,7 @@
     content="Explore Australian ISM security controls, Essential Eight strategies, and IRAP assessment guidance. Search, filter, and compare controls across framework versions."
   />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://wan0.net/rule1/" />
+  <meta property="og:url" content="https://rule1.link42.app/" />
   <meta property="og:site_name" content="Rule1" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content={siteName} />
@@ -138,7 +138,7 @@
     name="twitter:description"
     content="Explore Australian ISM security controls, Essential Eight strategies, and IRAP assessment guidance. Search, filter, and compare controls across framework versions."
   />
-  <link rel="canonical" href="https://wan0.net/rule1/" />
+  <link rel="canonical" href="https://rule1.link42.app/" />
 </svelte:head>
 
 <div class="landing">

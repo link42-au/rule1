@@ -14,7 +14,9 @@ test("SQLite is the only workflow and publishes its verified build to Pages", ()
   const verifyPosition = buildJob.indexOf("run: pnpm verify");
   const repeatBuildPosition = buildJob.indexOf("--output build/rule1-repeat.sqlite3");
   const artifactPosition = buildJob.indexOf("actions/upload-artifact@v4");
-  const pagesArtifactPosition = buildJob.indexOf("actions/upload-pages-artifact@v5");
+  const pagesArtifactPosition = buildJob.indexOf(
+    "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9",
+  );
 
   assert.match(workflow, /pnpm exec playwright install --with-deps chromium/);
   assert.match(buildJob, /run: pnpm validate:sources/);
@@ -31,8 +33,8 @@ test("SQLite is the only workflow and publishes its verified build to Pages", ()
   assert.match(workflow, /apps\/web\/build\/data\/rule1-artifact-manifest\.json/);
   assert.match(workflow, / {12}ingestion\/validation-contract\.json/);
   assert.match(workflow, / {12}scripts\/post-deploy-canary\.mjs/);
-  assert.match(buildJob, /actions\/configure-pages@v5/);
-  assert.match(buildJob, /actions\/upload-pages-artifact@v5/);
+  assert.match(buildJob, /actions\/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5/);
+  assert.match(buildJob, /actions\/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5/);
   assert.match(buildJob, /path: apps\/web\/build/);
   assert.doesNotMatch(buildJob, /pages:\s*write|id-token:\s*write/);
 
@@ -45,7 +47,7 @@ test("SQLite is the only workflow and publishes its verified build to Pages", ()
   assert.doesNotMatch(deployJob, /contents:\s*write/);
   assert.match(deployJob, /environment:\n\s+name: github-pages/);
   assert.match(deployJob, /url: \$\{\{ steps\.deployment\.outputs\.page_url \}\}/);
-  assert.match(deployJob, /actions\/deploy-pages@v5/);
+  assert.match(deployJob, /actions\/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5/);
   assert.match(deployJob, /actions\/setup-node@v4/);
   assert.match(deployJob, /node-version: 22\.23\.1/);
   assert.match(deployJob, /actions\/download-artifact@v4/);

@@ -10,7 +10,7 @@ export default defineConfig({
   outputDir: "test-results",
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: "http://127.0.0.1:4173/rule1",
+    baseURL: "http://127.0.0.1:4173",
     browserName: "chromium",
     viewport: { width: 1280, height: 900 },
     screenshot: "only-on-failure",
@@ -19,7 +19,7 @@ export default defineConfig({
   projects: [{ name: "chromium" }],
   webServer: {
     command: "pnpm --filter @rule1/web preview --host 127.0.0.1 --port 4173",
-    url: "http://127.0.0.1:4173/rule1/",
+    url: "http://127.0.0.1:4173/",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

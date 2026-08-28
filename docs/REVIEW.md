@@ -39,7 +39,7 @@ Each fix requires a regression test; none is a design change.
 ## Port seams
 
 - Bring the required shared UI and design tokens into this repository; retain no monorepo package dependency.
-- Convert server routes, redirects, base-path handling, and theme persistence for a static `/rule1/` build.
+- Convert server routes, redirects, base-path handling, and theme persistence for the original static `/rule1/` project-path build. Feature 38 later moved the current build to the `rule1.link42.app` root.
 - Put a typed browser SQLite client between the reviewed UI and the database. Pages should consume domain data, not backend-specific HTTP plumbing.
 
 The minimal read contract covers the old data-backed UI operations corresponding to:

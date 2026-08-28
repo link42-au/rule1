@@ -21,8 +21,8 @@ const fontAssets = [
 ];
 
 describe("standalone foundation", () => {
-  it("uses the GitHub Pages base path with a static adapter", () => {
-    expect(config.kit?.paths?.base).toBe("/rule1");
+  it("builds for the custom-domain root with a static adapter", () => {
+    expect(config.kit?.paths?.base ?? "").toBe("");
     expect(config.kit?.adapter).toBeDefined();
   });
 

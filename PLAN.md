@@ -22,7 +22,7 @@ The application will query a browser-local SQLite database generated from source
 - Do not add signing, attestations, evidence bundles, release policy engines, or other publication machinery.
 - Desktop, phone, and tablet verification are required. Accessibility work targets WCAG 2.2 AA for the retained static application.
 - Known static-hosting gaps: authentication, cloud-synchronised favourites, community writes/voting, bypass tokens, and maintenance polling. Browser-local favourites remain in scope.
-- Publication was approved and completed on 22 August 2026 at [`wan0.net/rule1`](https://wan0.net/rule1/).
+- The original public release was completed on 22 August 2026 at `wan0.net/rule1`; the approved canonical domain is now [`rule1.link42.app`](https://rule1.link42.app/).
 
 ## Ordered features
 
@@ -68,6 +68,7 @@ The application will query a browser-local SQLite database generated from source
 | 35b | Essential Eight comparison contrast | Correct the dark-theme contrast of the new old/new Essential Eight comparison chips without changing the restored table layout. | 33, 35a | The focused comparison presentation checks and complete rendered accessibility browser test pass in light and dark themes. | done |
 | 36 | Public-release hardening | Correct catalogue-size and release documentation, refresh compatible dependencies, enable appropriate public-repository protections, and complete clean/stale-client live verification without restoring the retired redesign. | 35, 35a, 35b | AGPL compatibility remains documented; dependency audit is reviewed; branch and secret protections are enabled where supported; current and cache-busted live routes expose the restored interface and verified catalogue. | done |
 | 37 | Link42 organisation ownership | Transfer repository ownership to `link42-au`, update repository ownership links, deploy and validate the organisation-owned GitHub Pages origin, and defer the custom-domain cutover to `rule1.link42.app` until separate explicit approval. The existing `wan0.net` hosting is not a continuity requirement. | 36 | The repository resolves at `link42-au/rule1`; repository and application ownership links use the organisation namespace; the organisation Pages origin serves the expected routes, immutable assets, and verified catalogue; no custom-domain change is made without separate approval. | done |
+| 38 | `rule1.link42.app` custom-domain preparation | Move the static application from the GitHub project path to a root-domain source contract, update canonical metadata and deployment verification, and pin the Pages actions used for publication. DNS and the GitHub Pages custom-domain setting remain separate cutover operations. | 37, custom-domain approval | Root routes, immutable assets, database files, preload recovery, metadata, static verification, and browser tests pass locally and in hosted CI; the protected change is merged before the external domain setting is changed. | done |
 
 ## Discovered dependencies
 

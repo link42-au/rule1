@@ -25,7 +25,7 @@ describe("database loading splash", () => {
 
   it("renders the opening cover into initial server HTML when requested", () => {
     const { body } = render(DatabaseLoadingSplash, {
-      props: { initiallyVisible: true, routeKey: "/rule1/explorer/" },
+      props: { initiallyVisible: true, routeKey: "/explorer/" },
     });
 
     expect(body).toMatch(/class="database-splash(?:\s|")/);
@@ -37,7 +37,7 @@ describe("database loading splash", () => {
 
   it("does not render a cover into initial server HTML for informational routes", () => {
     const { body } = render(DatabaseLoadingSplash, {
-      props: { initiallyVisible: false, routeKey: "/rule1/guide/" },
+      props: { initiallyVisible: false, routeKey: "/guide/" },
     });
 
     expect(body).not.toMatch(/class="database-splash(?:\s|")/);

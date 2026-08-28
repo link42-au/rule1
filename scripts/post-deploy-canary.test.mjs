@@ -24,14 +24,14 @@ const createManifest = (database) => ({
 const startDeployment = async ({ database, manifest = createManifest(database), missingAsset = false }) => {
   const server = createServer((request, response) => {
     const path = new URL(request.url, "http://localhost").pathname;
-    if (path === "/rule1/") {
+    if (path === "/") {
       response.setHeader("content-type", "text/html");
       response.end(
         '<link rel="stylesheet" href="./_app/immutable/assets/app.ABC123.css"><script src="./_app/immutable/entry/start.DEF456.js"></script>',
       );
       return;
     }
-    if (path === "/rule1/_app/immutable/assets/app.ABC123.css") {
+    if (path === "/_app/immutable/assets/app.ABC123.css") {
       if (missingAsset) {
         response.writeHead(404).end("missing");
       } else {
@@ -39,16 +39,16 @@ const startDeployment = async ({ database, manifest = createManifest(database), 
       }
       return;
     }
-    if (path === "/rule1/_app/immutable/entry/start.DEF456.js") {
+    if (path === "/_app/immutable/entry/start.DEF456.js") {
       response.end("export const started = true;");
       return;
     }
-    if (path === "/rule1/data/rule1-artifact-manifest.json") {
+    if (path === "/data/rule1-artifact-manifest.json") {
       response.setHeader("content-type", "application/json");
       response.end(JSON.stringify(manifest));
       return;
     }
-    if (path === "/rule1/data/rule1.sqlite3") {
+    if (path === "/data/rule1.sqlite3") {
       response.end(database);
       return;
     }
@@ -62,7 +62,7 @@ const startDeployment = async ({ database, manifest = createManifest(database), 
         server.close((error) => (error ? reject(error) : resolve()));
         server.closeAllConnections();
       }),
-    url: `http://127.0.0.1:${address.port}/rule1/`,
+    url: `http://127.0.0.1:${address.port}/`,
   };
 };
 

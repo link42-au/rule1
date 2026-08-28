@@ -4,12 +4,12 @@
   <meta property="og:title" content="Privacy — rule1" />
   <meta property="og:description" content="How the standalone Rule1 application uses browser-local storage without accounts, analytics, or an application backend." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://wan0.net/rule1/privacy/" />
+  <meta property="og:url" content="https://rule1.link42.app/privacy/" />
   <meta property="og:site_name" content="rule1" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Privacy — rule1" />
   <meta name="twitter:description" content="How the standalone Rule1 application uses browser-local storage without accounts, analytics, or an application backend." />
-  <link rel="canonical" href="https://wan0.net/rule1/privacy/" />
+  <link rel="canonical" href="https://rule1.link42.app/privacy/" />
 </svelte:head>
 
 <div class="cl-main privacy-page">

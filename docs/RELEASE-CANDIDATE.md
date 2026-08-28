@@ -4,7 +4,7 @@ Date: 22 August 2026
 
 Reviewed baseline: `link42-rule1` at `aaa140cdd753d6576f0a2bf3292b31518b88fbcc`
 
-Standalone release: public repository; live at [`wan0.net/rule1`](https://wan0.net/rule1/)
+Canonical release target: [`rule1.link42.app`](https://rule1.link42.app/). The original 22 August release used the historical `wan0.net/rule1` path.
 
 ## Status and scope
 
@@ -18,18 +18,18 @@ Parity is assessed against the reviewed old desktop product and the route/capabi
 
 | Built route | Release-candidate behaviour | Baseline disposition |
 |---|---|---|
-| `/rule1/` | Recognisable Rule1 landing and all five retained framework entry points; availability comes from local SQLite. | Retained |
-| `/rule1/explorer/` | Hierarchy, search, filters, deep links, details, history, E8 maturity mappings, context graph, local favourites, and JSON/CSV/Markdown control exports. | Retained and reviewed |
-| `/rule1/compare/` | Framework/version selection, refresh-safe state, change filtering, and formula-safe CSV export. | Retained and reviewed |
-| `/rule1/glossary/` | Framework navigation, search, and term detail states work; ISM glossary terms and their retained OSCAL history are available locally. | Retained and reviewed |
-| `/rule1/guide/` | Static standalone usage, data, and interpretation guidance. | Retained and corrected |
-| `/rule1/privacy/` | Static, accurate browser-local privacy statement. | Retained and corrected |
-| `/rule1/about/`, `/rule1/api/`, `/rule1/licence/` | Base-path-aware static destinations to the guide. `/api/` explicitly states that there is no runtime API. | Static compatibility routes |
-| `/rule1/changelog/` | Base-path-aware static destination to version comparison. | Static compatibility route |
-| `/rule1/bypass-eligibility/` | Base-path-aware static destination explaining that bypass tokens are excluded. | Removed server feature with compatibility route |
-| Unknown route | Static `404.html` fallback with a `/rule1/` home link. | Retained |
+| `/` | Recognisable Rule1 landing and all five retained framework entry points; availability comes from local SQLite. | Retained |
+| `/explorer/` | Hierarchy, search, filters, deep links, details, history, E8 maturity mappings, context graph, local favourites, and JSON/CSV/Markdown control exports. | Retained and reviewed |
+| `/compare/` | Framework/version selection, refresh-safe state, change filtering, and formula-safe CSV export. | Retained and reviewed |
+| `/glossary/` | Framework navigation, search, and term detail states work; ISM glossary terms and their retained OSCAL history are available locally. | Retained and reviewed |
+| `/guide/` | Static standalone usage, data, and interpretation guidance. | Retained and corrected |
+| `/privacy/` | Static, accurate browser-local privacy statement. | Retained and corrected |
+| `/about/`, `/api/`, `/licence/` | Root-domain static destinations to the guide. `/api/` explicitly states that there is no runtime API. | Static compatibility routes |
+| `/changelog/` | Root-domain static destination to version comparison. | Static compatibility route |
+| `/bypass-eligibility/` | Root-domain static destination explaining that bypass tokens are excluded. | Removed server feature with compatibility route |
+| Unknown route | Static `404.html` fallback with a root home link. | Retained |
 
-The built route verifier checks every route above, the fallback, database, artifact manifest, and SQLite runtime assets. It also rejects rendered links or assets that escape the `/rule1/` base and rendered links to the retired Rule1 API, account service, or old Rule1 host.
+The built route verifier checks every route above, the fallback, database, artifact manifest, and SQLite runtime assets. It also rejects the retired `/rule1/` deployment prefix and rendered links to the retired Rule1 API, account service, or old Rule1 host.
 
 ## Confirmed defects fixed during the port
 
@@ -81,7 +81,7 @@ The following is a dated local source-verification checkpoint. It is not hosted-
 - Web tests: 18 files and 160 tests passed.
 - Browser tests: 2 passed across responsive, accessibility, loading, and local-only interaction coverage.
 - Database build and validation passed locally; `build/rule1.sqlite3` has SHA-256 `5a1ad1752fc9f4f0e6914d64ddd4c358c7dd2fa34b91cc806c6250d1e1511ab7`.
-- Static verifier: 11 routes plus the fallback passed beneath `/rule1/`; no rendered root-path escape or retired operated-host link was found.
+- Static verifier: 11 routes plus the fallback passed at the root; no retired deployment prefix or operated-host link was found.
 
 The current source-controlled release gate runs the same complete verification command for pull requests and `main`, performs a second deterministic database build, and permits only a verified `main` build to publish. Its post-deployment canary checks the current HTML-referenced immutable assets, the deployed artifact manifest, and the database bytes. These workflow controls describe repository source; a named completed workflow and canary are still required before claiming a new deployment is CI-verified or live-verified.
 
@@ -94,9 +94,9 @@ The canonical macOS local build SHA-256 is:
 
 The current catalogue heads are `CE-3.3`, `ISM-OSCAL-2026.06.18`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
 
-### Current live-release verification
+### Historical live-release verification
 
-On 27 August 2026, [GitHub Actions run 33039711058](https://github.com/wan0net/rule1/actions/runs/33039711058) completed the full build job, deterministic repeat build, Pages deployment, and post-deployment canary successfully. The canary verified 25 current immutable assets and 65,613,824 deployed database bytes. The CI database SHA-256 is `a9e77655195a6000af511011144ca2dd6a6c4c859134f99abc0a4e62cabf4101`.
+On 27 August 2026, before the Link42 organisation and domain migration, [GitHub Actions run 33039711058](https://github.com/wan0net/rule1/actions/runs/33039711058) completed the full build job, deterministic repeat build, Pages deployment, and post-deployment canary successfully. The canary verified 25 immutable assets and 65,613,824 deployed database bytes. The CI database SHA-256 was `a9e77655195a6000af511011144ca2dd6a6c4c859134f99abc0a4e62cabf4101`.
 
 Independent cache-busted origin checks confirmed that current `app.DYuXl1GC.js` returned HTTP 200, the deleted redesign asset `app.DQeL95Q0.js` returned HTTP 404, and cache-busted Explorer HTML referenced the current application asset. This establishes the current hosted-CI, deployment, and origin state.
 
@@ -119,4 +119,4 @@ The old landing, explorer, and long comparison references remain in `docs/refere
 ## Publication outcome
 
 - The initial Feature 13 public GitHub Pages deployment and its database were verified live at the publication checkpoint above.
-- `rule1.link42.app` was not modified and continued to return HTTP 200 during that publication verification.
+- At that historical publication checkpoint, `rule1.link42.app` had not yet been moved to this static release.
