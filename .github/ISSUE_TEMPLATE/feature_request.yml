@@ -1,0 +1,45 @@
+name: Improvement suggestion
+description: Suggest a useful change to Rule1.
+title: "[Suggestion]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement. Search existing issues first and describe the need before prescribing an implementation.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What is difficult, missing, or worth improving, and who does it affect?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Suggested outcome
+      description: Describe the result you would like to see. Implementation ideas are welcome but optional.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Note any current workaround or other approach you considered.
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add non-sensitive examples, sketches, source links, or related issues.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and did not find a duplicate suggestion.
+          required: true

@@ -8,7 +8,16 @@ The canonical site is [rule1.link42.app](https://rule1.link42.app/).
 
 Rule1 is a static SvelteKit application hosted on GitHub Pages. It downloads a checksum-verified SQLite snapshot, opens it inside the browser with SQLite WASM, and keeps a checksum-keyed local copy where the browser supports it. There is no runtime application server, account system, or external database.
 
-The repository contains the ingestion pipeline and retained framework history used to generate the SQLite snapshot. GitHub Actions performs the same build and validation used locally.
+The [source repository](https://github.com/link42-au/rule1) is hosted by the [`link42-au`](https://github.com/link42-au) GitHub organisation. It contains the SvelteKit and TypeScript browser application, the Python ingestion pipeline, and the retained framework history used to generate the SQLite snapshot. GitHub Actions performs the same deterministic build and validation used locally, then publishes the verified static site to GitHub Pages at [rule1.link42.app](https://rule1.link42.app/).
+
+## Feedback and support
+
+- [Report a Rule1 bug](https://github.com/link42-au/rule1/issues/new?template=bug_report.yml) when the catalogue, interface, data, or documentation is not behaving as expected.
+- [Suggest an improvement](https://github.com/link42-au/rule1/issues/new?template=feature_request.yml) for a new capability, usability change, framework addition, or documentation idea.
+- Browse [existing issues](https://github.com/link42-au/rule1/issues) before opening a report to avoid duplicates.
+- Report security vulnerabilities privately through [GitHub Security Advisories](https://github.com/link42-au/rule1/security/advisories/new). Do not put exploit details, secrets, personal information, or other sensitive material in a public issue.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the information that makes reports and pull requests easier to review.
 
 ## Development
 
