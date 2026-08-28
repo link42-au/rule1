@@ -30,6 +30,17 @@ describe("responsive shell and retained routes", () => {
     expect(platformBar).toMatch(/\.pb-nav\s*{[^}]*gap:\s*6px/s);
   });
 
+  it("uses Geist sans for primary navigation while retaining the mono platform bar", () => {
+    expect(header).toMatch(/\.nav-link\s*\{[^}]*font-family:\s*var\(--font-sans\)/s);
+    expect(header).toMatch(/\.nav-mobile-link\s*\{[^}]*font-family:\s*var\(--font-sans\)/s);
+    expect(platformBar).toMatch(
+      /\.pb-app\s*\{[^}]*font-family:\s*"Geist Mono",\s*ui-monospace,\s*"SF Mono",\s*Menlo,\s*monospace/s,
+    );
+    expect(platformBar).toMatch(
+      /\.pb-more-trigger\s*\{[^}]*font-family:\s*"Geist Mono",\s*ui-monospace,\s*"SF Mono",\s*Menlo,\s*monospace/s,
+    );
+  });
+
   it("lets landing content and its controls shrink and wrap", () => {
     expect(landing).toMatch(/\.landing\s*{[^}]*width:\s*100%[^}]*min-width:\s*0/s);
     expect(landing).toMatch(/\.landing-fw-bar\s*{[^}]*flex-wrap:\s*wrap/s);
