@@ -203,7 +203,7 @@ function handleMobileSearchSubmit(event: Event) {
   }
 
   .nav-link {
-    font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-family: var(--font-sans);
     font-size: 13px;
     font-weight: 500;
     color: var(--text-mid);
@@ -328,7 +328,7 @@ function handleMobileSearchSubmit(event: Event) {
     align-items: center;
     justify-content: space-between;
     padding: 12px 20px;
-    font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 500;
     color: var(--text-mid);

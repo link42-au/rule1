@@ -31,6 +31,38 @@ async function selectTheme(page: Page, value: "light" | "dark"): Promise<void> {
   await expect(page.locator("html")).toHaveAttribute("data-theme", value);
 }
 
+test("primary navigation renders in Geist sans while the platform bar remains Geist Mono", async ({ page }) => {
+  await page.goto("/guide/");
+  await expect(page.getByRole("heading", { name: "Rule1 guide" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.fonts.check('13px "Geist"'))).toBe(true);
+  await expect.poll(() => page.evaluate(() => document.fonts.check('10px "Geist Mono"'))).toBe(true);
+
+  const desktopPrimaryFamily = await page
+    .locator(".nav-link")
+    .first()
+    .evaluate((element) => getComputedStyle(element).fontFamily);
+  const platformAppFamily = await page
+    .locator(".pb-app")
+    .first()
+    .evaluate((element) => getComputedStyle(element).fontFamily);
+  const platformMoreFamily = await page
+    .locator(".pb-more-trigger")
+    .evaluate((element) => getComputedStyle(element).fontFamily);
+  expect(desktopPrimaryFamily).toContain("Geist");
+  expect(desktopPrimaryFamily).not.toContain("Geist Mono");
+  expect(platformAppFamily).toContain("Geist Mono");
+  expect(platformMoreFamily).toContain("Geist Mono");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Toggle menu" }).click();
+  const mobilePrimaryFamily = await page
+    .locator(".nav-mobile-link")
+    .first()
+    .evaluate((element) => getComputedStyle(element).fontFamily);
+  expect(mobilePrimaryFamily).toContain("Geist");
+  expect(mobilePrimaryFamily).not.toContain("Geist Mono");
+});
+
 test("static routes reflow across representative viewports and themes", async ({ page }, testInfo) => {
   await page.goto("/guide/");
   await selectTheme(page, "light");
