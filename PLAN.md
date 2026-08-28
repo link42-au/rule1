@@ -2,7 +2,7 @@
 
 Status: **Complete**
 
-Repository: [`wan0net/rule1`](https://github.com/wan0net/rule1) (**public**)
+Repository: [`link42-au/rule1`](https://github.com/link42-au/rule1) (**public**)
 Reference source: `/Users/icd/Workspace/link42-rule1/rule1`
 
 ## Goal
@@ -67,6 +67,7 @@ The application will query a browser-local SQLite database generated from source
 | 35a | Latest-only Explorer navigation | Repair the duplicate header-search navigation race exposed by the complete hosted browser gate so only the latest URL state can select or clear a control. | 35 | Focused navigation regressions and repeated production-browser searches pass; a complete hosted verification run reaches deployment and its post-deploy canary. | done |
 | 35b | Essential Eight comparison contrast | Correct the dark-theme contrast of the new old/new Essential Eight comparison chips without changing the restored table layout. | 33, 35a | The focused comparison presentation checks and complete rendered accessibility browser test pass in light and dark themes. | done |
 | 36 | Public-release hardening | Correct catalogue-size and release documentation, refresh compatible dependencies, enable appropriate public-repository protections, and complete clean/stale-client live verification without restoring the retired redesign. | 35, 35a, 35b | AGPL compatibility remains documented; dependency audit is reviewed; branch and secret protections are enabled where supported; current and cache-busted live routes expose the restored interface and verified catalogue. | done |
+| 37 | Link42 organisation ownership | Transfer repository ownership to `link42-au`, update repository ownership links, deploy and validate the organisation-owned GitHub Pages origin, and defer the custom-domain cutover to `rule1.link42.app` until separate explicit approval. The existing `wan0.net` hosting is not a continuity requirement. | 36 | The repository resolves at `link42-au/rule1`; repository and application ownership links use the organisation namespace; the organisation Pages origin serves the expected routes, immutable assets, and verified catalogue; no custom-domain change is made without separate approval. | done |
 
 ## Discovered dependencies
 
