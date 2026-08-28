@@ -32,7 +32,7 @@ async function selectTheme(page: Page, value: "light" | "dark"): Promise<void> {
 }
 
 test("static routes reflow across representative viewports and themes", async ({ page }, testInfo) => {
-  await page.goto("/rule1/guide/");
+  await page.goto("/guide/");
   await selectTheme(page, "light");
   await expect(page.getByRole("heading", { name: "Rule1 guide" })).toBeVisible();
   await assertDocumentDoesNotOverflow(page);
@@ -42,7 +42,7 @@ test("static routes reflow across representative viewports and themes", async ({
   await assertNoSeriousAxeViolations(page, testInfo, "guide-dark-desktop");
 
   await page.setViewportSize({ width: 768, height: 900 });
-  await page.goto("/rule1/privacy/");
+  await page.goto("/privacy/");
   await expect(page.getByRole("heading", { name: "Privacy" })).toBeVisible();
   await assertDocumentDoesNotOverflow(page);
 
@@ -77,10 +77,10 @@ test("catalogue splash and loaded interactions remain accessible and locally con
     await route.continue();
   });
 
-  await page.goto("/rule1/guide/");
+  await page.goto("/guide/");
   await page.evaluate(() => localStorage.setItem("theme", "light"));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/rule1/explorer/");
+  await page.goto("/explorer/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   const splash = page.locator(".database-splash");
   await expect(splash).toBeVisible();
@@ -114,7 +114,7 @@ test("catalogue splash and loaded interactions remain accessible and locally con
   await expect(page.getByText("Controls list")).toBeVisible();
 
   await page.setViewportSize({ width: 768, height: 900 });
-  await page.goto("/rule1/explorer/?id=ism-0009");
+  await page.goto("/explorer/?id=ism-0009");
   await expect(page.locator("[data-control-heading]")).toBeVisible();
   const tabs = page.getByRole("tablist", { name: "Control detail views" });
   await tabs.getByRole("tab", { name: "Overview" }).focus();
@@ -134,7 +134,7 @@ test("catalogue splash and loaded interactions remain accessible and locally con
   await expect(page.locator("[data-control-heading]")).toBeVisible();
   await assertNoSeriousAxeViolations(page, testInfo, "explorer-dark-desktop");
 
-  await page.goto("/rule1/compare/?from=ISM-OSCAL-2026.03.24&to=ISM-OSCAL-2026.06.18");
+  await page.goto("/compare/?from=ISM-OSCAL-2026.03.24&to=ISM-OSCAL-2026.06.18");
   const results = page.getByRole("region", { name: "Comparison results" });
   await expect(results).toBeVisible();
   await expect(results.getByRole("table")).toBeVisible();

@@ -156,12 +156,12 @@
   <meta property="og:title" content="Compare versions — rule1" />
   <meta property="og:description" content="Compare retained security framework versions locally in your browser and review controls that were added, modified, or withdrawn." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://wan0.net/rule1/compare/" />
+  <meta property="og:url" content="https://rule1.link42.app/compare/" />
   <meta property="og:site_name" content="rule1" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Compare versions — rule1" />
   <meta name="twitter:description" content="Compare retained security framework versions locally in your browser and review controls that were added, modified, or withdrawn." />
-  <link rel="canonical" href="https://wan0.net/rule1/compare/" />
+  <link rel="canonical" href="https://rule1.link42.app/compare/" />
 </svelte:head>
 
 <div class="cl-main cl-main--wide compare-page">

@@ -114,9 +114,9 @@ describe("standalone information and compatibility routes", () => {
       expect(page).toContain('<meta property="og:title"');
       expect(page).toContain('<meta property="og:description"');
       expect(page).toContain('<meta name="twitter:card" content="summary"');
-      expect(page).toContain(`<link rel="canonical" href="https://wan0.net/rule1/${route}/"`);
-      expect(page).toContain(`<meta property="og:url" content="https://wan0.net/rule1/${route}/"`);
-      expect(page).not.toContain("rule1.link42.app");
+      expect(page).toContain(`<link rel="canonical" href="https://rule1.link42.app/${route}/"`);
+      expect(page).toContain(`<meta property="og:url" content="https://rule1.link42.app/${route}/"`);
+      expect(page).not.toContain("wan0.net/rule1");
     }
   });
 
@@ -128,5 +128,6 @@ describe("standalone information and compatibility routes", () => {
 
   it("generates a static 404 fallback", () => {
     expect(config).toContain('adapter({ fallback: "404.html" })');
+    expect(config).not.toContain('base: "/rule1"');
   });
 });

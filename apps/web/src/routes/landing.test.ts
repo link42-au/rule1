@@ -15,7 +15,7 @@ describe("reviewed Rule1 landing page", () => {
     expect(landingSource).toContain("Browse all controls");
   });
 
-  it("keeps assets and catalogue destinations beneath the configured base path", () => {
+  it("keeps assets and catalogue destinations relative to the configured root", () => {
     expect(landingSource).toContain('import { base } from "$app/paths"');
     expect(landingSource).toMatch(/`\$\{base\}\/\$\{theme\.value/);
     expect(landingSource).toMatch(/return `\$\{base\}\$\{path\}`/);

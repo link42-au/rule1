@@ -8,12 +8,12 @@
   <meta property="og:title" content="Guide — rule1" />
   <meta property="og:description" content="Learn how to explore and compare the security framework history retained by the standalone Rule1 catalogue." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://wan0.net/rule1/guide/" />
+  <meta property="og:url" content="https://rule1.link42.app/guide/" />
   <meta property="og:site_name" content="rule1" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Guide — rule1" />
   <meta name="twitter:description" content="Learn how to explore and compare the security framework history retained by the standalone Rule1 catalogue." />
-  <link rel="canonical" href="https://wan0.net/rule1/guide/" />
+  <link rel="canonical" href="https://rule1.link42.app/guide/" />
 </svelte:head>
 
 <div class="cl-main guide-page">

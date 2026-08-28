@@ -54,7 +54,7 @@ describe("reviewed Rule1 explorer", () => {
     expect(layoutSource).toContain('params.delete("tab")');
   });
 
-  it("uses the static hosting base path and closes the local database worker", () => {
+  it("uses the static root path and closes the local database worker", () => {
     expect(explorerSource).toContain("openRule1DataClient(base, window.location.href)");
     expect(explorerSource).toContain("if (closeClient) void closeClient()");
   });

@@ -12,9 +12,9 @@ import {
 
 const SHA = "11".repeat(32);
 const urls = {
-  moduleUrl: "https://wan0.net/rule1/vendor/sqlite/index.mjs",
-  manifestUrl: "https://wan0.net/rule1/data/rule1-artifact-manifest.json",
-  databaseUrl: "https://wan0.net/rule1/data/rule1.sqlite3",
+  moduleUrl: "https://rule1.link42.app/vendor/sqlite/index.mjs",
+  manifestUrl: "https://rule1.link42.app/data/rule1-artifact-manifest.json",
+  databaseUrl: "https://rule1.link42.app/data/rule1.sqlite3",
 };
 const manifest = {
   format_version: 1 as const,
@@ -104,14 +104,17 @@ describe("browser SQLite runtime", () => {
   });
 
   it("rejects cross-origin runtime assets", () => {
-    expect(() => assertSameOriginAssets(urls, "https://wan0.net/rule1/")).not.toThrow();
+    expect(() => assertSameOriginAssets(urls, "https://rule1.link42.app/")).not.toThrow();
     expect(() =>
-      assertSameOriginAssets({ ...urls, databaseUrl: "https://example.com/rule1.sqlite3" }, "https://wan0.net/rule1/"),
+      assertSameOriginAssets(
+        { ...urls, databaseUrl: "https://example.com/rule1.sqlite3" },
+        "https://rule1.link42.app/",
+      ),
     ).toThrow("application origin");
   });
 
-  it("builds all static assets beneath the configured Pages base path", () => {
-    expect(buildRuntimeAssetUrls("/rule1", "https://wan0.net/rule1/explorer/")).toEqual(urls);
+  it("builds all static assets at the custom-domain root", () => {
+    expect(buildRuntimeAssetUrls("", "https://rule1.link42.app/explorer/")).toEqual(urls);
   });
 
   it("keeps the WorkerGlobalScope receiver when calling fetch", async () => {
@@ -127,7 +130,7 @@ describe("browser SQLite runtime", () => {
     expect(() => unboundFetch()).toThrow("Illegal invocation");
 
     const dependencies = createRuntimeDependencies(scope as unknown as typeof globalThis);
-    await expect(dependencies.fetch("https://wan0.net/rule1/data/manifest.json")).resolves.toBeDefined();
+    await expect(dependencies.fetch("https://rule1.link42.app/data/manifest.json")).resolves.toBeDefined();
   });
 
   it("checks both database size and SHA-256", async () => {

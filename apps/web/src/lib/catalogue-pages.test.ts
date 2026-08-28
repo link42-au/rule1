@@ -41,13 +41,13 @@ const changes: ChangeRow[] = [
 
 describe("static comparison route state", () => {
   it("restores valid framework and version selections on direct refresh", () => {
-    const url = new URL("https://wan0.net/rule1/compare/?framework=nzism&from=1.0&to=2.0");
+    const url = new URL("https://rule1.link42.app/compare/?framework=nzism&from=1.0&to=2.0");
     expect(frameworkFromUrl(url, ["ism", "nzism"])).toBe("nzism");
     expect(versionPairFromUrl(url, versions)).toEqual({ from: "1.0", to: "2.0" });
   });
 
   it("falls back to a valid framework and the latest pair", () => {
-    const url = new URL("https://wan0.net/rule1/compare/?framework=invalid&from=nope&to=1.0");
+    const url = new URL("https://rule1.link42.app/compare/?framework=invalid&from=nope&to=1.0");
     expect(frameworkFromUrl(url, ["ism", "nzism"])).toBe("ism");
     expect(versionPairFromUrl(url, versions)).toEqual({ from: "1.1", to: "2.0" });
     expect(versionPairFromUrl(url, versions.slice(0, 1))).toBeNull();

@@ -49,46 +49,48 @@ const controls: Control[] = [
 
 describe("explorer URL state", () => {
   it.each(FRAMEWORK_IDS)("restores the %s framework on a direct refresh", (framework) => {
-    const url = new URL(`https://wan0.net/rule1/explorer/?framework=${framework}&id=control-1&filter=new`);
+    const url = new URL(`https://rule1.link42.app/explorer/?framework=${framework}&id=control-1&filter=new`);
     expect(readExplorerUrl(url, FRAMEWORK_IDS)).toMatchObject({ framework, selectedId: "control-1", filter: "new" });
   });
 
   it("falls back safely when the initial framework is invalid or unavailable", () => {
-    expect(readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?framework=nope"), FRAMEWORK_IDS).framework).toBe(
+    expect(readExplorerUrl(new URL("https://rule1.link42.app/explorer/?framework=nope"), FRAMEWORK_IDS).framework).toBe(
       "ism",
     );
-    expect(readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?framework=nzism"), ["ism"]).framework).toBe("ism");
+    expect(readExplorerUrl(new URL("https://rule1.link42.app/explorer/?framework=nzism"), ["ism"]).framework).toBe(
+      "ism",
+    );
   });
 
   it("keeps legacy ID search links working without retaining a false search", () => {
-    const state = readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?search=ISM-1749"), FRAMEWORK_IDS);
+    const state = readExplorerUrl(new URL("https://rule1.link42.app/explorer/?search=ISM-1749"), FRAMEWORK_IDS);
     expect(state.search).toBe("");
     expect(state.selectedId).toBe("ISM-1749");
   });
 
   it("opens an exact control from a legacy q link", () => {
-    const state = readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?q=ism-0009"), FRAMEWORK_IDS);
+    const state = readExplorerUrl(new URL("https://rule1.link42.app/explorer/?q=ism-0009"), FRAMEWORK_IDS);
     expect(state.search).toBe("");
     expect(state.selectedId).toBe("ism-0009");
   });
 
   it("uses a free-text legacy q value as the explorer search", () => {
-    const state = readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?q=patch+management"), FRAMEWORK_IDS);
+    const state = readExplorerUrl(new URL("https://rule1.link42.app/explorer/?q=patch+management"), FRAMEWORK_IDS);
     expect(state.search).toBe("patch management");
     expect(state.selectedId).toBeNull();
   });
 
   it("gives explicit modern id and search parameters precedence over legacy q", () => {
     expect(
-      readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?id=ISM-2116&q=ism-0009"), FRAMEWORK_IDS),
+      readExplorerUrl(new URL("https://rule1.link42.app/explorer/?id=ISM-2116&q=ism-0009"), FRAMEWORK_IDS),
     ).toMatchObject({ selectedId: "ISM-2116", search: "" });
     expect(
-      readExplorerUrl(new URL("https://wan0.net/rule1/explorer/?search=patching&q=ism-0009"), FRAMEWORK_IDS),
+      readExplorerUrl(new URL("https://rule1.link42.app/explorer/?search=patching&q=ism-0009"), FRAMEWORK_IDS),
     ).toMatchObject({ selectedId: null, search: "patching" });
   });
 
   it("removes legacy q when writing canonical explorer state", () => {
-    const initial = new URL("https://wan0.net/rule1/explorer/?q=ism-0009&tab=context");
+    const initial = new URL("https://rule1.link42.app/explorer/?q=ism-0009&tab=context");
     const result = writeExplorerUrl(initial, {
       framework: "ism",
       filter: "all",
@@ -103,7 +105,7 @@ describe("explorer URL state", () => {
 
   it("removes cleared selection, search, and default state from the URL", () => {
     const initial = new URL(
-      "https://wan0.net/rule1/explorer/?framework=nzism&id=NZISM-1&search=old&filter=new&tab=context",
+      "https://rule1.link42.app/explorer/?framework=nzism&id=NZISM-1&search=old&filter=new&tab=context",
     );
     const state: ExplorerUrlState = {
       framework: "ism",

@@ -607,7 +607,7 @@
 <svelte:head>
   <title>Explorer — rule1</title>
   <meta name="description" content="Browse and search security controls across five retained frameworks." />
-  <link rel="canonical" href="https://wan0.net/rule1/explorer/" />
+  <link rel="canonical" href="https://rule1.link42.app/explorer/" />
 </svelte:head>
 
 <svelte:window onpointermove={resizeSidebar} onpointerup={finishSidebarResize} onpointercancel={finishSidebarResize} />
