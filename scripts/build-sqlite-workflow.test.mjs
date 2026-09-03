@@ -71,7 +71,7 @@ test("annotation generation is manual, secret-scoped, checkpointed, and review-g
   assert.match(workflow, /permissions:\n\s+actions: write\n\s+contents: write\n\s+pull-requests: write/);
   assert.match(workflow, /OPENROUTER_API_KEY: \$\{\{ secrets\.OPENROUTER_API_KEY \}\}/);
   assert.equal(workflow.match(/OPENROUTER_API_KEY/g)?.length, 3);
-  assert.match(workflow, /--batch-size 25/);
+  assert.match(workflow, /--batch-size 10/);
   assert.match(workflow, /--require-complete/);
   assert.match(workflow, /--write-contract/);
   assert.match(workflow, /actions\/upload-artifact@v4/);
