@@ -44,6 +44,34 @@ CLASSIFICATION_LABELS = {
     "TS": "TOP SECRET",
 }
 
+SUBMIT_ANNOTATIONS_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "submit_annotations",
+        "description": "Submit all requested factual and Professional Rule1 annotations.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "control_id": {"type": "string"},
+                            "ai_view": {"type": "string"},
+                            "ai_view_snarky": {"type": "string"},
+                        },
+                        "required": ["control_id", "ai_view", "ai_view_snarky"],
+                        "additionalProperties": False,
+                    },
+                },
+            },
+            "required": ["annotations"],
+            "additionalProperties": False,
+        },
+    },
+}
+
 
 def canonical_json(value: object) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -297,12 +325,35 @@ def bounded_http_error_body(error: urllib.error.HTTPError, api_key: str = "") ->
     return " ".join(text.split())[:512]
 
 
+def extract_annotation_arguments(message: object) -> str:
+    if not isinstance(message, dict):
+        raise ValueError("OpenRouter returned an invalid message")
+    tool_calls = message.get("tool_calls")
+    if tool_calls is not None:
+        if not isinstance(tool_calls, list) or len(tool_calls) != 1:
+            raise ValueError("OpenRouter returned an invalid annotation tool call count")
+        call = tool_calls[0]
+        function = call.get("function") if isinstance(call, dict) else None
+        if not isinstance(function, dict) or function.get("name") != "submit_annotations":
+            raise ValueError("OpenRouter returned an unexpected annotation tool call")
+        arguments = function.get("arguments")
+        if not isinstance(arguments, str) or not arguments.strip():
+            raise ValueError("OpenRouter returned empty annotation tool arguments")
+        return arguments.strip()
+    content = message.get("content")
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError("OpenRouter returned neither annotation tool arguments nor content")
+    return content.strip()
+
+
 def call_openrouter(prompt: str, api_key: str, *, attempts: int = 6) -> str:
     payload = json.dumps({
         "model": MODEL,
         "temperature": 0,
         "max_tokens": 12_000,
         "provider": {"data_collection": "allow"},
+        "tools": [SUBMIT_ANNOTATIONS_TOOL],
+        "tool_choice": {"type": "function", "function": {"name": "submit_annotations"}},
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
     request = urllib.request.Request(
@@ -318,10 +369,7 @@ def call_openrouter(prompt: str, api_key: str, *, attempts: int = 6) -> str:
             choices = body.get("choices") or []
             if not choices:
                 raise ValueError("OpenRouter returned no choices")
-            content = choices[0].get("message", {}).get("content")
-            if not isinstance(content, str) or not content.strip():
-                raise ValueError("OpenRouter returned empty message content")
-            return content.strip()
+            return extract_annotation_arguments(choices[0].get("message"))
         except urllib.error.HTTPError as error:
             if error.code in {429, 500, 502, 503, 504} and attempt < attempts - 1:
                 retry_after = error.headers.get("Retry-After")
