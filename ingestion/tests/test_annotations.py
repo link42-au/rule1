@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import tempfile
 import unittest
@@ -140,6 +141,25 @@ class AnnotationResponseTests(unittest.TestCase):
             self.assertEqual(call_openrouter("prompt", "secret-value", attempts=2), "result")
         self.assertEqual(request.call_count, 2)
         self.assertNotIn("secret-value", str(error))
+        request_payload = json.loads(request.call_args.args[0].data)
+        self.assertEqual(request_payload["provider"], {"data_collection": "allow"})
+
+    def test_openrouter_http_error_surfaces_only_a_bounded_redacted_body(self) -> None:
+        exposed_key = "sk-or-v1-example-secret-value"
+        request_key = "request-secret"
+        body = json.dumps({
+            "error": {"message": f"No endpoints found matching your data policy {exposed_key} {request_key} " + ("x" * 2_000)}
+        }).encode()
+        error = urllib.error.HTTPError("https://openrouter.ai", 404, "not found", {}, io.BytesIO(body))
+        with patch("urllib.request.urlopen", side_effect=error), self.assertRaises(RuntimeError) as raised:
+            call_openrouter("public prompt", request_key, attempts=1)
+        message = str(raised.exception)
+        self.assertIn("OpenRouter HTTP 404", message)
+        self.assertIn("No endpoints found matching your data policy", message)
+        self.assertIn("[redacted]", message)
+        self.assertNotIn(exposed_key, message)
+        self.assertNotIn(request_key, message)
+        self.assertLessEqual(len(message), 533)
 
     def test_semantically_invalid_batch_is_retried(self) -> None:
         items = [{"control_id": "ism-1"}]
