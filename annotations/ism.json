@@ -47,14 +47,14 @@
       "framework": "ism",
       "control_id": "ism-0041",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "e1ae2d302afa63b9d9c1956a6ce5d09935b7f39882706f83e843805de73b47bd",
+      "input_sha256": "01c7d0601a64474760698d7a19fadba3fe0b36025418ebd8596e0c9884538400",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "A system security plan must document the system’s purpose, boundary, and management approach, and include an annex listing all applicable ISM controls plus any extra controls the organization has implemented. This provides a single, traceable reference for the system’s security posture.",
-      "ai_view_snarky": "Write a security plan nobody reads, but auditors will demand; it’s basically a checklist of controls you claim to have so you can pretend compliance when the review arrives.",
+      "ai_view": "Each system must have a system security plan containing an overview of the system’s purpose, boundary, and management, plus an annex listing applicable ISM controls and any extra controls implemented.",
+      "ai_view_snarky": "A system security plan documents what the system does, where it stops, and which controls apply — plus any extra ones you invented, because the baseline is never enough.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
@@ -73,14 +73,14 @@
       "framework": "ism",
       "control_id": "ism-0043",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "d763d044ecb984032eef9ca9df7e7b40ab23dd391c95d4f8ec0fea97f557b2f7",
+      "input_sha256": "8b0ef21b2da357ca0bc7f5aa4a1b5f870ba576d032ac1bd477dbfe1bced97dc2",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "An incident response plan must define what counts as a cyber incident, the likely incident types and responses, internal and external reporting paths, parties to notify, responsible authorities, criteria for law‑enforcement involvement, evidence‑preservation steps, and contingency measures. This ensures a coordinated, timely response that limits damage.",
-      "ai_view_snarky": "A comprehensive checklist you’ll file away until a breach hits, then scramble to find the authority list you never updated.",
+      "ai_view": "Systems must have a cyber security incident response plan covering incident criteria, likely incident types and responses, internal and external reporting, parties to inform, investigation authorities, escalation criteria for law enforcement or ASD, evidence integrity steps, and contingency measures or a reference to them.",
+      "ai_view_snarky": "The incident response plan lists what counts as an incident, how to handle each type, who to tell, who decides, when to call the cops or ASD, how to keep evidence clean, and where the backup plan lives — because chaos loves a vacuum.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
@@ -632,14 +632,14 @@
       "framework": "ism",
       "control_id": "ism-0252",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "09c5a12f573503434a9c9cea93cfe3fdf21860d9d2bc2a5c93a964ea6ef8af1f",
+      "input_sha256": "20ae595b3a6ed1f2177638345ae2f05947a0ccf6513ded9255d15f54a36237a0",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "All personnel must complete annual cyber security awareness training covering the training purpose, security contacts, authorised system use, protection of resources, and incident reporting. This builds a baseline security culture across the organization.",
-      "ai_view_snarky": "A once‑a‑year PowerPoint that everyone clicks through while checking email.",
+      "ai_view": "All personnel must complete annual cyber security awareness training covering the training purpose, security contacts, authorised use, protection of systems, and incident reporting. The training ensures everyone knows their responsibilities and how to respond to incidents.",
+      "ai_view_snarky": "Everyone sits through the same yearly briefing on why security matters, who to call, what they can do, how to protect stuff, and how to report incidents — because repetition is the only way it sticks. Attendance is recorded, comprehension is optional.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
@@ -1217,14 +1217,14 @@
       "framework": "ism",
       "control_id": "ism-0350",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "13e1bfa2ef91f26d45da8797b4cd53718b561b13da67475b1c6d87a67163a34f",
+      "input_sha256": "d152e0fe001679c178968219790070c82ecdd4380c7048c6a589ecf49c989206",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Any media that cannot be reliably sanitized—such as microfiche, optical discs, PROM, ROM, or similar—must be physically destroyed before disposal. This prevents residual data recovery.",
-      "ai_view_snarky": "Shred the microfilm, melt the CDs, and crush the PROMs—because if you can’t wipe it, you burn it. The only good unreadable media is a pile of ash.",
+      "ai_view": "Media such as microfiche, optical discs, programmable read‑only memory, read‑only memory and any other media that cannot be sanitised must be destroyed before disposal. This prevents residual data from being recovered after the media leaves the organisation.",
+      "ai_view_snarky": "You’ll shred the microfiche, melt the CDs and crush the PROM chips because they can’t be wiped; apparently the only way to be sure is to turn them into confetti.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:34:28Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
@@ -1607,40 +1607,40 @@
       "framework": "ism",
       "control_id": "ism-0408",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "637b5c229dd493bf169b070db92a6b7af8f88150e7499807c82dc363689f85f0",
+      "input_sha256": "77e080d6b1395c43f62301c83dfc13f4b2fc7f09305e3c7c3b9faf876eb4ebd3",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Systems must display a logon banner that reminds users of their security obligations when accessing the system. The banner reinforces policy awareness and can serve as a legal notice for acceptable use.",
-      "ai_view_snarky": "A splash screen that nobody reads, but at least you can say you told them.",
+      "ai_view": "Systems must display a logon banner that reminds users of their security responsibilities when accessing the system and its resources. The banner reinforces policy awareness at the point of entry.",
+      "ai_view_snarky": "A banner pops up at login to remind you that you’re not supposed to click ‘I agree’ without reading—because apparently that works.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:37:18Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
       "control_id": "ism-0409",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "868e80359e3573a1f83def3f5c967a47d40d655008a895f4a56b37d7e6b3d8ca",
+      "input_sha256": "f10c97e524c373637e6c2b468f8101f3fcfeeb5d3a06ef328425c95e2852a919",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Foreign nationals, including seconded personnel, must be prevented from accessing systems that handle AUSTEO or REL classified data unless controls guarantee the data remains inaccessible to them. This protects highly sensitive Australian government information.",
-      "ai_view_snarky": "Because the only thing more sensitive than AUSTEO data is the paperwork needed to keep foreigners away from it.",
+      "ai_view": "Foreign nationals, including seconded personnel, must not access systems that process, store or communicate AUSTEO or REL data unless effective controls guarantee they cannot see that data. This protects highly classified Australian information.",
+      "ai_view_snarky": "Even your seconded allies can’t touch AUSTEO/REL unless you’ve locked it down tighter than a vault—because trust is a four‑letter word.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:37:18Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
       "control_id": "ism-0411",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "a433c983de330bf35f4f87da7c793129d6f97ebcf07597f5df6af50035b70733",
+      "input_sha256": "a7e66db72d0b57f087f8d48beba5d5326f1696b45435eeb3e695a29566cf7ea7",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Foreign nationals (except seconded ones) must not access systems that process, store, or communicate AGAO data unless controls ensure the data cannot be reached. This safeguards Australian Government Access Only information.",
-      "ai_view_snarky": "AGAO data gets its own ‘no foreigners’ sign—unless you’ve got a really good lock.",
+      "ai_view": "Foreign nationals, except seconded foreign nationals, must not access systems that process, store or communicate AGAO data unless effective controls prevent their access. This safeguards AGAO‑classified material.",
+      "ai_view_snarky": "Seconded foreigners get a pass, everyone else stays out of AGAO unless you’ve built a wall that actually works.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:37:18Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
@@ -4675,14 +4675,14 @@
       "framework": "ism",
       "control_id": "ism-1163",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "3693c52b34fb875e41f724114855bc47f815a9478f9df87d2cd30885a4671cd1",
+      "input_sha256": "10cb48d1f5af8e5f055a56a0a02baa0f2145e2398402fd90ae7856b172128e4a",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "A continuous monitoring plan must include regular security assessments to find vulnerabilities, analysis of those vulnerabilities to gauge impact, and risk‑based mitigation implementation considering effectiveness and cost. This keeps the organization’s risk picture current.",
-      "ai_view_snarky": "You’ll run scans quarterly, ignore the findings, and claim “risk‑based” mitigation when the budget runs out.",
+      "ai_view": "Systems must have a continuous monitoring plan that conducts security assessments to find vulnerabilities. The plan must analyse those vulnerabilities for impact and implement mitigations based on risk, effectiveness and cost.",
+      "ai_view_snarky": "You need a continuous monitoring plan that actually does the three things listed — assess, analyse, mitigate — rather than just a document gathering dust. Otherwise the plan is just paperwork that nobody reads.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
@@ -5026,14 +5026,14 @@
       "framework": "ism",
       "control_id": "ism-1223",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "13ce1f33f30a157e796ab6c473dc89a6797658bfb0131de73c30058bc194f04d",
+      "input_sha256": "1285f55c88879cf47f540191b72fa0c9f991dd38154f8531372664323311c6fb",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Network device memory must be cleared following the preferred order: device‑specific evaluation guidance, vendor instructions, or as a last resort load a dummy config, factory reset, and reinstall firmware. This guarantees no residual configuration or data remains.",
-      "ai_view_snarky": "Follow the vendor’s magic ritual, or if that fails, nuke the config, reset, and reflash—because ‘factory default’ is the only thing you trust after a contractor touches the router.",
+      "ai_view": "Network device memory is sanitised in order of preference: follow evaluation documentation, then vendor guidance, then load a dummy configuration, perform a factory reset, and reinstall firmware. This ordered approach maximises assurance that no residual data remains.",
+      "ai_view_snarky": "You’ll wipe the device by the book — first the eval docs, then the vendor guide, then the classic dummy‑config‑reset‑reflash dance — because ‘good enough’ never passes an audit. Any shortcut and the auditor will notice.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:34:28Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
@@ -5767,14 +5767,14 @@
       "framework": "ism",
       "control_id": "ism-1322",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "7c1101282e709dda820b4496b2a2fc80a7228f3514d633cc68bc50c99a28c3bd",
+      "input_sha256": "dd0539be3660278b7825e9bd6c752a3975105bc0d22a15d3401c9e39cf2410f2",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Only evaluated (certified) supplicants, authenticators, and authentication servers may be deployed for 802.1X implementations.",
-      "ai_view_snarky": "You can’t just download any RADIUS server; it has to be on the approved list, which is surprisingly short.",
+      "ai_view": "Only evaluated supplicants, authenticators, and authentication servers may be deployed for 802.1X authentication, ensuring the components meet the required assurance level.",
+      "ai_view_snarky": "You’ll only run 802.1X with gear that’s been evaluated — supplicants, authenticators, and servers all vetted. No random RADIUS boxes allowed, just the approved kit.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:44:44Z"
+      "updated_at": "2026-09-03T22:06:34Z"
     },
     {
       "framework": "ism",
@@ -7080,14 +7080,14 @@
       "framework": "ism",
       "control_id": "ism-1526",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "7ff4c814eb583861b6eebaef90269eb6c12fc6a07f56a2c67f7a5204d66aa1c1",
+      "input_sha256": "41de6fb8746755352e69ba01ca479ce0adf1a9f16db375aa2f7820f0543d0ccb",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "System owners must continuously monitor each system’s security posture, manage emerging cyber threats, assess risks, and keep controls effective over time.",
-      "ai_view_snarky": "Continuous monitoring usually means a dashboard nobody watches until an alert screams.",
+      "ai_view": "System owners must continuously monitor the security of each system and manage associated cyber threats, security risks, and security controls.",
+      "ai_view_snarky": "System owners are supposed to keep watching their systems and juggle threats, risks, and controls continuously — a task that never ends and rarely gets the resources it needs.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:29:46Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
@@ -7418,14 +7418,14 @@
       "framework": "ism",
       "control_id": "ism-1558",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "8326a3d99868a2b99ea20fde3972901b1a89a016e16f4119bce13ff3161f6e9e",
+      "input_sha256": "86bcd021ff5b25d20826ab0de21cc8847ffe96dcabfb2e3c7ab0157ee51a4ec2",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Passphrases used for single‑factor authentication must be composed of random words, not predictable phrases, song lyrics, or common sentences. The required number of random words increases with system classification: four for non‑classified up to six for TOP SECRET.",
-      "ai_view_snarky": "You’re told to pick random words, not a line from ‘Bohemian Rhapsody’, and the higher the classification the more words you need—four, five, or six. Expect users to still choose ‘correct horse battery staple’ and call it a day.",
+      "ai_view": "Passphrases built from random words must not use categorised word lists, real sentences, song lyrics, movie quotes or any publicly available material; they require at least 4 random words for non‑classified, OFFICIAL:Sensitive and PROTECTED systems, 5 for SECRET, and 6 for TOP SECRET. This makes passphrases resistant to guessing.",
+      "ai_view_snarky": "You’ll craft passphrases from random words—no song lyrics, no sentences—and count them: four for the low stuff, five for secret, six for top secret, because ‘password123’ is still a thing.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:40:49Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
@@ -7483,40 +7483,40 @@
       "framework": "ism",
       "control_id": "ism-1563",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "0003d0a6de7fba7176b3d45e855c8f1e531c6a25ddbc103ea18140f05fad9296",
+      "input_sha256": "2b60c33747b7472c1a079a13e599fa7972f4cd13d6b47a64643283283cf85bf7",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "At the end of a security control assessment, the assessor produces a report covering the assessment scope, system strengths and weaknesses, associated security risks, control implementation effectiveness, and recommended remediation actions. This informs leadership and drives improvement.",
-      "ai_view_snarky": "A PDF that sits in a SharePoint folder, read only by the auditor who asked for it.",
+      "ai_view": "At the end of a security control assessment, the assessor produces a report covering the assessment scope, system strengths and weaknesses, associated security risks, control effectiveness, and recommended remediation actions. The report ensures all stakeholders understand the system’s security posture.",
+      "ai_view_snarky": "The assessor writes a report that ticks all five boxes — scope, strengths, weaknesses, risks, control effectiveness, and remediation — because a checklist is only useful if it’s complete. If any box is empty, the report is as useful as a screen door on a submarine.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
       "control_id": "ism-1564",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "1d1001d3eaa0cd2a147182a7e058672bc7a81729ca2cba55c03dffe2b05ffd06",
+      "input_sha256": "ae2e6d06980cdfc73b26bb10866ecc35a2386396f4b7c720cba795e499f66dcd",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "The system owner must create a plan of action and milestones after a security control assessment, detailing remediation steps and target dates for each finding. This tracks closure of identified weaknesses.",
-      "ai_view_snarky": "A to‑do list the owner creates, then forgets until the next audit cycle.",
+      "ai_view": "After a security control assessment, the system owner creates a plan of action and milestones. This plan outlines the steps and timelines for addressing identified findings.",
+      "ai_view_snarky": "The system owner then drafts a plan of action and milestones, because nothing says ‘we’re on it’ like a spreadsheet of future tasks. Whether anyone follows it is another story.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
       "control_id": "ism-1565",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "e8ad0c6f7c2eda9b77391b8a228d7212ce686efafb9c2b961a007a164b733d4c",
+      "input_sha256": "be7f5e6a48afa7c05c7a9c1fb4b0f0224254903a584730e77813d813cb2bfa6d",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Personnel with privileged access must receive tailored annual training specific to their elevated responsibilities. This reduces the risk of insider misuse or error.",
-      "ai_view_snarky": "The same slides as general training, just with “admin” added to the title.",
+      "ai_view": "Personnel with privileged system access must receive annual training tailored to their duties. The training is customised to the specific privileged duties each user performs.",
+      "ai_view_snarky": "Privileged users get a custom yearly refresher, because generic training apparently isn’t enough for people who hold the keys. They still click phishing links, but at least they’ve been told not to.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
@@ -7873,14 +7873,14 @@
       "framework": "ism",
       "control_id": "ism-1594",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "a40dd18b1b4ea97805d4b2758d956216a9d816229fed4282f1f4ae743251c9fd",
+      "input_sha256": "1fa87d9861a619fb6954740cb7ebee3f528f54720aa1e5f9e482b8d0c25c7d8d",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Credentials must be delivered over a protected communication channel; if that’s impossible, they are split so the user receives one part and their supervisor the other. This reduces the risk of interception or unilateral misuse.",
-      "ai_view_snarky": "If you can’t send the password over TLS, you’re expected to play secret‑sharing with the user’s boss—half the password here, half there. Most teams just email the whole thing and hope the auditor doesn’t notice.",
+      "ai_view": "Human user credentials must be delivered via a secure communications channel; if that is not possible, the credential is split into two parts with one part given to the user and the other to their supervisor. This protects credential confidentiality during provisioning.",
+      "ai_view_snarky": "Send the password over a secure link, or if you’re stuck in the 90s, hand half to the user and half to their boss—because sharing the whole thing is just asking for trouble.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:40:49Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
@@ -8393,27 +8393,27 @@
       "framework": "ism",
       "control_id": "ism-1635",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "bbff5c68398c442327e333551d56bf9d33ad2040880f06e1038fa6d7ecd27ad7",
+      "input_sha256": "d80a1d5eacb984ee280373511de1b1a4b21ce6846b17a032c79e28ae9c41c7ba",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "System owners are responsible for actually putting the selected and tailored controls into operation for each system and its environment. Implementation turns policy into practice.",
-      "ai_view_snarky": "Implementation is where good intentions go to die — documented, approved, and then quietly ignored.",
+      "ai_view": "System owners must put in place security controls for every system and its operating environment. This ensures protective measures cover both the system itself and the surrounding infrastructure.",
+      "ai_view_snarky": "System owners are expected to actually implement controls for each system and its environment — because apparently that still needs saying.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:29:46Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
       "control_id": "ism-1636",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "167937920af326a72a9a3364338df9294fcc35df706d226c915fe08ea49cfbe9",
+      "input_sha256": "58ad3acd941ffbe12f84529f1ead14af1dddfcdd2d56d0a55e3e0a679603e27c",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "For non‑classified, OFFICIAL:Sensitive, PROTECTED and SECRET systems, owners must arrange a security control assessment by internal assessors or IRAP assessors to verify correct implementation and operation.",
-      "ai_view_snarky": "They hire assessors to confirm what they already knew — that the controls were never fully applied.",
+      "ai_view": "System owners, together with the system’s authorising officer, must arrange a security control assessment by internal assessors or IRAP assessors to verify correct implementation and operation. This applies to systems up to SECRET classification.",
+      "ai_view_snarky": "System owners and authorising officers must get an internal or IRAP assessment done for every non‑classified to SECRET system — because trusting the paperwork alone never works.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:29:46Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
@@ -9433,14 +9433,14 @@
       "framework": "ism",
       "control_id": "ism-1731",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "2cd882b102aa0505dceb566954b2c3d3227a40910ea43d71317d7625c86fd8de",
+      "input_sha256": "b5c7e5b866409e7a7d65c3f49edb1c293df33859ff4e60ea8714acf6c3837d4b",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Planning and coordination of intrusion remediation must be performed on trusted, clean systems that are separate from the compromised environment.",
-      "ai_view_snarky": "They plan the cleanup on a machine that’s already owned — because nothing says ‘trust’ like a compromised host.",
+      "ai_view": "Intrusion remediation planning and coordination must be performed using trusted systems that are separate from any compromised system.",
+      "ai_view_snarky": "You plan the cleanup on a clean, trusted system — because doing it on the hacked box is a great way to lose the evidence.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:29:46Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
@@ -10239,14 +10239,14 @@
       "framework": "ism",
       "control_id": "ism-1803",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "c3dfc8659819a2b3e1b2db39115fe9b999c6481b4febaf26bad2b70847ad1821",
+      "input_sha256": "c56616e1827e5a348166a2aa6d6208d29b7c8a9b7e8ae4845a35d86d18f61934",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "A cyber security incident register must record the incident date, discovery date, description, response actions, and reporting recipients for every incident.",
-      "ai_view_snarky": "A spreadsheet that gets filled out after the breach, mostly to satisfy auditors.",
+      "ai_view": "A cyber security incident register must record the incident date, discovery date, description, response actions, and reporting recipients for each incident.",
+      "ai_view_snarky": "The register captures when it happened, when you found out, what it was, what you did, and who you told — because memory is unreliable and auditors love lists.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:29:46Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
@@ -12293,14 +12293,14 @@
       "framework": "ism",
       "control_id": "ism-1967",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "745047df73a0ec8e9c6a1d58b30d32357c7378912e5e7b1c8efc4449a1a50646",
+      "input_sha256": "345bd056acec5a32bf475d43a2d3a95324e71288bdd1c14ba028de9a023ad63c",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "TOP SECRET systems (including sensitive compartmented information systems) require a security control assessment conducted by ASD assessors or their delegates to ensure proper implementation.",
-      "ai_view_snarky": "Only the spooks get the real audit; everyone else settles for a self‑signed checklist.",
+      "ai_view": "For TOP SECRET and sensitive compartmented information systems, system owners must consult the authorising officer and have ASD assessors (or delegates) evaluate whether controls are correctly implemented and operating.",
+      "ai_view_snarky": "TOP SECRET system owners get to ask ASD (or a delegate) to check their controls — because at that level, self‑assessment is a fantasy.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:29:46Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
@@ -12345,14 +12345,14 @@
       "framework": "ism",
       "control_id": "ism-1971",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "e929e906f14c9573aa22877f2a9a6cd1b32c6915f9e14012f6d3be6e1123fbd3",
+      "input_sha256": "123ecf2498eb1fa05eb21c281c4f0d54500f349f6b7b8888a52f5b8b99fedc24",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "TOP SECRET managed services must undergo a formal security control assessment by ASD (or delegates) at least every two years, using the current ISM version.",
-      "ai_view_snarky": "Every two years the spooks send auditors to poke your TOP SECRET services with the latest rulebook—because nothing says “trust” like a mandatory biennial audit.",
+      "ai_view": "Managed service providers delivering TOP SECRET services, including SCI services, must undergo a security control assessment by ASD assessors (or delegates) at least every 24 months, using the ISM version current at assessment start or later.",
+      "ai_view_snarky": "Providers of TOP SECRET managed services get an ASD (or delegate) check every two years — because outsourcing trust is a myth that needs regular reality checks.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:30:23Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
@@ -12826,14 +12826,14 @@
       "framework": "ism",
       "control_id": "ism-2008",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "8b74dbde10f06cff9e2a4824407474cceab4342b87296201482fae0af3a07a15",
+      "input_sha256": "3bcf3662c640122afeb7b96a4524889245286e574271555585e212217daf1d12",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Medical devices brought into SECRET or TOP SECRET areas must be listed on the Australian Register of Therapeutic Goods, prescribed by a qualified practitioner, purchased in Australia, lack cellular connectivity, operate independently of mobile devices, and have Wi‑Fi/Bluetooth disabled where possible. This prevents covert data exfiltration via medical equipment.",
-      "ai_view_snarky": "You can bring your insulin pump only if it’s a dumb, Australian‑bought model; otherwise leave it at the gate.",
+      "ai_view": "Medical devices allowed into SECRET and TOP SECRET areas must be on the Australian Register of Therapeutic Goods, prescribed by a qualified practitioner, and purchased commercially in Australia. They must also lack built‑in cellular connectivity, operate independently of mobile devices, and have wireless functions disabled where possible.",
+      "ai_view_snarky": "Only devices that tick every box — registered, prescribed, locally bought, no cellular, no phone‑dependency, wireless off — get past the gate, because apparently a pacemaker can be a spy tool. Any missing criterion means the device stays outside.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
@@ -13983,14 +13983,14 @@
       "framework": "ism",
       "control_id": "ism-2097",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "fd5ba59cf0aa7910998cb14491e69e32b6c7f075c96e6ff512d166268aadb067",
+      "input_sha256": "78a6a8145c0c51852a3423cc8d6e649a371f1381dbd484b92e962a23c4d0b8c9",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Mobile devices must have an always‑on VPN so that all network traffic remains encrypted at all times.",
-      "ai_view_snarky": "An always‑on VPN — because trusting the coffee‑shop Wi‑Fi is a hobby for the reckless.",
+      "ai_view": "Mobile devices must be configured with an always‑on VPN. The always‑on VPN ensures network traffic is routed through the organisation’s secure gateway.",
+      "ai_view_snarky": "Devices get an always‑on VPN, because the only thing more constant than the connection is the hope that it actually encrypts everything. If the VPN drops, the device is effectively offline.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:32:54Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
@@ -14074,14 +14074,14 @@
       "framework": "ism",
       "control_id": "ism-2104",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "af670f83baa129810cc89f57cada3193d2b5f4bb331cdf66ade8b96f64eb2a2d",
+      "input_sha256": "1f0c1611e1f427714f2fef2aec7f5aaad1c93f164d71d710b94c9d88d231de94",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Staff must avoid posting details of their security clearance or briefings on any unauthorised online platforms and must report any such disclosures. This limits the risk of adversaries gathering intelligence on privileged access.",
-      "ai_view_snarky": "Don't brag about your clearance on LinkedIn; if you do, tell someone so we can pretend to care.",
+      "ai_view": "Personnel are advised not to share their security clearance or briefings on unauthorised online services and to report any such disclosures. Reporting any accidental disclosure helps the organisation contain the exposure.",
+      "ai_view_snarky": "Staff are told not to broadcast their clearances on random websites and to flag it when they do — because loose lips still sink ships. Compliance is advisory, but the report button is mandatory.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:27Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
@@ -14191,14 +14191,14 @@
       "framework": "ism",
       "control_id": "ism-2113",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "a589b45c3bb204424812d44be885611cf749da70ee76656c47c9a635fda52351",
+      "input_sha256": "255c74e9bad59d2fc42242a4771219da6fcac55f36fb2fbc180ffe19f828319d",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "AI applications must obtain human approval before performing any sensitive or high‑impact actions, ensuring a accountable checkpoint against autonomous misuse. This human‑in‑the‑loop step limits the damage from erroneous or malicious automated decisions.",
-      "ai_view_snarky": "Because letting the bot launch nukes on its own is a bad look, we now make a tired analyst click “OK” before every risky move. Hope the approval workflow isn’t a rubber‑stamp.",
+      "ai_view": "AI applications must be configured so that a human approves any sensitive or high‑impact action before it is executed. This reduces the risk of autonomous decisions causing serious harm.",
+      "ai_view_snarky": "Because letting an AI decide to launch nukes is a bad idea, you’ll need a human to click ‘yes’ on every high‑stakes move.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:35:54Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
@@ -14243,14 +14243,14 @@
       "framework": "ism",
       "control_id": "ism-2117",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "83c506867fb381fc9239bcb7a2c3284fd5ce54412550e2bf74225ec3724e8668",
+      "input_sha256": "0dc8ecb55d1e6822d7128a0cfc45d4bc5ae70b2e4808eb7ac952a90f7236b2b4",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Suitable artificial‑intelligence models should be used to augment detection of security events and identification of incidents. AI can surface patterns that traditional rule‑based systems miss.",
-      "ai_view_snarky": "Throw some AI at the log pile and hope it finds the needle in the haystack. Just remember: the model is only as good as the data you feed it — and you’re still the one who has to triage the false positives.",
+      "ai_view": "Organisations must employ appropriate AI models to help detect security events and identify incidents, complementing existing monitoring processes.",
+      "ai_view_snarky": "You’ll throw some AI at the logs to help spot events and incidents, because humans alone are too slow. The models assist, they don’t replace analysts or promise perfect detection.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:41:38Z"
+      "updated_at": "2026-09-03T22:06:34Z"
     },
     {
       "framework": "ism",
@@ -14269,14 +14269,14 @@
       "framework": "ism",
       "control_id": "ism-2119",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "f03b676e6f6ad26b7f590849580bfe513ab4145267c0ee706d8cba8c5bbbb811",
+      "input_sha256": "a2049cbf5c687e54f176c6a9841494ccc54b392a16822f3948a7f2e1b98bdb85",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Organisations should employ suitable AI models to enhance the effectiveness of vulnerability assessments and penetration tests. AI can help prioritize findings, reduce false positives, and accelerate coverage of large codebases.",
-      "ai_view_snarky": "Throw some AI at your pen tests and pretend the machine will magically find the bugs your overworked analysts missed — just don’t forget to validate the model’s output.",
+      "ai_view": "Suitable AI models must be used to enhance vulnerability assessments and penetration testing activities, supporting the identification of weaknesses.",
+      "ai_view_snarky": "You’ll let AI lend a hand during vuln scans and pen tests, because manual testing is tedious. It augments the effort, not a silver bullet for finding every flaw.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:41:56Z"
+      "updated_at": "2026-09-03T22:06:34Z"
     },
     {
       "framework": "ism",
@@ -14347,27 +14347,27 @@
       "framework": "ism",
       "control_id": "ism-2125",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "920effddc41949d803e5ad829ab1e4d0d51345b3cc88a6a4e08933156222cb06",
+      "input_sha256": "dcab17f1ff4e7e22f206da44a2b00a9968fbf547ebe084ed5508edb60cfa6df5",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "The organisation must log all service‑provider access in tamper‑proof logs and review them promptly to spot anomalous or unauthorized activity.",
-      "ai_view_snarky": "You’ll keep your own immutable audit trail of every vendor click—because trusting the vendor’s logs is a rookie mistake.",
+      "ai_view": "All service‑provider access to organisational systems must be logged independently by the organisation in a way the provider cannot alter or delete, and the logs must be analysed promptly for anomalous, unexpected, or unauthorised activity.",
+      "ai_view_snarky": "The organisation logs every provider move in a tamper‑proof way and actually reviews those logs — because providers love to delete their tracks.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:30:23Z"
+      "updated_at": "2026-09-03T22:01:10Z"
     },
     {
       "framework": "ism",
       "control_id": "ism-2126",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "577767340b7f2516c2883de7f154b19629c88cf651d8f2ce9029e5bd2e944a63",
+      "input_sha256": "dc578439e40775914568161e1941096812c5a7b7174e8a1885b2bf35d8ecbe86",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Before modifying user account details, banking details, or conducting financial transactions, staff must positively verify the requestor using a pre‑established authentication method or an independent trusted channel. This mitigates social‑engineering and fraud attempts.",
-      "ai_view_snarky": "You’ll still get a phone call from “IT support” asking for the admin password, and you’ll comply because the policy says “verify” but nobody does.",
+      "ai_view": "Before modifying user accounts, banking details, or processing financial transactions, personnel must positively verify the requestor using a pre‑established authentication method or an independent trusted channel. This verification step reduces the risk of fraudulent changes.",
+      "ai_view_snarky": "You’ll confirm who’s asking — via a known method or a separate trusted line — before you touch any account, bank or money request, because social engineering loves a lazy check. Skipping it is an open invitation for attackers.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:31:00Z"
+      "updated_at": "2026-09-03T22:03:16Z"
     },
     {
       "framework": "ism",
@@ -14412,14 +14412,14 @@
       "framework": "ism",
       "control_id": "ism-2130",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "2642dfb1f840e2615302efb73be89544184531756001c15091586f93d1bc89bf",
+      "input_sha256": "5026d27dd576461108333b6860a73a50850bc3e3ab4bd206aac2bd56803c7395",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Web‑based enrollment interfaces on AD CS servers should be disabled unless a business case exists. If they remain enabled, they must enforce HTTPS and Extended Protection for Authentication to prevent credential relay and man‑in‑the‑middle attacks.",
-      "ai_view_snarky": "Disabling the web enrollment page is the secure default, yet most orgs leave it on because ‘the help desk needs it’. When it’s on, it’s usually HTTP with basic auth—because configuring Extended Protection is ‘too hard’.",
+      "ai_view": "Web enrolment interfaces for Microsoft AD CS servers must be disabled unless required; when enabled they must use HTTPS with Extended Protection for Authentication. This limits the attack surface of certificate services.",
+      "ai_view_snarky": "You’ll disable the web enrolment page unless you really need it, and if you do, you’ll wrap it in HTTPS and Extended Protection—because plain HTTP is so last decade.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:36:34Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
@@ -14477,14 +14477,14 @@
       "framework": "ism",
       "control_id": "ism-2135",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "54af5e6f2f409a61db9e3c257f036453058761be76e64eb1d6e39922336c9501",
+      "input_sha256": "e2301ac4fdd887be0b5bda3b1d3a0ba657a2d1b59c49dac4de6b0031ddcbe46f",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "The AI agent register must record each agent’s unique ID, owner, purpose, assigned identities, credentials, and the tools, permissions, and data it can access. This detail supports risk assessment and audit.",
-      "ai_view_snarky": "Document every bot’s resume—who owns it, what it touches, and which passwords it stole. Then watch the register gather dust next to the unused firewall rules.",
+      "ai_view": "An AI agent register must record each agent’s unique identifier, owner and business purpose, assigned identities, any user accounts and credentials it uses, and the tools, permissions and data repositories it can access. This provides accountability for AI behaviour.",
+      "ai_view_snarky": "You’ll keep a spreadsheet of every AI agent’s ID, owner, credentials and what it can touch—because ‘it just works’ isn’t an audit trail.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:38:47Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
@@ -14633,14 +14633,14 @@
       "framework": "ism",
       "control_id": "ism-2147",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "f440dccae7a4a7cb6414947504abc45d5075327cddc9e1c4da5b65b16f614877",
+      "input_sha256": "d240e985dbfaadb7b20d25f75259ad52101d1dbc3656ed699fd7ec144f4b7269",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Authentication tokens, session cookies, and refresh tokens must be cryptographically bound to the device on which they were issued. Binding ties the artefact to a specific hardware identity, preventing replay on other devices.",
-      "ai_view_snarky": "Tie every session cookie to the device’s TPM and watch users complain when they switch laptops.",
+      "ai_view": "Authentication tokens, session cookies and refresh tokens must be cryptographically bound to the device on which they were issued. This prevents token replay on other devices.",
+      "ai_view_snarky": "Tokens are tied to the device they were born on—so stealing a cookie won’t let you log in from your coffee‑shop laptop.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:41:15Z"
+      "updated_at": "2026-09-03T22:05:30Z"
     },
     {
       "framework": "ism",
@@ -14685,14 +14685,14 @@
       "framework": "ism",
       "control_id": "ism-2151",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "c9d11c1059fa425b2b6c122758e60e9ae5e3c1f5771af01e2019e4d0c9916705",
+      "input_sha256": "4234d1d0bf9825e994439662fe9455cf611eed9248bb0fea1355c7cbbe528e6f",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Backups must be stored using a technically enforced immutability mechanism that prevents any modification or deletion for the entire retention period. This guarantees that backup data remains trustworthy for recovery.",
-      "ai_view_snarky": "Make the backups write‑once, read‑never‑delete — because ransomware loves a good ‘delete‑the‑backups’ trick. If you can’t enforce immutability, you’re just keeping a spare copy of the encryption key.",
+      "ai_view": "Backups must be kept in a storage system that technically enforces immutability, preventing any changes or deletions for the full retention period. This ensures that backup data remains unaltered for recovery purposes.",
+      "ai_view_snarky": "You’ll store backups on a system that technically locks them down for the retention window, so no one can tamper with or delete them. It doesn’t magically make the data trustworthy, but at least it can’t be quietly erased.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T13:41:38Z"
+      "updated_at": "2026-09-03T22:06:34Z"
     },
     {
       "framework": "ism",
