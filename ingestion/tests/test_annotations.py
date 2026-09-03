@@ -94,6 +94,7 @@ class AnnotationCacheTests(unittest.TestCase):
         targeted = controls["ism-0043"]
         self.assertIn(TARGETED_REVIEW_RULES, targeted["review_guidance"])
         self.assertIn("all eight incident response plan elements", targeted["review_guidance"])
+        self.assertIn("2–3 complete sentences", targeted["review_guidance"])
         without_guidance = {key: value for key, value in targeted.items() if key != "review_guidance"}
         self.assertNotEqual(input_sha256(targeted), input_sha256(without_guidance))
         changed_guidance = {**targeted, "review_guidance": targeted["review_guidance"] + " Updated."}
@@ -154,10 +155,21 @@ class AnnotationCacheTests(unittest.TestCase):
 
 
 class AnnotationResponseTests(unittest.TestCase):
-    def test_strict_response_accepts_every_requested_id_in_request_order(self) -> None:
+    def test_strict_response_accepts_two_and_three_sentences_in_request_order(self) -> None:
         raw = json.dumps({"annotations": [
-            {"control_id": "ism-2", "ai_view": "F2", "ai_view_snarky": "P2"},
-            {"control_id": "ism-1", "ai_view": "F1", "ai_view_snarky": "P1"},
+            {
+                "control_id": "ism-2",
+                "ai_view": "First factual sentence. Second factual sentence.",
+                "ai_view_snarky": "First Professional sentence. Second Professional sentence.",
+            },
+            {
+                "control_id": "ism-1",
+                "ai_view": "First factual sentence. Second factual sentence. Third factual sentence.",
+                "ai_view_snarky": (
+                    "First Professional sentence. Second Professional sentence. "
+                    "Third Professional sentence."
+                ),
+            },
         ]})
         parsed = parse_batch_response(raw, ["ism-1", "ism-2"])
         self.assertEqual([row["control_id"] for row in parsed], ["ism-1", "ism-2"])
@@ -256,14 +268,25 @@ class AnnotationResponseTests(unittest.TestCase):
         self.assertNotIn(request_key, message)
         self.assertLessEqual(len(message), 533)
 
-    def test_semantically_invalid_batch_is_retried(self) -> None:
+    def test_one_sentence_batch_is_retried(self) -> None:
         items = [{"control_id": "ism-1"}]
-        valid = json.dumps({"annotations": [
-            {"control_id": "ism-1", "ai_view": "Factual", "ai_view_snarky": "Professional"}
+        one_sentence = json.dumps({"annotations": [
+            {
+                "control_id": "ism-1",
+                "ai_view": "Only one factual sentence.",
+                "ai_view_snarky": "Only one Professional sentence.",
+            }
         ]})
-        with patch("rule1_ingest.annotations.call_openrouter", side_effect=["not json", valid]) as request, patch("time.sleep"):
+        valid = json.dumps({"annotations": [
+            {
+                "control_id": "ism-1",
+                "ai_view": "First factual sentence. Second factual sentence.",
+                "ai_view_snarky": "First Professional sentence. Second Professional sentence.",
+            }
+        ]})
+        with patch("rule1_ingest.annotations.call_openrouter", side_effect=[one_sentence, valid]) as request, patch("time.sleep"):
             result = generate_batch(items, "secret-value", attempts=2)
-        self.assertEqual(result[0]["ai_view"], "Factual")
+        self.assertEqual(result[0]["ai_view"], "First factual sentence. Second factual sentence.")
         self.assertEqual(request.call_count, 2)
 
 
