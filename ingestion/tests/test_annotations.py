@@ -8,6 +8,7 @@ import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 
+from rule1_ingest.build import build_database
 from rule1_ingest.annotations import (
     MODEL,
     PROMPT_VERSION,
@@ -72,8 +73,10 @@ class AnnotationCacheTests(unittest.TestCase):
         self.assertEqual(PROMPT_VERSION, "legacy-rule1-v1")
 
     def test_generation_plan_adopts_unchanged_legacy_text_and_only_generates_delta(self) -> None:
-        database = ROOT / "build/rule1.sqlite3"
-        controls = load_current_controls(database)
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "rule1.sqlite3"
+            build_database(ROOT, database)
+            controls = load_current_controls(database)
         manifest = json.loads((ROOT / "annotations/legacy-preservation.json").read_text(encoding="utf-8"))
         payload = {"annotations": [
             {
