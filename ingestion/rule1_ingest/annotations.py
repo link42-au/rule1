@@ -36,6 +36,49 @@ PROFESSIONAL_SYSTEM = (
     "control for the fifteenth time. You are concise, technically correct, and quietly "
     "judgmental. You do not make things up — you just observe reality with a raised eyebrow."
 )
+TARGETED_REVIEW_RULES = (
+    "Use Australian English. Preserve the source control's modality, including advisory and "
+    "conditional language. Do not add guarantees, unsupported outcomes, technologies, "
+    "implementation details, processes, threat scenarios or claims about organisational behaviour. "
+    "Do not allege wrongdoing, negligence, evasion, discrimination or noncompliance. The Professional "
+    "copy must communicate the substantive requirements before any restrained dry tone."
+)
+CONTROL_REVIEW_GUIDANCE: dict[str, str] = {
+    "ism-0043": "Cover all eight incident response plan elements: incident criteria; likely incident types and responses; internal and external reporting; parties to inform; investigation and response authorities; escalation criteria for law enforcement, ASD or another authority; evidence integrity; and contingency measures or a reference to them.",
+    "ism-1731": "State that incident response planning is performed on a separate, trustworthy system rather than the potentially compromised system.",
+    "ism-2008": "Accurately retain every condition governing medical devices without demeaning language or unsupported claims about data exfiltration.",
+    "ism-2126": "State that positive identity verification occurs before action is taken on accounts, banking or financial matters.",
+    "ism-2104": "Preserve the advisory wording: personnel are advised not to post information about their security clearance and briefings on unauthorised online services, and to report cases where it is posted.",
+    "ism-2117": "State declaratively that suitable AI models are used to augment event detection and incident identification; do not claim they replace people, guarantee detection or find otherwise missed patterns.",
+    "ism-2119": "State declaratively that suitable AI models are used to augment vulnerability assessments and penetration tests; do not invent prioritisation, false-positive or codebase outcomes.",
+    "ism-2130": "State that web-based enrolment interfaces for Microsoft AD CS servers are disabled unless required and, where enabled, require HTTPS and Extended Protection for Authentication.",
+    "ism-1223": "Preserve the ordered sanitisation preference and avoid any guarantee that no residual data remains.",
+    "ism-2097": "Describe configuration of an always-on VPN without claiming that all traffic is encrypted at all times.",
+    "ism-2125": "State that the organisation independently logs all service-provider access so the provider cannot modify or delete those logs, then analyses them promptly for anomalous, unexpected or unauthorised activity; do not describe all logging as immutable or tamper-proof.",
+    "ism-2147": "State that credentials are cryptographically bound to the device to which they were issued; do not invent particular hardware.",
+    "ism-2151": "State that immutability is technically enforced for the retention duration without claiming that this guarantees trustworthiness.",
+    "ism-1558": "Include every prohibited passphrase category and the exact minimums: 4 random words for non-classified, OFFICIAL: Sensitive and PROTECTED systems, 5 for SECRET, and 6 for TOP SECRET; do not suggest known phrases or copyrighted material.",
+    "ism-1322": "Cover evaluated supplicants, authenticators and authentication servers used for 802.1X; do not invent RADIUS or an approved-list constraint.",
+    "ism-0409": "Use neutral language about foreign nationals and retain the exception where effective controls prevent access to AUSTEO or REL data.",
+    "ism-0411": "Use neutral source-faithful language, including the exclusion for seconded foreign nationals and the AGAO condition.",
+    "ism-0041": "Explain that the system security plan contains a system overview and an annex of applicable and additional controls.",
+    "ism-0350": "State that media which cannot be sanitised is destroyed before disposal where the listed conditions apply; do not prescribe a destruction method.",
+    "ism-1163": "Cover all three continuous monitoring plan elements and do not invent scan schedules, ignored findings or budget motives.",
+    "ism-1526": "State that system owners continuously monitor their systems and manage threats, risks and controls.",
+    "ism-1563": "Cover the assessor's report and its required scope, strengths, weaknesses, risks, control effectiveness and remediation information.",
+    "ism-1564": "State only that the system owner produces a plan of action and milestones after the assessment; do not invent per-finding dates or steps.",
+    "ism-1565": "State that all personnel with privileged access receive annual training tailored to their duties.",
+    "ism-1635": "State that system owners implement controls for the system and its operating environment without implying that controls are ignored.",
+    "ism-1803": "List the substantive data that the cyber security incident register records rather than characterising it as an audit exercise.",
+    "ism-1636": "Cover consultation, eligible system classifications, assessment by ASD or an IRAP assessor, and correct implementation and intended operation.",
+    "ism-1594": "Preserve the choice between a secure communication channel and splitting password delivery between the user and supervisor; do not invent technologies or wrongdoing.",
+    "ism-1967": "Cover system-owner consultation with the authorising officer and ASD or delegate assessment of TOP SECRET and sensitive compartmented information systems and operating environments for correct implementation and intended operation.",
+    "ism-1971": "State that providers and their TOP SECRET managed services, including sensitive compartmented information services, undergo ASD or delegate assessment at least every 24 months using the latest ISM available before assessment commencement or a later release.",
+    "ism-2113": "State that a human approves sensitive or high-impact AI-agent actions before execution; avoid unsupported autonomous misuse scenarios.",
+    "ism-2135": "Accurately list the AI agent register fields and refer neutrally to credentials the agent uses.",
+    "ism-0252": "Cover annual training for all personnel and all five required subject areas.",
+    "ism-0408": "State that a logon banner reminds personnel of their security responsibilities without inventing a legal-notice purpose.",
+}
 CLASSIFICATION_LABELS = {
     "NC": "Not Classified",
     "OS": "OFFICIAL:Sensitive",
@@ -208,7 +251,7 @@ def _expand_applicability(codes: list[str]) -> str:
 
 def _prompt_input(row: sqlite3.Row, history: list[sqlite3.Row]) -> dict[str, Any]:
     changed = [item for item in history if item["change_type"] not in ("unchanged", None)][:4]
-    return {
+    item = {
         "control_id": row["control_id"],
         "display_id": row["display_id"] or row["control_id"],
         "label": row["label"] or "",
@@ -224,6 +267,10 @@ def _prompt_input(row: sqlite3.Row, history: list[sqlite3.Row]) -> dict[str, Any
         "catalog_version": row["catalog_version"],
         "current_change_type": row["change_type"],
     }
+    guidance = CONTROL_REVIEW_GUIDANCE.get(row["control_id"])
+    if guidance:
+        item["review_guidance"] = f"{TARGETED_REVIEW_RULES} Specific remediation: {guidance}"
+    return item
 
 
 def input_sha256(item: dict[str, Any]) -> str:
@@ -276,6 +323,8 @@ Write a 2–3 sentence plain-English summary explaining what the control require
 Professional style instruction:
 {PROFESSIONAL_SYSTEM}
 Write a 2–3 sentence annotation explaining what the control requires, in the voice of a battle-hardened infosec practitioner who finds the whole thing mildly absurd but technically correct. Be accurate but drily sardonic. Do not restate the control ID.
+
+When an input includes review_guidance, follow it as a mandatory quality constraint for both annotation flavours.
 
 Return only one JSON object with this shape:
 {{"annotations":[{{"control_id":"ism-0000","ai_view":"...","ai_view_snarky":"..."}}]}}
@@ -412,7 +461,7 @@ def prepare_generation(
         digest = input_sha256(item)
         if row and row.get("catalog_version") == item["catalog_version"] and row.get("input_sha256") == digest:
             continue
-        if row and item["current_change_type"] == "unchanged":
+        if row and item["current_change_type"] == "unchanged" and "review_guidance" not in item:
             row["catalog_version"] = item["catalog_version"]
             row["input_sha256"] = digest
             adopted += 1
