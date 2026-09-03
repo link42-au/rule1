@@ -30,9 +30,9 @@ class ParserTests(unittest.TestCase):
         }
 
     def test_all_retained_versions_have_stable_unique_controls(self) -> None:
-        expected = {"cyber-essentials": 3, "ism": 62, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
+        expected = {"cyber-essentials": 3, "ism": 63, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
         self.assertEqual({key: len(value) for key, value in self.by_framework.items()}, expected)
-        self.assertEqual(len(self.snapshots), 79)
+        self.assertEqual(len(self.snapshots), 80)
         for snapshot in self.snapshots:
             controls = snapshot["controls"]
             self.assertTrue(controls, snapshot["catalog_version"])
@@ -54,12 +54,12 @@ class ParserTests(unittest.TestCase):
 
     def test_reviewed_parser_regressions(self) -> None:
         ism = self.by_framework["ism"]
-        self.assertEqual(sum(len(item["controls"]) for item in ism), 52_836)
-        self.assertEqual(len(ism[-1]["controls"]), 1_150)
-        self.assertEqual(sum(len(item["terms"]) for item in ism), 3_810)
+        self.assertEqual(sum(len(item["controls"]) for item in ism), 54_030)
+        self.assertEqual(len(ism[-1]["controls"]), 1_194)
+        self.assertEqual(sum(len(item["terms"]) for item in ism), 4_058)
         self.assertEqual(len(ism[-1]["terms"]), 248)
-        self.assertEqual(len(ism[-17]["groups"]), 481)
-        self.assertEqual(len(ism[-1]["groups"]), 550)
+        self.assertEqual(len(ism[-18]["groups"]), 481)
+        self.assertEqual(len(ism[-1]["groups"]), 564)
         self.assertTrue(any(item["groups"] for item in ism))
         self.assertLessEqual(max(len(control["statement"]) for item in ism for control in item["controls"].values()), 2_000)
         self.assertTrue(any("C" in (control.get("applicability") or []) for item in ism for control in item["controls"].values()))
@@ -69,16 +69,63 @@ class ParserTests(unittest.TestCase):
         if fallback:
             self.assertEqual(fallback["display_id"], "AC-2(1)")
 
-    def test_june_2026_is_the_current_complete_ism(self) -> None:
+    def test_september_2026_pdf_is_the_current_complete_ism(self) -> None:
         current = self.by_framework["ism"][-1]
-        self.assertEqual(current["catalog_version"], "ISM-OSCAL-2026.06.18")
+        self.assertEqual(current["catalog_version"], "ISM-PDF-2026-09")
         active = [control for control in current["controls"].values() if control["change_type"] != "withdrawn"]
-        self.assertEqual(sum(control["control_class"] == "ISM-control" for control in active), 1_101)
+        self.assertEqual(sum(control["control_class"] == "ISM-control" for control in active), 1_143)
         self.assertEqual(sum(control["control_class"] == "ISM-principle" for control in active), 49)
-        self.assertEqual(current["controls"]["ism-2116"]["source"], "oscal")
-        self.assertIn("ism-2118", current["controls"])
+        self.assertEqual(current["controls"]["ism-2116"]["source"], "pdf")
+        self.assertEqual(current["controls"]["ism-2124"]["source"], "pdf")
         self.assertEqual(current["controls"]["ism-principle-gov-01"]["display_id"], "GOV-01")
         self.assertEqual(current["controls"]["ism-0123"]["e8_levels"], ["ML2", "ML3"])
+        self.assertEqual(current["controls"]["ism-1636"]["applicability"], ["NC", "OS", "P", "S"])
+        self.assertEqual(
+            current["controls"]["ism-2126"]["statement"],
+            "Personnel positively identify requestors using a pre-established authentication method or "
+            "independent trusted communication channel before actioning requests to modify user account "
+            "details, modify banking details or conduct financial transactions.",
+        )
+        self.assertEqual(
+            current["controls"]["ism-2162"]["statement"],
+            "Unneeded components, services and functionality of network devices are disabled or removed.",
+        )
+
+    def test_september_2026_pdf_merges_with_june_structure(self) -> None:
+        current = self.by_framework["ism"][-1]
+        controls = current["controls"]
+        active_principles = {
+            control_id: control for control_id, control in controls.items()
+            if control["control_class"] == "ISM-principle" and control["change_type"] != "withdrawn"
+        }
+        prior_group_ids = {group["id"] for group in self.by_framework["ism"][-2]["groups"]}
+        self.assertTrue(prior_group_ids.issubset({group["id"] for group in current["groups"]}))
+        self.assertEqual(len(current["groups"]), 564)
+        self.assertEqual(len(current["terms"]), 248)
+        self.assertEqual(len(active_principles), 49)
+        self.assertTrue(all(control["source"] == "pdf" for control in active_principles.values()))
+        self.assertEqual(controls["ism-0521"]["change_type"], "withdrawn")
+        self.assertEqual(controls["ism-1448"]["change_type"], "withdrawn")
+        self.assertEqual(controls["ism-1372"]["change_type"], "modified")
+        self.assertEqual(controls["ism-1372"]["revision"], "4")
+        self.assertEqual(controls["ism-1372"]["updated"], "Sep-26")
+        self.assertEqual(controls["ism-2163"]["section_title"], "Media Access Control Security")
+        groups = {group["id"]: group for group in current["groups"]}
+        macsec_group = groups[controls["ism-2163"]["section_id"]]
+        self.assertEqual(groups[macsec_group["parent_id"]]["title"], "Wired networks")
+        self.assertEqual(
+            active_principles["ism-principle-gov-02"]["statement"],
+            "A chief information security officer provides leadership and oversight of cyber security "
+            "activities and delivers regular and timely risk-based reporting to the board of directors or "
+            "executive committee on their organisation’s cyber security posture, the effectiveness of security "
+            "controls, current security risks and emerging cyber threats.",
+        )
+        self.assertEqual(
+            active_principles["ism-principle-det-04"]["statement"],
+            "Baseline patterns of identity and credential access activities, privileged access activities, "
+            "and remote access activities are established and maintained for systems (infrastructure, operating "
+            "systems, applications and data) to enable the detection of anomalous or unexpected behaviour.",
+        )
 
     def test_pdf_to_oscal_boundary_records_real_changes(self) -> None:
         june_2022 = next(item for item in self.by_framework["ism"]
@@ -138,7 +185,7 @@ class ParserTests(unittest.TestCase):
             self.assertEqual(mapping_digest, profile_verified_e8_digests[directory])
         ledger = json.loads((ROOT / "data/source-ledger.json").read_text(encoding="utf-8"))["sources"]
         retained_pdfs = [item for item in ledger if item["framework"] == "ism" and item["path"].endswith(".pdf")]
-        self.assertEqual(retained_pdfs[-1]["version"], "ISM-PDF-2022-03")
+        self.assertEqual(retained_pdfs[-1]["version"], "ISM-PDF-2026-09")
         self.assertEqual(len(expected), sum(item["framework"] == "ism" and item["path"].endswith(".json")
                                             for item in ledger))
 
@@ -267,15 +314,15 @@ class DatabaseTests(unittest.TestCase):
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
                 sqlite3.sqlite_version,
             )
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 79)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 81)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 3_810)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 80)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 82)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_058)
             self.assertEqual(connection.execute(
-                "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-OSCAL-2026.06.18'"
+                "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-PDF-2026-09'"
             ).fetchone()[0], 256)
             ordered_controls = connection.execute(
                 "SELECT control_id FROM control_history WHERE framework='ism' "
-                "AND catalog_version='ISM-OSCAL-2026.06.18' ORDER BY ordinal LIMIT 3"
+                "AND catalog_version='ISM-PDF-2026-09' ORDER BY ordinal LIMIT 3"
             ).fetchall()
             self.assertEqual(ordered_controls, [
                 ("ism-principle-gov-01",), ("ism-principle-gov-08",), ("ism-principle-gov-02",),

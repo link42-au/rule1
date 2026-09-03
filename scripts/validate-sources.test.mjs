@@ -29,7 +29,7 @@ async function fixture() {
 }
 
 test("accepts the committed source archive", async () => {
-  assert.equal(await validateSourceLedger(process.cwd()), 81);
+  assert.equal(await validateSourceLedger(process.cwd()), 82);
 });
 
 test("rejects a changed source", async () => {

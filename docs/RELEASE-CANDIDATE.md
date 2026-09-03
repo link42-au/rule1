@@ -61,26 +61,26 @@ The shared, local UI package still contains dormant platform URL constants in it
 
 ## Current data and retained gaps
 
-- The Australian ISM now ends at the authoritative `ISM-OSCAL-2026.06.18` catalog with 1,101 active controls and 49 cyber security principles. This closes the old candidate's December 2025 currency and missing-principles gaps.
+- The Australian ISM now ends at the authoritative September 2026 PDF (`ISM-PDF-2026-09`), published without a corresponding ASD OSCAL catalog at the 3 September archive checkpoint, with 1,143 active controls and 49 cyber security principles. The PDF is authoritative for active control and principle text, applicability, revision and updated metadata, and Essential Eight mappings. June 2026 OSCAL hierarchy and glossary data is carried forward only where the PDF lacks equivalent machine-readable structure; ingestion adds 14 visible PDF-derived groups and treats controls absent from the September PDF as withdrawals.
 - ISM OSCAL glossary history is retained from June 2022 onward; frameworks whose archived sources provide no glossary remain in an honest empty state.
 - AI annotations from the operated product are not retained.
 - The Essential Eight mapping rows retain maturity levels but contain no named strategy strings.
 - The Cyber Essentials 3.2 source PDF is missing from the archive. Its committed, checksum-verified 3.2 JSON source is ingested.
-- Australian ISM Excel history is not committed; ingestion uses 45 historical PDFs through March 2022 followed by 17 official ASD OSCAL catalogs covering the June 2022 through June 2026 editions.
+- Australian ISM Excel history is not committed; the 63 retained ISM versions use 45 historical PDFs through March 2022, 17 official ASD OSCAL catalogs covering June 2022 through June 2026, and ASD's official September 2026 PDF.
 
 These are provenance/data differences, not UI defects. Framework decisions should be checked against the current authoritative publisher source.
 
 ## Verification evidence
 
-The following is a dated local source-verification checkpoint. It is not hosted-CI, deployment, or live-origin evidence. `pnpm verify` passed on 27 August 2026:
+The following is a dated local source-verification checkpoint. It is not hosted-CI, deployment, or live-origin evidence. `pnpm verify` passed on 3 September 2026:
 
-- Biome: 73 files checked.
+- Biome: 74 files checked.
 - Svelte type checking: zero errors and zero warnings.
-- Node script tests: 10 passed.
-- Python ingestion/parser/database tests: 11 passed, including two clean byte-identical database builds, OSCAL metadata and original-parser parity, and June 2026 catalogue regressions.
-- Web tests: 18 files and 160 tests passed.
-- Browser tests: 2 passed across responsive, accessibility, loading, and local-only interaction coverage.
-- Database build and validation passed locally; `build/rule1.sqlite3` has SHA-256 `5a1ad1752fc9f4f0e6914d64ddd4c358c7dd2fa34b91cc806c6250d1e1511ab7`.
+- Node script tests: 12 passed.
+- Python ingestion/parser/database tests: 12 passed, including two clean byte-identical database builds, mixed PDF/OSCAL history, September 2026 merge semantics, OSCAL metadata, and original-parser parity.
+- Web tests: 18 files and 161 tests passed.
+- Browser tests: 3 passed across responsive, accessibility, loading, local-only interaction, and September 2026 catalogue coverage.
+- Database build and validation passed locally with 80 catalogue versions, 82 source files, 69,992 control-history rows, 4,058 term-history rows, 4,213 Essential Eight mappings, and `PRAGMA integrity_check` reporting `ok`; `build/rule1.sqlite3` has SHA-256 `adfd78b2d1c556eec8fe116670dbc00db32992dc480306480cd4ae7a1a67cbbd`.
 - Static verifier: 11 routes plus the fallback passed at the root; no retired deployment prefix or operated-host link was found.
 
 The current source-controlled release gate runs the same complete verification command for pull requests and `main`, performs a second deterministic database build, and permits only a verified `main` build to publish. Its post-deployment canary checks the current HTML-referenced immutable assets, the deployed artifact manifest, and the database bytes. These workflow controls describe repository source; a named completed workflow and canary are still required before claiming a new deployment is CI-verified or live-verified.
@@ -88,11 +88,11 @@ The current source-controlled release gate runs the same complete verification c
 The canonical macOS local build SHA-256 is:
 
 ```text
-5a1ad1752fc9f4f0e6914d64ddd4c358c7dd2fa34b91cc806c6250d1e1511ab7  build/rule1.sqlite3
-5a1ad1752fc9f4f0e6914d64ddd4c358c7dd2fa34b91cc806c6250d1e1511ab7  apps/web/build/data/rule1.sqlite3
+adfd78b2d1c556eec8fe116670dbc00db32992dc480306480cd4ae7a1a67cbbd  build/rule1.sqlite3
+adfd78b2d1c556eec8fe116670dbc00db32992dc480306480cd4ae7a1a67cbbd  apps/web/build/data/rule1.sqlite3
 ```
 
-The current catalogue heads are `CE-3.3`, `ISM-OSCAL-2026.06.18`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
+The current catalogue heads are `CE-3.3`, `ISM-PDF-2026-09`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
 
 ### Historical live-release verification
 
