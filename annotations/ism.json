@@ -7080,14 +7080,14 @@
       "framework": "ism",
       "control_id": "ism-1526",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "41de6fb8746755352e69ba01ca479ce0adf1a9f16db375aa2f7820f0543d0ccb",
+      "input_sha256": "70bee8f645d5f7e8fdaa78c7df0b92424dd08bf0dd65c3ee150884936a1424ae",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "System owners must continuously monitor the security of each system and manage associated cyber threats, security risks, and security controls.",
-      "ai_view_snarky": "System owners are supposed to keep watching their systems and juggle threats, risks, and controls continuously — a task that never ends and rarely gets the resources it needs.",
+      "ai_view": "System owners are required to continuously monitor the security of each system and to manage the associated cyber threats, security risks and security controls. Ongoing monitoring ensures that changes in the threat landscape are detected and addressed promptly.",
+      "ai_view_snarky": "System owners must keep a constant watch on their systems, managing threats, risks and controls as they evolve. Because ignoring continuous monitoring is the fastest way to discover a breach after the fact.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T22:01:10Z"
+      "updated_at": "2026-09-03T22:22:33Z"
     },
     {
       "framework": "ism",
@@ -8393,27 +8393,27 @@
       "framework": "ism",
       "control_id": "ism-1635",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "d80a1d5eacb984ee280373511de1b1a4b21ce6846b17a032c79e28ae9c41c7ba",
+      "input_sha256": "61f2788277db56b21eef6b5c444b4676a763606750fa317f90a5d16d91e38b38",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "System owners must put in place security controls for every system and its operating environment. This ensures protective measures cover both the system itself and the surrounding infrastructure.",
-      "ai_view_snarky": "System owners are expected to actually implement controls for each system and its environment — because apparently that still needs saying.",
+      "ai_view": "System owners are responsible for putting in place the required security controls for every system and its operating environment. This ensures that protective measures are applied consistently across the entire system boundary.",
+      "ai_view_snarky": "System owners must implement the required security controls for each system and its operating environment — because apparently that still needs saying. In practice, this means the owner actually configures and maintains the controls rather than hoping they appear by magic.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T22:01:10Z"
+      "updated_at": "2026-09-03T22:22:33Z"
     },
     {
       "framework": "ism",
       "control_id": "ism-1636",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "58ad3acd941ffbe12f84529f1ead14af1dddfcdd2d56d0a55e3e0a679603e27c",
+      "input_sha256": "c1fb95407c5af4d3a0d97e7bf4ca41e216a3d7cdfc26a8377ed0887ba8cd6a58",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "System owners, together with the system’s authorising officer, must arrange a security control assessment by internal assessors or IRAP assessors to verify correct implementation and operation. This applies to systems up to SECRET classification.",
-      "ai_view_snarky": "System owners and authorising officers must get an internal or IRAP assessment done for every non‑classified to SECRET system — because trusting the paperwork alone never works.",
+      "ai_view": "System owners, together with the system’s authorising officer, must arrange a security control assessment for each non‑classified, OFFICIAL:Sensitive, PROTECTED and SECRET system and its environment. The assessment is carried out by the organisation’s own assessors or by an IRAP assessor to verify correct implementation and intended operation.",
+      "ai_view_snarky": "System owners, in consultation with the authorising officer, have to get their non‑classified through SECRET systems assessed by either internal assessors or an IRAP assessor to confirm the controls are actually in place and working. Because self‑assessment is only as good as the paperwork that backs it up.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T22:01:10Z"
+      "updated_at": "2026-09-03T22:22:33Z"
     },
     {
       "framework": "ism",
@@ -10239,14 +10239,14 @@
       "framework": "ism",
       "control_id": "ism-1803",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "c56616e1827e5a348166a2aa6d6208d29b7c8a9b7e8ae4845a35d86d18f61934",
+      "input_sha256": "128811c69b690247931919d7477e26ef9ffa4dce2da0a70e16be3cc30be67ade",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "A cyber security incident register must record the incident date, discovery date, description, response actions, and reporting recipients for each incident.",
-      "ai_view_snarky": "The register captures when it happened, when you found out, what it was, what you did, and who you told — because memory is unreliable and auditors love lists.",
+      "ai_view": "A cyber security incident register must record for each incident the date it occurred, the date it was discovered, a description, actions taken in response, and to whom it was reported. Capturing these details supports consistent incident handling and reporting.",
+      "ai_view_snarky": "The incident register has to log the occurrence date, discovery date, description, response actions and reporting recipients for every cyber security incident. Because if you don’t write it down, it never happened — at least not on paper.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T22:01:10Z"
+      "updated_at": "2026-09-03T22:22:33Z"
     },
     {
       "framework": "ism",
@@ -12293,14 +12293,14 @@
       "framework": "ism",
       "control_id": "ism-1967",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "345bd056acec5a32bf475d43a2d3a95324e71288bdd1c14ba028de9a023ad63c",
+      "input_sha256": "ae8b3b119e80006f4d0b2646dba7ec245a0a9a307d858fde0da78284700c8ba7",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "For TOP SECRET and sensitive compartmented information systems, system owners must consult the authorising officer and have ASD assessors (or delegates) evaluate whether controls are correctly implemented and operating.",
-      "ai_view_snarky": "TOP SECRET system owners get to ask ASD (or a delegate) to check their controls — because at that level, self‑assessment is a fantasy.",
+      "ai_view": "For TOP SECRET systems and sensitive compartmented information systems, system owners, in consultation with the authorising officer, must ensure a security control assessment is performed by ASD assessors or their delegates. This assessment confirms that controls are correctly implemented and operating as intended.",
+      "ai_view_snarky": "System owners must arrange for ASD (or its delegates) to assess TOP SECRET and compartmented systems to verify the controls are properly implemented and functioning. Apparently, the highest classification still needs an external check to be believed.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T22:01:10Z"
+      "updated_at": "2026-09-03T22:22:33Z"
     },
     {
       "framework": "ism",
