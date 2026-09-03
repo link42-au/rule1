@@ -5767,14 +5767,14 @@
       "framework": "ism",
       "control_id": "ism-1322",
       "catalog_version": "ISM-PDF-2026-09",
-      "input_sha256": "dd0539be3660278b7825e9bd6c752a3975105bc0d22a15d3401c9e39cf2410f2",
+      "input_sha256": "0454bcd8661ccec4b3ff3a8cb987c810745ca879fb6255e7df5fc8df1a6f325e",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Only evaluated supplicants, authenticators, and authentication servers may be deployed for 802.1X authentication, ensuring the components meet the required assurance level.",
-      "ai_view_snarky": "You’ll only run 802.1X with gear that’s been evaluated — supplicants, authenticators, and servers all vetted. No random RADIUS boxes allowed, just the approved kit.",
+      "ai_view": "The control requires that any 802.1X authentication deployment use supplicants, authenticators and authentication servers that have been formally evaluated. Using evaluated components ensures the authentication process meets the security assurances expected for the system's classification level.",
+      "ai_view_snarky": "You must deploy only evaluated supplicants, authenticators and authentication servers for 802.1X — because apparently trusting untested gear is still a thing. It’s a modest request that the pieces you plug in have actually been vetted, not just marketed.",
       "links": [],
       "impls": [],
-      "updated_at": "2026-09-03T22:06:34Z"
+      "updated_at": "2026-09-03T22:46:51Z"
     },
     {
       "framework": "ism",
