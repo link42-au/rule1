@@ -4,9 +4,9 @@ import test from "node:test";
 
 const WORKFLOWS = new URL("../.github/workflows/", import.meta.url);
 
-test("SQLite is the only workflow and publishes its verified build to Pages", () => {
+test("SQLite workflow publishes its verified build to Pages", () => {
   const files = readdirSync(WORKFLOWS).filter((name) => /\.ya?ml$/.test(name));
-  assert.deepEqual(files, ["build-sqlite.yml"]);
+  assert.deepEqual(files, ["build-sqlite.yml", "generate-annotations.yml"]);
 
   const workflow = readFileSync(new URL("build-sqlite.yml", WORKFLOWS), "utf8");
   const buildJob = workflow.slice(workflow.indexOf("  build-sqlite:"), workflow.indexOf("  deploy-pages:"));
@@ -39,7 +39,9 @@ test("SQLite is the only workflow and publishes its verified build to Pages", ()
   assert.doesNotMatch(buildJob, /pages:\s*write|id-token:\s*write/);
 
   const publicationCondition = /if: github\.ref == 'refs\/heads\/main' && github\.event_name != 'pull_request'/g;
-  assert.equal([...workflow.matchAll(publicationCondition)].length, 3);
+  assert.equal([...workflow.matchAll(publicationCondition)].length, 4);
+  assert.match(buildJob, /python -m rule1_ingest\.annotations check[\s\S]*--require-complete/);
+  assert.match(buildJob, /--require-complete-annotations/);
   assert.match(deployJob, /needs: build-sqlite/);
   assert.match(deployJob, /actions:\s*read/);
   assert.match(deployJob, /pages:\s*write/);
@@ -60,4 +62,21 @@ test("SQLite is the only workflow and publishes its verified build to Pages", ()
     deployJob.indexOf("post-deploy-canary.mjs") > deployJob.indexOf("actions/deploy-pages@v5"),
     "the deployed-origin canary must run after Pages deployment",
   );
+});
+
+test("annotation generation is manual, secret-scoped, checkpointed, and review-gated", () => {
+  const workflow = readFileSync(new URL("generate-annotations.yml", WORKFLOWS), "utf8");
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /\n\s+push:/);
+  assert.match(workflow, /permissions:\n\s+actions: write\n\s+contents: write\n\s+pull-requests: write/);
+  assert.match(workflow, /OPENROUTER_API_KEY: \$\{\{ secrets\.OPENROUTER_API_KEY \}\}/);
+  assert.equal(workflow.match(/OPENROUTER_API_KEY/g)?.length, 3);
+  assert.match(workflow, /--batch-size 25/);
+  assert.match(workflow, /--require-complete/);
+  assert.match(workflow, /--write-contract/);
+  assert.match(workflow, /actions\/upload-artifact@v4/);
+  assert.match(workflow, /git add -- annotations\/ism\.json ingestion\/validation-contract\.json/);
+  assert.match(workflow, /gh pr create/);
+  assert.match(workflow, /gh workflow run build-sqlite\.yml --ref "\$branch"/);
+  assert.doesNotMatch(workflow, /OPENROUTER_API_KEY:\s*sk-/);
 });

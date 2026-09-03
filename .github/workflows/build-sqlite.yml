@@ -62,6 +62,18 @@ jobs:
           cmp --silent build/rule1.sqlite3 apps/web/build/data/rule1.sqlite3
           cmp --silent apps/web/static/data/rule1-artifact-manifest.json apps/web/build/data/rule1-artifact-manifest.json
 
+      - name: Require complete current annotations for release
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          UV_FROZEN: "true"
+        run: |
+          PYTHONPATH=ingestion uv run --frozen --python 3.12.13 \
+            python -m rule1_ingest.annotations check \
+            --database build/rule1.sqlite3 --cache annotations/ism.json --require-complete
+          PYTHONPATH=ingestion uv run --frozen --python 3.12.13 \
+            python -m rule1_ingest.validate --root . --database build/rule1.sqlite3 \
+            --require-complete-annotations
+
       - name: Upload verified database
         uses: actions/upload-artifact@v4
         with:

@@ -77,6 +77,7 @@
   let openGroupIds = $state(new Set<string>());
   let favouriteStorage: StorageLike | undefined;
   let favouriteInput: HTMLInputElement | undefined = $state();
+  let snarkyPref = $state(false);
   let sidebarWidth = $state(SIDEBAR_WIDTH_DEFAULT);
   let resizingSidebar = $state(false);
   let resizeStartX = 0;
@@ -311,6 +312,16 @@
     syncUrl();
     if (tab === "changelog") void loadHistory();
     if (tab === "context") void loadGraph();
+  }
+
+  function setAiFlavour(flavour: "factual" | "snarky"): void {
+    snarkyPref = flavour === "snarky";
+    try {
+      if (snarkyPref) window.localStorage.setItem("ai-flavour", "snarky");
+      else window.localStorage.removeItem("ai-flavour");
+    } catch {
+      // The selected flavour still applies for this session when storage is unavailable.
+    }
   }
 
   function handleTabKey(event: KeyboardEvent, tab: DetailTab): void {
@@ -553,6 +564,7 @@
       try {
         try {
           favouriteStorage = window.localStorage;
+          snarkyPref = window.localStorage.getItem("ai-flavour") === "snarky";
           sidebarWidth = clampSidebarWidth(window.localStorage.getItem("rule1-sidebar-width"));
         } catch {
           favouriteStorage = undefined;
@@ -851,6 +863,41 @@
               </div>
               <p><GlossaryText text={detail.latest.statement ?? "No description is available for this control."} terms={glossaryTerms} /></p>
             </section>
+            {#if detail.annotation?.ai_view || detail.annotation?.ai_view_snarky}
+              {@const aiView = detail.annotation.ai_view}
+              {@const aiViewSnarky = detail.annotation.ai_view_snarky}
+              {@const hasBothFlavours = Boolean(aiView && aiViewSnarky)}
+              {@const activeAiView = snarkyPref && aiViewSnarky ? aiViewSnarky : (aiView ?? aiViewSnarky)}
+              <div class="ai-summary-header">
+                <span class="section-label">AI Summary</span>
+                <span
+                  class="ai-slop-warn"
+                  data-tooltip="AI-generated content. May be inaccurate or misleading. Verify against the official ISM."
+                  title="AI-generated content. May be inaccurate or misleading. Verify against the official ISM."
+                >⚠ AI generated</span>
+                {#if hasBothFlavours}
+                  <span class="ai-flavour-toggle" role="group" aria-label="AI summary flavour">
+                    <button
+                      type="button"
+                      class="ai-flavour-btn"
+                      class:active={!snarkyPref}
+                      aria-pressed={!snarkyPref}
+                      data-flavour="factual"
+                      onclick={() => setAiFlavour("factual")}
+                    >Factual</button>
+                    <button
+                      type="button"
+                      class="ai-flavour-btn"
+                      class:active={snarkyPref}
+                      aria-pressed={snarkyPref}
+                      data-flavour="snarky"
+                      onclick={() => setAiFlavour("snarky")}
+                    >Professional</button>
+                  </span>
+                {/if}
+              </div>
+              <div class="ai-summary-block">{activeAiView}</div>
+            {/if}
             {#if detail.section_overview}
               <section class="overview-card">
                 <h2>Section overview</h2>
@@ -1486,6 +1533,77 @@
 
   .description-card p {
     padding: 18px;
+  }
+
+  .ai-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .ai-summary-header .section-label {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .ai-slop-warn {
+    position: relative;
+    padding: 2px 7px;
+    border: 1px solid var(--amber-border);
+    border-radius: 4px;
+    background: var(--amber-bg);
+    color: var(--amber);
+    cursor: help;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .ai-summary-block {
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-subtle);
+    color: var(--text-mid);
+    font-size: 13.5px;
+    line-height: 1.75;
+  }
+
+  .ai-flavour-toggle {
+    display: inline-flex;
+    overflow: hidden;
+    margin-left: auto;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+  }
+
+  .ai-flavour-btn {
+    padding: 2px 9px;
+    border: none;
+    background: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+    text-transform: uppercase;
+  }
+
+  .ai-flavour-btn + .ai-flavour-btn {
+    border-left: 1px solid var(--border);
+  }
+
+  .ai-flavour-btn.active {
+    background: var(--amber-bg);
+    color: var(--amber);
   }
 
   .overview-card h2 {

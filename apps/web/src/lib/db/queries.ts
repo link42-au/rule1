@@ -1,6 +1,7 @@
 import type {
   Control,
   ControlDetail,
+  Annotation,
   Framework,
   GlossaryTerm,
   GraphData,
@@ -127,6 +128,32 @@ const decodeRevision = (row: Row, includeStatement: boolean): Revision => ({
   revision: nullableText(row.revision) ?? undefined,
   change_complexity: nullableText(row.change_complexity),
   metadata: jsonObject(row.metadata),
+});
+
+const jsonRecords = (value: unknown): Record<string, unknown>[] => {
+  if (typeof value !== "string" || value.length === 0) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+const decodeAnnotation = (row: Row): Annotation => ({
+  ai_view: nullableText(row.ai_view),
+  ai_view_snarky: nullableText(row.ai_view_snarky),
+  links: jsonRecords(row.links).flatMap((item) =>
+    typeof item.url === "string" && typeof item.title === "string" ? [{ url: item.url, title: item.title }] : [],
+  ),
+  impls: jsonRecords(row.impls).flatMap((item) =>
+    typeof item.text === "string"
+      ? [{ text: item.text, ...(typeof item.url === "string" ? { url: item.url } : {}) }]
+      : [],
+  ),
+  updated_at: text(row.updated_at),
 });
 
 async function frameworks(executor: QueryExecutor): Promise<Framework[]> {
@@ -333,7 +360,7 @@ async function control(executor: QueryExecutor, params: ControlParams): Promise<
   const latestRow = latestRows[0];
   if (!latestRow) return null;
 
-  const [historyRows, mappings] = await Promise.all([
+  const [historyRows, mappings, annotationRows] = await Promise.all([
     executor.all<Row>(
       `/* rule1:control-history-summary */
       SELECT ${HISTORY_COLUMNS} FROM control_history h
@@ -344,6 +371,12 @@ async function control(executor: QueryExecutor, params: ControlParams): Promise<
     framework === "ism"
       ? e8Mappings(executor, { framework, id, catalogVersion: text(latestRow.catalog_version) })
       : Promise.resolve([]),
+    executor.all<Row>(
+      `/* rule1:annotation */
+      SELECT ai_view, ai_view_snarky, links, impls, updated_at FROM annotations
+      WHERE framework = ? AND control_id = ? LIMIT 1`,
+      [framework, id],
+    ),
   ]);
   const latest = decodeRevision(latestRow, true);
   latest.e8_strategies = mappings;
@@ -359,7 +392,7 @@ async function control(executor: QueryExecutor, params: ControlParams): Promise<
     section_overview: text(latestRow.section_overview),
     latest,
     history: historyRows.map((row) => decodeRevision(row, false)),
-    annotation: null,
+    annotation: annotationRows[0] ? decodeAnnotation(annotationRows[0]) : null,
   };
 }
 

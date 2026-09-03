@@ -9,8 +9,10 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from .annotations import LEGACY_MANIFEST_SHA256
+
 TABLES = (
-    "build_counts", "build_metadata", "catalog_versions", "control_groups", "control_history",
+    "annotations", "build_counts", "build_metadata", "catalog_versions", "control_groups", "control_history",
     "e8_mappings", "frameworks", "source_files", "term_history",
 )
 
@@ -69,7 +71,13 @@ def write_contract(root: Path, database: Path, contract_path: Path) -> None:
     contract_path.write_text(json.dumps(contract, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def validate_database(root: Path, database: Path, contract_path: Path | None = None) -> None:
+def validate_database(
+    root: Path,
+    database: Path,
+    contract_path: Path | None = None,
+    *,
+    require_complete_annotations: bool = False,
+) -> None:
     root, database = root.resolve(), database.resolve()
     ledger_path = root / "data/source-ledger.json"
     ledger_payload = ledger_path.read_bytes()
@@ -110,13 +118,82 @@ def validate_database(root: Path, database: Path, contract_path: Path | None = N
             raise ValueError(f"unexpected database tables: {tables}")
         if connection.execute("PRAGMA application_id").fetchone()[0] != 1381321777:
             raise ValueError("unexpected application_id")
-        if connection.execute("PRAGMA user_version").fetchone()[0] != 1:
+        if connection.execute("PRAGMA user_version").fetchone()[0] != 2:
             raise ValueError("unexpected user_version")
         if connection.execute("PRAGMA page_size").fetchone()[0] != 4096:
             raise ValueError("unexpected page_size")
         metadata = dict(connection.execute("SELECT key, value FROM build_metadata"))
-        if metadata != {"schema_version": "1", "source_ledger_sha256": ledger_sha, "sqlite_version": sqlite3.sqlite_version}:
+        annotation_path = root / "annotations/ism.json"
+        annotation_manifest_path = root / "annotations/legacy-preservation.json"
+        annotation_sha = _sha256(annotation_path)
+        annotation_manifest_sha = _sha256(annotation_manifest_path)
+        if annotation_manifest_sha != LEGACY_MANIFEST_SHA256:
+            raise ValueError("legacy annotation preservation manifest checksum mismatch")
+        expected_metadata = {
+            "annotation_cache_sha256": annotation_sha,
+            "annotation_legacy_manifest_sha256": annotation_manifest_sha,
+            "annotation_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "annotation_prompt_version": "legacy-rule1-v1",
+            "schema_version": "2",
+            "source_ledger_sha256": ledger_sha,
+            "sqlite_version": sqlite3.sqlite_version,
+        }
+        if metadata != expected_metadata:
             raise ValueError(f"unexpected build metadata: {metadata}")
+        cache_payload = json.loads(annotation_path.read_text(encoding="utf-8"))
+        preservation_payload = json.loads(annotation_manifest_path.read_text(encoding="utf-8"))
+        cache_by_id = {row["control_id"]: row for row in cache_payload["annotations"]}
+        for record in preservation_payload["rows"]:
+            if record["disposition"] != "preserve":
+                continue
+            cached = cache_by_id.get(record["control_id"])
+            if cached is None:
+                raise ValueError(f"preserved legacy annotation is missing: {record['control_id']}")
+            pair = json.dumps(
+                [cached["ai_view"], cached["ai_view_snarky"]],
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            if hashlib.sha256(pair.encode()).hexdigest() != record["description_sha256"]:
+                raise ValueError(f"preserved legacy annotation changed: {record['control_id']}")
+        expected_annotations = sorted((
+            row["framework"], row["control_id"], row["catalog_version"], row.get("input_sha256"),
+            row["prompt_version"], row["model"], row["ai_view"], row["ai_view_snarky"],
+            json.dumps(row.get("links", []), ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+            json.dumps(row.get("impls", []), ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+            row["updated_at"],
+        ) for row in cache_payload["annotations"])
+        actual_annotations = connection.execute(
+            "SELECT framework, control_id, catalog_version, input_sha256, prompt_version, model, "
+            "ai_view, ai_view_snarky, links, impls, updated_at FROM annotations ORDER BY framework, control_id"
+        ).fetchall()
+        if actual_annotations != expected_annotations:
+            raise ValueError("database annotations do not exactly match the committed cache")
+        invalid_annotations = connection.execute(
+            "SELECT COUNT(*) FROM annotations WHERE framework!='ism' OR TRIM(ai_view)='' "
+            "OR TRIM(ai_view_snarky)='' OR TRIM(prompt_version)='' OR TRIM(model)='' "
+            "OR json_valid(links)=0 OR json_valid(impls)=0"
+        ).fetchone()[0]
+        if invalid_annotations:
+            raise ValueError(f"invalid annotation rows: {invalid_annotations}")
+        orphan_annotations = connection.execute(
+            "SELECT COUNT(*) FROM annotations a WHERE NOT EXISTS ("
+            "SELECT 1 FROM control_history h WHERE h.framework=a.framework AND h.control_id=a.control_id)"
+        ).fetchone()[0]
+        if orphan_annotations:
+            raise ValueError(f"orphan annotation rows: {orphan_annotations}")
+        if require_complete_annotations:
+            incomplete = connection.execute(
+                "WITH current_ism AS (SELECT version FROM catalog_versions WHERE framework='ism' ORDER BY ordinal DESC LIMIT 1) "
+                "SELECT COUNT(*) FROM control_history h LEFT JOIN annotations a "
+                "ON a.framework=h.framework AND a.control_id=h.control_id "
+                "WHERE h.framework='ism' AND h.catalog_version=(SELECT version FROM current_ism) "
+                "AND h.control_class='ISM-control' AND h.change_type!='withdrawn' "
+                "AND (a.control_id IS NULL OR a.catalog_version!=h.catalog_version OR a.input_sha256 IS NULL)"
+            ).fetchone()[0]
+            if incomplete:
+                raise ValueError(f"current ISM annotations are incomplete or stale: {incomplete}")
         actual_sources = connection.execute(
             "SELECT path, framework, version, source_date, origin, sha256 FROM source_files ORDER BY path"
         ).fetchall()
@@ -154,10 +231,16 @@ def main() -> None:
     parser.add_argument("--database", type=Path, default=Path("build/rule1.sqlite3"))
     parser.add_argument("--contract", type=Path, default=Path("ingestion/validation-contract.json"))
     parser.add_argument("--write-contract", action="store_true")
+    parser.add_argument("--require-complete-annotations", action="store_true")
     args = parser.parse_args()
     if args.write_contract:
         write_contract(args.root.resolve(), args.database.resolve(), args.contract.resolve())
-    validate_database(args.root, args.database, args.contract)
+    validate_database(
+        args.root,
+        args.database,
+        args.contract,
+        require_complete_annotations=args.require_complete_annotations,
+    )
     print(f"validated {args.database}")
 
 

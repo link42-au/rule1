@@ -253,6 +253,15 @@ describe("Rule1 query dispatcher", () => {
         },
       ],
       "e8-mappings": [{ level: "ML1", strategy: "Patch applications" }],
+      annotation: [
+        {
+          ai_view: "A factual description.",
+          ai_view_snarky: "A Professional description.",
+          links: '[{"url":"https://example.com","title":"Reference"}]',
+          impls: '[{"text":"Implement it","url":"https://example.com/how"}]',
+          updated_at: "2026-09-03T00:00:00Z",
+        },
+      ],
       "graph-center": [
         {
           control_id: "ism-1",
@@ -274,7 +283,13 @@ describe("Rule1 query dispatcher", () => {
     await expect(dispatchRule1Query(executor, "control", { framework: "ism", id: "ISM-1" })).resolves.toMatchObject({
       id: "ism-1",
       section_overview: "Overview",
-      annotation: null,
+      annotation: {
+        ai_view: "A factual description.",
+        ai_view_snarky: "A Professional description.",
+        links: [{ url: "https://example.com", title: "Reference" }],
+        impls: [{ text: "Implement it", url: "https://example.com/how" }],
+        updated_at: "2026-09-03T00:00:00Z",
+      },
       latest: { e8_strategies: [{ level: "ML1", strategy: "Patch applications" }] },
     });
     await expect(
@@ -288,6 +303,7 @@ describe("Rule1 query dispatcher", () => {
     const detailSql = executor.calls.find((call) => call.name === "control")?.sql ?? "";
     expect(detailSql).toContain("g.catalog_version = h.catalog_version");
     expect(executor.calls.find((call) => call.name === "e8-mappings")?.bind).toEqual(["ism", "v2", "ism-1"]);
+    expect(executor.calls.find((call) => call.name === "annotation")?.bind).toEqual(["ism", "ism-1"]);
   });
 
   it("does not query Essential Eight mappings for non-ISM control details", async () => {
@@ -310,6 +326,7 @@ describe("Rule1 query dispatcher", () => {
     await expect(dispatchRule1Query(executor, "control", { framework: "nzism", id: "NZISM-1" })).resolves.toMatchObject(
       {
         framework: "nzism",
+        annotation: null,
         latest: { e8_strategies: [] },
       },
     );

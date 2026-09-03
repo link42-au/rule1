@@ -30,7 +30,16 @@
     }
   },
   "files": {
-    "includes": ["**", "!node_modules", "!build", "!.svelte-kit", "!data", "!**/*.svelte"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!build",
+      "!.svelte-kit",
+      "!annotations",
+      "!data",
+      "!ingestion/validation-contract.json",
+      "!**/*.svelte"
+    ]
   },
   "overrides": [
     {

@@ -11,6 +11,9 @@ from pathlib import Path
 from typing import Any
 
 from .parsers import Snapshot, build_all_histories
+from .annotations import MODEL as ANNOTATION_MODEL
+from .annotations import PROMPT_VERSION as ANNOTATION_PROMPT_VERSION
+from .annotations import load_cache as load_annotation_cache
 
 FRAMEWORKS = (
     ("cyber-essentials", "Cyber Essentials", "CE", "UK National Cyber Security Centre", "https://www.ncsc.gov.uk/cyberessentials/overview", "United Kingdom", "#2563eb"),
@@ -114,7 +117,7 @@ def _insert_snapshots(connection: sqlite3.Connection, snapshots: list[Snapshot])
 
 
 def _record_counts(connection: sqlite3.Connection) -> None:
-    overall = ("frameworks", "catalog_versions", "source_files", "control_groups", "control_history", "term_history", "e8_mappings")
+    overall = ("annotations", "frameworks", "catalog_versions", "source_files", "control_groups", "control_history", "term_history", "e8_mappings")
     for table in overall:
         count = connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         connection.execute("INSERT INTO build_counts VALUES (?, '', '', ?)", (table, count))
@@ -133,6 +136,11 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
     output.unlink(missing_ok=True)
     sources, ledger_sha = _ledger(root)
     snapshots = snapshots if snapshots is not None else build_all_histories(root)
+    annotation_path = root / "annotations/ism.json"
+    annotation_manifest_path = root / "annotations/legacy-preservation.json"
+    annotation_payload = load_annotation_cache(annotation_path)
+    annotation_sha = hashlib.sha256(annotation_path.read_bytes()).hexdigest()
+    annotation_manifest_sha = hashlib.sha256(annotation_manifest_path.read_bytes()).hexdigest()
     with sqlite3.connect(output) as connection:
         connection.execute("PRAGMA journal_mode=OFF")
         connection.execute("PRAGMA synchronous=OFF")
@@ -142,13 +150,30 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
         connection.execute("BEGIN")
         connection.executemany("INSERT INTO frameworks VALUES (?, ?, ?, ?, ?, ?, ?)", FRAMEWORKS)
         _insert_snapshots(connection, snapshots)
+        for annotation in annotation_payload["annotations"]:
+            connection.execute(
+                "INSERT INTO annotations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    annotation["framework"], annotation["control_id"], annotation["catalog_version"],
+                    annotation.get("input_sha256"), annotation["prompt_version"], annotation["model"],
+                    annotation["ai_view"], annotation["ai_view_snarky"],
+                    canonical_json(annotation.get("links", [])), canonical_json(annotation.get("impls", [])),
+                    annotation["updated_at"],
+                ),
+            )
         for source in sorted(sources, key=lambda item: item["path"]):
             connection.execute(
                 "INSERT INTO source_files VALUES (?, ?, ?, ?, ?, ?)",
                 (source["path"], source["framework"], source["version"], source["date"], source["origin"], source["sha256"]),
             )
         connection.executemany("INSERT INTO build_metadata VALUES (?, ?)", (
-            ("schema_version", "1"), ("sqlite_version", sqlite3.sqlite_version), ("source_ledger_sha256", ledger_sha),
+            ("annotation_cache_sha256", annotation_sha),
+            ("annotation_legacy_manifest_sha256", annotation_manifest_sha),
+            ("annotation_model", ANNOTATION_MODEL),
+            ("annotation_prompt_version", ANNOTATION_PROMPT_VERSION),
+            ("schema_version", "2"),
+            ("sqlite_version", sqlite3.sqlite_version),
+            ("source_ledger_sha256", ledger_sha),
         ))
         _record_counts(connection)
         connection.commit()

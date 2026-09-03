@@ -179,3 +179,33 @@ test("catalogue splash and loaded interactions remain accessible and locally con
   expect(overflow.scrollWidth).toBeGreaterThan(overflow.clientWidth);
   await assertNoSeriousAxeViolations(page, testInfo, "compare-mobile-dark");
 });
+
+test("AI Summary switches between factual and Professional descriptions and remembers the preference", async ({
+  page,
+}) => {
+  await page.goto("/guide/");
+  await page.evaluate(() => localStorage.removeItem("ai-flavour"));
+  await page.goto("/explorer/?framework=ism&id=ism-0009");
+  await expect(page.locator("[data-control-heading]")).toBeVisible();
+
+  const flavour = page.getByRole("group", { name: "AI summary flavour" });
+  const summary = page.locator(".ai-summary-block");
+  await expect(flavour).toBeVisible();
+  await expect(flavour.getByRole("button", { name: "Factual" })).toHaveAttribute("aria-pressed", "true");
+  const factual = await summary.innerText();
+  expect(factual.trim()).not.toBe("");
+
+  await flavour.getByRole("button", { name: "Professional" }).click();
+  await expect(flavour.getByRole("button", { name: "Professional" })).toHaveAttribute("aria-pressed", "true");
+  const professional = await summary.innerText();
+  expect(professional.trim()).not.toBe("");
+  expect(professional).not.toBe(factual);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("ai-flavour"))).toBe("snarky");
+
+  await page.reload();
+  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await expect(
+    page.getByRole("group", { name: "AI summary flavour" }).getByRole("button", { name: "Professional" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".ai-summary-block")).toHaveText(professional);
+});
