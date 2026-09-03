@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sqlite3
 import sys
 import time
@@ -284,11 +285,24 @@ def parse_batch_response(raw: str, expected_ids: list[str]) -> list[dict[str, st
     return [found[control_id] for control_id in expected_ids]
 
 
+def bounded_http_error_body(error: urllib.error.HTTPError, api_key: str = "") -> str:
+    try:
+        raw = error.read(2_048)
+    except (AttributeError, OSError):
+        return ""
+    text = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else str(raw)
+    if api_key:
+        text = text.replace(api_key, "[redacted]")
+    text = re.sub(r"sk-or-v1-[A-Za-z0-9_-]+", "[redacted]", text)
+    return " ".join(text.split())[:512]
+
+
 def call_openrouter(prompt: str, api_key: str, *, attempts: int = 6) -> str:
     payload = json.dumps({
         "model": MODEL,
         "temperature": 0,
         "max_tokens": 12_000,
+        "provider": {"data_collection": "allow"},
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
     request = urllib.request.Request(
@@ -309,11 +323,14 @@ def call_openrouter(prompt: str, api_key: str, *, attempts: int = 6) -> str:
                 raise ValueError("OpenRouter returned empty message content")
             return content.strip()
         except urllib.error.HTTPError as error:
-            if error.code not in {429, 500, 502, 503, 504} or attempt == attempts - 1:
-                raise
-            retry_after = error.headers.get("Retry-After")
-            delay = min(60, int(retry_after)) if retry_after and retry_after.isdigit() else min(60, 2 ** (attempt + 1))
-            time.sleep(delay)
+            if error.code in {429, 500, 502, 503, 504} and attempt < attempts - 1:
+                retry_after = error.headers.get("Retry-After")
+                delay = min(60, int(retry_after)) if retry_after and retry_after.isdigit() else min(60, 2 ** (attempt + 1))
+                time.sleep(delay)
+                continue
+            body = bounded_http_error_body(error, api_key)
+            detail = f": {body}" if body else ""
+            raise RuntimeError(f"OpenRouter HTTP {error.code}{detail}") from None
         except urllib.error.URLError:
             if attempt == attempts - 1:
                 raise
@@ -444,7 +461,7 @@ def main() -> None:
             print(f"annotation coverage: {fresh}/{total} current, {stale} stale or missing")
             if args.require_complete and stale:
                 raise ValueError("annotation cache is incomplete or stale")
-    except (OSError, ValueError, sqlite3.Error, urllib.error.URLError) as error:
+    except (OSError, RuntimeError, ValueError, sqlite3.Error, urllib.error.URLError) as error:
         print(f"annotation operation failed: {error}", file=sys.stderr)
         raise SystemExit(1) from error
 
