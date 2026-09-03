@@ -16,6 +16,7 @@ from rule1_ingest.annotations import (
     LEGACY_MANIFEST_SHA256,
     call_openrouter,
     description_sha256,
+    extract_annotation_arguments,
     input_sha256,
     generate_batch,
     load_cache,
@@ -143,6 +144,53 @@ class AnnotationResponseTests(unittest.TestCase):
         self.assertNotIn("secret-value", str(error))
         request_payload = json.loads(request.call_args.args[0].data)
         self.assertEqual(request_payload["provider"], {"data_collection": "allow"})
+        self.assertEqual(
+            request_payload["tool_choice"],
+            {"type": "function", "function": {"name": "submit_annotations"}},
+        )
+        tool = request_payload["tools"][0]
+        self.assertEqual(tool["function"]["name"], "submit_annotations")
+        parameters = tool["function"]["parameters"]
+        self.assertEqual(parameters["required"], ["annotations"])
+        self.assertIs(parameters["additionalProperties"], False)
+        row_schema = parameters["properties"]["annotations"]["items"]
+        self.assertEqual(row_schema["required"], ["control_id", "ai_view", "ai_view_snarky"])
+        self.assertIs(row_schema["additionalProperties"], False)
+
+    def test_openrouter_extracts_forced_annotation_tool_arguments(self) -> None:
+        arguments = json.dumps({"annotations": [
+            {"control_id": "ism-1", "ai_view": "Factual", "ai_view_snarky": "Professional"}
+        ]})
+        response = unittest.mock.MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({
+            "choices": [{"message": {
+                "content": None,
+                "tool_calls": [{
+                    "type": "function",
+                    "function": {"name": "submit_annotations", "arguments": arguments},
+                }],
+            }}]
+        }).encode()
+        with patch("urllib.request.urlopen", return_value=response):
+            self.assertEqual(call_openrouter("prompt", "secret-value", attempts=1), arguments)
+
+    def test_annotation_argument_extraction_rejects_malformed_or_missing_tool_calls(self) -> None:
+        invalid = [
+            None,
+            {},
+            {"content": ""},
+            {"tool_calls": []},
+            {"tool_calls": [{"function": {"name": "wrong", "arguments": "{}"}}]},
+            {"tool_calls": [{"function": {"name": "submit_annotations", "arguments": ""}}]},
+            {"tool_calls": [
+                {"function": {"name": "submit_annotations", "arguments": "{}"}},
+                {"function": {"name": "submit_annotations", "arguments": "{}"}},
+            ]},
+        ]
+        for message in invalid:
+            with self.subTest(message=message), self.assertRaises(ValueError):
+                extract_annotation_arguments(message)
+        self.assertEqual(extract_annotation_arguments({"content": '{"annotations":[]}'}), '{"annotations":[]}')
 
     def test_openrouter_http_error_surfaces_only_a_bounded_redacted_body(self) -> None:
         exposed_key = "sk-or-v1-example-secret-value"
