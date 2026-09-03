@@ -111,7 +111,7 @@ describe("reviewed Rule1 explorer", () => {
     expect(mappingSource).toContain("strategy names are not present in the archived source");
     expect(mappingSource).toContain("this does not imply current coverage");
     expect(contextSource).toContain("No related controls are retained in the same section.");
-    expect(explorerSource).not.toContain("AI Summary");
+    expect(explorerSource).toContain("{#if detail.annotation?.ai_view || detail.annotation?.ai_view_snarky}");
   });
 
   it("passes catalogue identity into the structured changelog presentation", () => {
@@ -153,6 +153,44 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).toContain("Overview");
     expect(explorerSource).toContain("Changelog");
     expect(explorerSource).toContain("Context");
+  });
+
+  it("restores the former factual and Professional AI Summary presentation", () => {
+    expect(explorerSource).toContain('class="ai-summary-header"');
+    expect(explorerSource).toContain("AI Summary");
+    expect(explorerSource).toContain("⚠ AI generated");
+    expect(explorerSource).toContain(
+      "AI-generated content. May be inaccurate or misleading. Verify against the official ISM.",
+    );
+    expect(explorerSource).toContain('aria-label="AI summary flavour"');
+    expect(explorerSource).toContain('data-flavour="factual"');
+    expect(explorerSource).toContain(">Factual</button>");
+    expect(explorerSource).toContain('data-flavour="snarky"');
+    expect(explorerSource).toContain(">Professional</button>");
+    expect(explorerSource).toContain("snarkyPref && aiViewSnarky ? aiViewSnarky : (aiView ?? aiViewSnarky)");
+    expect(explorerSource.indexOf('class="description-card"')).toBeLessThan(
+      explorerSource.indexOf('class="ai-summary-header"'),
+    );
+    expect(explorerSource.indexOf('class="ai-summary-header"')).toBeLessThan(
+      explorerSource.indexOf("{#if detail.section_overview}"),
+    );
+    expect(explorerSource).toMatch(
+      /\.ai-summary-block\s*{[^}]*padding:\s*16px 18px[^}]*border-radius:\s*10px[^}]*font-size:\s*13\.5px[^}]*line-height:\s*1\.75/s,
+    );
+    expect(explorerSource).toMatch(
+      /\.ai-slop-warn\s*{[^}]*padding:\s*2px 7px[^}]*border-radius:\s*4px[^}]*font-size:\s*10px[^}]*text-transform:\s*uppercase/s,
+    );
+    expect(explorerSource).toMatch(
+      /\.ai-flavour-toggle\s*{[^}]*display:\s*inline-flex[^}]*margin-left:\s*auto[^}]*border-radius:\s*5px/s,
+    );
+  });
+
+  it("persists the former AI flavour preference locally", () => {
+    expect(explorerSource).toContain('window.localStorage.getItem("ai-flavour") === "snarky"');
+    expect(explorerSource).toContain('window.localStorage.setItem("ai-flavour", "snarky")');
+    expect(explorerSource).toContain('window.localStorage.removeItem("ai-flavour")');
+    expect(explorerSource).toContain("aria-pressed={!snarkyPref}");
+    expect(explorerSource).toContain("aria-pressed={snarkyPref}");
   });
 
   it("keeps restored detail actions and stats independent of backend services", () => {

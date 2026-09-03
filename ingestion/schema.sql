@@ -2,7 +2,7 @@ PRAGMA page_size = 4096;
 PRAGMA encoding = 'UTF-8';
 PRAGMA auto_vacuum = NONE;
 PRAGMA application_id = 1381321777;
-PRAGMA user_version = 1;
+PRAGMA user_version = 2;
 
 CREATE TABLE frameworks (
   id TEXT PRIMARY KEY,
@@ -95,6 +95,21 @@ CREATE TABLE e8_mappings (
   PRIMARY KEY (framework, catalog_version, control_id, level, strategy),
   FOREIGN KEY (framework, control_id, catalog_version)
     REFERENCES control_history(framework, control_id, catalog_version)
+);
+
+CREATE TABLE annotations (
+  framework TEXT NOT NULL,
+  control_id TEXT NOT NULL,
+  catalog_version TEXT NOT NULL,
+  input_sha256 TEXT,
+  prompt_version TEXT NOT NULL,
+  model TEXT NOT NULL,
+  ai_view TEXT NOT NULL,
+  ai_view_snarky TEXT NOT NULL,
+  links TEXT NOT NULL DEFAULT '[]',
+  impls TEXT NOT NULL DEFAULT '[]',
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (framework, control_id)
 );
 
 CREATE TABLE build_metadata (

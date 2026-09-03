@@ -354,7 +354,7 @@ class DatabaseTests(unittest.TestCase):
         validate_database(ROOT, database, ROOT / "ingestion/validation-contract.json")
         with sqlite3.connect(database) as connection:
             self.assertEqual(connection.execute("PRAGMA application_id").fetchone()[0], 1_381_321_777)
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 1)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 2)
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchall(), [("ok",)])
             self.assertEqual(
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
@@ -363,6 +363,14 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 80)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 82)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_058)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM annotations").fetchone()[0], 1_073)
+            annotation = connection.execute(
+                "SELECT catalog_version, ai_view, ai_view_snarky FROM annotations "
+                "WHERE framework='ism' AND control_id='ism-0043'"
+            ).fetchone()
+            self.assertEqual(annotation[0], "2025.12.9")
+            self.assertIn("documented plan", annotation[1])
+            self.assertIn("dust off after the breach", annotation[2])
             self.assertEqual(connection.execute(
                 "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-PDF-2026-09'"
             ).fetchone()[0], 256)

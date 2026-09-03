@@ -52,7 +52,7 @@ Each state or race fix has a focused regression test in the explorer, catalogue,
 - Favourites and preferences are browser-local. Favourite import/export remains available without an account.
 - Control export supports JSON, formula-safe CSV, and escaped Markdown. XLSX is intentionally omitted rather than adding a spreadsheet dependency solely for parity.
 - `/about`, `/api`, `/changelog`, `/licence`, and `/bypass-eligibility` are static compatibility destinations rather than server redirects.
-- AI-generated annotations and summaries are absent; the application does not fabricate them.
+- Reviewed factual and Professional descriptions are embedded in the static SQLite artifact from a committed cache. The browser makes no inference request, and the interface distinguishes generated descriptions from authoritative control text.
 - Geist and Geist Mono are self-hosted from pinned, checksum-recorded official v1.7.1 WOFF2 files. The reviewed typography is restored without an external font request; system fonts remain fallbacks if local font loading fails.
 
 Responsive phone/tablet behaviour and accessibility repairs are retained additions made after the initial desktop port. They do not restore authentication, operated services, or community-write features.
@@ -63,7 +63,7 @@ The shared, local UI package still contains dormant platform URL constants in it
 
 - The Australian ISM now ends at the authoritative September 2026 PDF (`ISM-PDF-2026-09`), published without a corresponding ASD OSCAL catalog at the 3 September archive checkpoint, with 1,143 active controls and 49 cyber security principles. The PDF is authoritative for active control and principle text, applicability, revision and updated metadata, and Essential Eight mappings. June 2026 OSCAL hierarchy and glossary data is carried forward only where the PDF lacks equivalent machine-readable structure; ingestion adds 14 visible PDF-derived groups and treats controls absent from the September PDF as withdrawals.
 - ISM OSCAL glossary history is retained from June 2022 onward; frameworks whose archived sources provide no glossary remain in an honest empty state.
-- AI annotations from the operated product are not retained.
+- The verified legacy baseline of 1,073 paired factual and Professional descriptions was imported exactly and recorded in an immutable digest manifest. The 936 unchanged current pairs and 3 historical pairs remain byte-exact; a separately approved workflow refreshes 134 stale pairs and adds 73 missing current pairs through the pinned free NVIDIA Nemotron model. Release validation prevents partial current coverage from deploying.
 - The Essential Eight mapping rows retain maturity levels but contain no named strategy strings.
 - The Cyber Essentials 3.2 source PDF is missing from the archive. Its committed, checksum-verified 3.2 JSON source is ingested.
 - Australian ISM Excel history is not committed; the 63 retained ISM versions use 45 historical PDFs through March 2022, 17 official ASD OSCAL catalogs covering June 2022 through June 2026, and ASD's official September 2026 PDF.
