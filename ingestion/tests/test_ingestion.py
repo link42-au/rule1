@@ -370,7 +370,7 @@ class DatabaseTests(unittest.TestCase):
             ).fetchone()
             self.assertEqual(annotation[0], "ISM-PDF-2026-09")
             self.assertIn("incident response plan", annotation[1].lower())
-            self.assertIn("breach hits", annotation[2])
+            self.assertIn("plan sits on a shelf", annotation[2])
             self.assertEqual(connection.execute(
                 "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-PDF-2026-09'"
             ).fetchone()[0], 256)
