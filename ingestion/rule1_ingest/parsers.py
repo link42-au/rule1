@@ -464,6 +464,8 @@ def _parse_modern_ism_pdf(path: Path, previous: Snapshot) -> Snapshot:
     raw_controls: dict[str, dict[str, Any]] = {}
     raw_principles: dict[str, tuple[str, str]] = {}
     pending_principle: tuple[str, int] | None = None
+    pending_control_id: str | None = None
+    continued_control_ids: set[str] = set()
     current_root_title = ""
     current_parent_title = ""
     current_section_title = ""
@@ -483,9 +485,11 @@ def _parse_modern_ism_pdf(path: Path, previous: Snapshot) -> Snapshot:
                     span for line in block["lines"] for span in line.get("spans", [])
                     if _text(span.get("text"))
                 ]
+                block_text = _join_pdf_lines(lines)
+                is_page_footer = bool(re.fullmatch(r"Information security manual \d+", block_text, re.I))
                 if visible_spans and all("Bold" in str(span.get("font", "")) for span in visible_spans):
                     size = round(float(visible_spans[0].get("size", 0)))
-                    heading = _join_pdf_lines(lines)
+                    heading = block_text
                     if size == 24:
                         current_root_title = _ism_root_title(heading)
                     elif size == 18:
@@ -500,7 +504,7 @@ def _parse_modern_ism_pdf(path: Path, previous: Snapshot) -> Snapshot:
                         raise ValueError(f"duplicate modern ISM control id in {path}: {control_id}")
                     applicability_raw = [value.strip() for value in raw_applicability.split(",") if value.strip()]
                     raw_controls[control_id] = {
-                        "statement": _join_pdf_lines(lines[1:]),
+                        "_statement_parts": [_join_pdf_lines(lines[1:])] if _join_pdf_lines(lines[1:]) else [],
                         "applicability": (list(_ALL_APPLICABILITY)
                                           if applicability_raw == ["ALL"] else applicability_raw),
                         "applicability_raw": applicability_raw,
@@ -512,8 +516,34 @@ def _parse_modern_ism_pdf(path: Path, previous: Snapshot) -> Snapshot:
                         "_pdf_root_title": current_root_title,
                         "_pdf_section_title": current_section_title,
                     }
-                    pending_principle = None
+                    pending_control_id = control_id
                     continue
+
+                if pending_control_id and (not block_text or is_page_footer):
+                    continue
+                if pending_control_id:
+                    is_heading = bool(visible_spans) and all(
+                        "Bold" in str(span.get("font", ""))
+                        and round(float(span.get("size", 0))) >= 16
+                        for span in visible_spans
+                    )
+                    is_statement_continuation = bool(visible_spans) and all(
+                        "Italic" in str(span.get("font", "")) or str(span.get("font", "")) == "Symbol"
+                        for span in visible_spans
+                    )
+                    if not is_heading and is_statement_continuation:
+                        parts = raw_controls[pending_control_id]["_statement_parts"]
+                        is_bullet = block_text.startswith("\uf0b7")
+                        continuation = block_text.lstrip("\uf0b7 ").strip()
+                        if is_bullet:
+                            parts.append(f"• {continuation}")
+                        elif parts:
+                            parts[-1] = f"{parts[-1]} {continuation}".strip()
+                        else:
+                            parts.append(continuation)
+                        continued_control_ids.add(pending_control_id)
+                        continue
+                    pending_control_id = None
 
                 # The principles occupy document pages 11-15. GOV-02 and DET-04
                 # continue in a plain block at the top of the following page.
@@ -538,6 +568,8 @@ def _parse_modern_ism_pdf(path: Path, previous: Snapshot) -> Snapshot:
         raise ValueError(f"expected 1143 modern ISM controls in {path}, found {len(raw_controls)}")
     if len(raw_principles) != 49:
         raise ValueError(f"expected 49 modern ISM principles in {path}, found {len(raw_principles)}")
+    for raw_control in raw_controls.values():
+        raw_control["statement"] = "\n".join(raw_control.pop("_statement_parts"))
 
     prior_controls = previous["controls"]
     controls: dict[str, dict[str, Any]] = {}
@@ -635,6 +667,7 @@ def _parse_modern_ism_pdf(path: Path, previous: Snapshot) -> Snapshot:
         "groups": groups,
         "controls": controls,
         "terms": {term_id: dict(term) for term_id, term in previous.get("terms", {}).items()},
+        "continued_control_ids": sorted(continued_control_ids),
     }
 
 

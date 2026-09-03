@@ -12,6 +12,7 @@ from rule1_ingest.parsers import (
     _changed,
     _ism_guideline_title,
     _parse_ce,
+    _parse_modern_ism_pdf,
     _parse_ism_oscal,
     build_all_histories,
 )
@@ -126,6 +127,51 @@ class ParserTests(unittest.TestCase):
             "and remote access activities are established and maintained for systems (infrastructure, operating "
             "systems, applications and data) to enable the detection of anomalous or unexpected behaviour.",
         )
+
+    def test_september_pdf_consumes_all_statement_continuation_blocks(self) -> None:
+        previous = _parse_ism_oscal(ROOT / "data/ism-oscal/2026-06/ISM_catalog.json")
+        parsed = _parse_modern_ism_pdf(ROOT / "data/ism-pdf/2026-09_ISM.pdf", previous)
+        self.assertEqual(set(parsed["continued_control_ids"]), {
+            "ism-0043", "ism-0138", "ism-0142", "ism-0208", "ism-0217", "ism-0252",
+            "ism-0261", "ism-0306", "ism-0350", "ism-0407", "ism-0428", "ism-0465",
+            "ism-0484", "ism-0487", "ism-0551", "ism-0634", "ism-0912", "ism-0917",
+            "ism-1088", "ism-1163", "ism-1223", "ism-1299", "ism-1300", "ism-1417",
+            "ism-1431", "ism-1491", "ism-1537", "ism-1554", "ism-1555", "ism-1556",
+            "ism-1558", "ism-1563", "ism-1590", "ism-1638", "ism-1646", "ism-1699",
+            "ism-1737", "ism-1803", "ism-1805", "ism-2008", "ism-2012", "ism-2102",
+            "ism-2135", "ism-2144",
+        })
+        controls = parsed["controls"]
+        self.assertEqual(
+            controls["ism-0043"]["statement"],
+            "Systems have a cyber security incident response plan that covers the following:\n"
+            "• guidelines on what constitutes a cyber security incident\n"
+            "• the types of cyber security incidents likely to be encountered and the expected response to each type\n"
+            "• how to report cyber security incidents, internally to an organisation and externally to relevant authorities\n"
+            "• other parties that need to be informed in the event of a cyber security incident\n"
+            "• the authority, or authorities, responsible for investigating and responding to cyber security incidents\n"
+            "• the criteria by which an investigation of a cyber security incident would be requested from a law "
+            "enforcement agency, the Australian Signals Directorate or other relevant authority\n"
+            "• the steps necessary to ensure the integrity of evidence relating to a cyber security incident\n"
+            "• system contingency measures or a reference to such details if they are in a separate document.",
+        )
+        expected_statements = {
+            "ism-1699": "A vulnerability scanner is used at least weekly to identify missing patches or updates "
+                        "for vulnerabilities in office productivity suites, web browsers and their extensions, "
+                        "email clients, PDF applications, and security products.",
+            "ism-2102": "Existing software artefacts in the authoritative source for software are periodically "
+                        "tested to detect known weaknesses using SAST, DAST or SCA, depending on the software "
+                        "artefact type, throughout the software development life cycle.",
+            "ism-0465": "Cryptographic equipment, applications or libraries that have completed a Common Criteria "
+                        "evaluation against an ASD-endorsed Protection Profile are used to protect OFFICIAL: "
+                        "Sensitive or PROTECTED data when communicated over insufficiently secure networks, outside "
+                        "of appropriately secure areas or via public network infrastructure.",
+            "ism-0142": "The compromise or suspected compromise of cryptographic equipment or associated keying "
+                        "material is reported to the chief information security officer, or one of their delegates, "
+                        "as soon as possible after it occurs.",
+        }
+        for control_id, statement in expected_statements.items():
+            self.assertEqual(controls[control_id]["statement"], statement)
 
     def test_pdf_to_oscal_boundary_records_real_changes(self) -> None:
         june_2022 = next(item for item in self.by_framework["ism"]
