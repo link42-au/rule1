@@ -1221,7 +1221,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "The control requires that microfiche, microfilm, optical discs, programmable read‑only memory, read‑only memory and any other media that cannot be sanitised be destroyed before they are disposed of. This is necessary because such media cannot be reliably cleared of data, so destruction is the only way to reduce the risk of residual information being recovered. The control does not specify a particular destruction method nor does it guarantee that recovery is impossible.",
-      "ai_view_snarky": "You’re told to destroy microfiche, microfilm, optical discs, PROM, ROM and any other unsanitizable media before tossing them, because they stubbornly refuse to be wiped clean. Naturally the manual leaves the exact method to your imagination—shred, melt, crush, whatever—while carefully avoiding any promise that the data is truly gone. It’s the classic ‘destroy it and hope for the best’ approach.",
+      "ai_view_snarky": "Microfiche, microfilm, optical discs, programmable read-only memory, read-only memory and any other media that cannot be sanitised must be destroyed before disposal. Some media simply declines to forget, so orderly destruction is the unglamorous requirement.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:38:03Z"
@@ -1624,7 +1624,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "The control requires that foreign nationals, including those seconded, must not be granted access to systems handling AUSTEO or REL data unless effective security controls prevent them from accessing that data. This ensures that sensitive Australian government information is protected from unauthorised foreign access. Implementing such controls helps maintain the confidentiality and integrity of classified material.",
-      "ai_view_snarky": "Foreign nationals are barred from touching AUSTEO or REL systems unless you can prove you’ve locked the data down so they can’t see it—because apparently trust is a luxury. In practice this means you’ll need robust segregation and monitoring, or you’ll be explaining a breach to the Minister. It’s a straightforward rule that organisations still manage to ignore.",
+      "ai_view_snarky": "Foreign nationals, including seconded foreign nationals, must not have access to systems processing, storing or communicating AUSTEO or REL data unless effective controls make that data inaccessible to them. The exception is precise: system access is permitted only when access to the protected data is not.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:39:52Z"
@@ -1636,8 +1636,8 @@
       "input_sha256": "a7a49cfa5ca47675fb9310c2b8221b832429523214484dfbbf87ff69b4b7ca0b",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "The control requires that foreign nationals, other than those seconded to the agency, are not granted access to systems that process, store or communicate AGAO data unless security controls make that data inaccessible to them. This limits the risk of unauthorised disclosure of sensitive government information to individuals who are not subject to the same vetting and loyalty obligations. Effective controls must be in place to ensure the data cannot be accessed by those personnel.",
-      "ai_view_snarky": "Foreign nationals who aren’t seconded must be kept away from AGAO‑processing systems unless you can guarantee the data is unreadable to them. Because relying on goodwill to keep sensitive data out of the wrong hands is a strategy that rarely survives an audit. If you can’t enforce that, you’re effectively hoping the problem solves itself.",
+      "ai_view": "Foreign nationals, excluding seconded foreign nationals, must not have access to systems that process, store or communicate AGAO data unless effective security controls make that data inaccessible to them. This confines access to the protected data while allowing system access only where the required controls are effective.",
+      "ai_view_snarky": "Foreign nationals, excluding seconded foreign nationals, must not access systems that process, store or communicate AGAO data unless effective controls make that data inaccessible to them. As ever, the exception depends on the controls actually doing the job described.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:40:25Z"
@@ -5029,8 +5029,8 @@
       "input_sha256": "6d1cc553a88f20da8d25443ab93bab439e604a4d309b815777ad285c8aa020b4",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Network device memory must be sanitised by first following any device‑specific guidance in the evaluation documentation, then vendor sanitisation guidance, and finally by loading a dummy configuration, performing a factory reset and reinstalling firmware. This ordered approach ensures that the most authoritative and reliable method is used, reducing the risk that residual data remains on the device.",
-      "ai_view_snarky": "You’ll sanitise the device memory by checking the evaluation docs, then the vendor’s instructions, and only as a last resort loading a dummy config, factory resetting and reflashing firmware — because apparently the first two steps are optional in practice. It’s a tidy hierarchy that everyone ignores until an audit forces them to pretend they followed it.",
+      "ai_view": "Network device memory must be sanitised using one of three processes, in order of preference: device-specific evaluation guidance, vendor sanitisation guidance, or loading a dummy configuration, performing a factory reset and reinstalling firmware. The order prioritises the most specific available guidance before the fallback process.",
+      "ai_view_snarky": "Sanitise network device memory using the preferred available process: follow device-specific evaluation guidance, otherwise vendor guidance, otherwise load a dummy configuration, perform a factory reset and reinstall firmware. Even erasing a network device has an order of operations, because improvisation is not a sanitisation method.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:37:52Z"
@@ -7083,8 +7083,8 @@
       "input_sha256": "70bee8f645d5f7e8fdaa78c7df0b92424dd08bf0dd65c3ee150884936a1424ae",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "System owners are required to continuously monitor the security of each system and to manage the associated cyber threats, security risks and security controls. Ongoing monitoring ensures that changes in the threat landscape are detected and addressed promptly.",
-      "ai_view_snarky": "System owners must keep a constant watch on their systems, managing threats, risks and controls as they evolve. Because ignoring continuous monitoring is the fastest way to discover a breach after the fact.",
+      "ai_view": "System owners monitor the security risks and effectiveness of security controls for each system. This provides an ongoing view of whether the system’s controls continue to address its risks.",
+      "ai_view_snarky": "System owners monitor each system’s security risks and whether its security controls remain effective. Apparently controls require observation after implementation rather than quiet confidence.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:22:33Z"
@@ -7500,7 +7500,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "After a security control assessment finishes, the system owner must create a plan of action and milestones that outlines how identified gaps will be addressed and when. This document provides a clear, trackable roadmap so that remediation can be monitored and verified over time.",
-      "ai_view_snarky": "When the assessment wraps up, the system owner is expected to churn out a plan of action and milestones — because nothing says ‘we’re on it’ like a spreadsheet of promises. It’s the paperwork that lets auditors tick a box while the real work stays conveniently vague.",
+      "ai_view_snarky": "After a system’s security control assessment, the system owner must produce a plan of action and milestones. Findings do not remediate themselves, however patiently the completed assessment is admired.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:33:34Z"
@@ -7877,7 +7877,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "Credentials for human users must be transmitted through a protected communication channel, or, if that is not feasible, divided into two parts with one part given to the user and the other to their supervisor. This reduces the risk that a single interception reveals the full credential.",
-      "ai_view_snarky": "The control permits credentials to be sent via a secure channel or split between the user and their supervisor, a choice that in practice defaults to the secure channel. The split‑knowledge option remains a theoretical alternative for many.",
+      "ai_view_snarky": "Credentials for human users must be delivered through a secure communications channel. Only when that is not possible may the credential be split, with one part given to the user and the other to their supervisor; apparently even fallback delivery needs some discipline.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:43:19Z"
@@ -12349,7 +12349,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "Managed service providers delivering TOP SECRET services, including sensitive compartmented information services, must be assessed by ASD assessors or their delegates at least every 24 months using the most recent ISM version available at the start of the assessment. This ensures that the security controls protecting the highest classification data remain current and effective.",
-      "ai_view_snarky": "Providers of TOP SECRET managed services, SCI included, get a mandatory ASD‑run check every two years, using whatever ISM edition is current when the audit kicks off. Unsurprisingly, many still treat it as a paperwork exercise rather than a genuine security refresh.",
+      "ai_view_snarky": "Managed service providers and their TOP SECRET services, including sensitive compartmented information services, must undergo assessment by ASD assessors or their delegates at least every 24 months. The assessment uses the latest ISM release available before it begins, or a subsequent release, so the calendar and baseline both require attention.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:28:24Z"
@@ -12829,8 +12829,8 @@
       "input_sha256": "25048fdc3aba9c41675174df261cf86468eb1ad48067742f26fe1274edcfb032",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "Medical devices allowed into SECRET and TOP SECRET areas must be listed on the Australian Register of Therapeutic Goods, prescribed by a qualified medical practitioner, commercially purchased in Australia, lack built‑in cellular connectivity, operate independently of mobile devices, and, where possible, have Wi‑Fi, Bluetooth and other wireless functions disabled while in those areas. This ensures only vetted, non‑networked devices enter the most sensitive zones.",
-      "ai_view_snarky": "You may bring a medical device into a SECRET or TOP SECRET area only if it ticks every box: on the Australian Register of Therapeutic Goods, prescribed, bought locally, no cellular radio, works without a phone, and, where possible, its Wi‑Fi and Bluetooth are turned off. Because apparently the only thing more sensitive than the data is the paperwork proving your insulin pump isn’t a covert transmitter.",
+      "ai_view": "Medical devices authorised for SECRET and TOP SECRET areas must, at a minimum, be listed on the Australian Register of Therapeutic Goods, prescribed by a legally qualified medical practitioner, commercially purchased within Australia, have no inbuilt cellular connectivity, and operate independently of mobile devices. Where possible, Wi-Fi, Bluetooth and other wireless connectivity must also be disabled while the devices operate in those areas.",
+      "ai_view_snarky": "To be authorised for a SECRET or TOP SECRET area, a medical device must meet the register, prescription, Australian purchase, no-cellular-connectivity and independent-operation criteria. Where possible, its Wi-Fi, Bluetooth and other wireless connectivity must also be disabled while it operates there, because clinical necessity does not make radio features disappear.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:34:09Z"
@@ -13987,7 +13987,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "The control requires that all mobile devices be set up with an always‑on VPN so that network traffic is routed through a protected tunnel whenever the device is online. This helps keep data confidential and reduces the risk of exposure when devices connect over untrusted networks.",
-      "ai_view_snarky": "Mobile devices must be configured with an always‑on VPN. Because apparently trusting users to toggle a VPN themselves is a strategy that has never failed.",
+      "ai_view_snarky": "Mobile devices must be configured with always-on VPN functionality. Leaving the connection to a manual toggle would rather miss the word ‘always’.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:37:17Z"
@@ -14078,7 +14078,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "Personnel are advised not to share details of their security clearance or briefings on unauthorised online services. They are also advised to report any instances where such information appears online. This helps limit exposure of sensitive status information that could be used by adversaries.",
-      "ai_view_snarky": "Staff are gently reminded not to broadcast their clearance level on random forums, because apparently that needs saying. If they do, they’re encouraged to tell someone, though no one’s holding their breath for a swift response. It’s a polite request that everyone will inevitably ignore until a breach forces a memo.",
+      "ai_view_snarky": "Personnel are advised not to post information about their security clearance or briefings on unauthorised online services. They are also advised to report cases where such information is posted, because discretion apparently now needs both preventative and follow-up guidance.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:37:11Z"
@@ -14246,8 +14246,8 @@
       "input_sha256": "38fe7a4e6b618a7d78decfa67e23ca05f14809699205579b4f26c15116dcb254",
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "ai_view": "The control requires that appropriate AI models be employed to help detect cyber security events and identify incidents. This augmentation supports analysts by highlighting potential threats without replacing human judgement. It matters because it can improve the speed and coverage of monitoring while still relying on people for final decisions.",
-      "ai_view_snarky": "Organisations must deploy suitable AI models to assist with event detection and incident identification, because apparently humans alone are too slow. The models are only meant to augment, not replace, analysts, so don’t expect them to magically catch everything you missed. In practice, you’ll still be the one explaining why the alert was a false positive.",
+      "ai_view": "Suitable AI models are used to augment the detection of cyber security events and the identification of cyber security incidents. This adds AI-assisted capability to both monitoring functions without making a broader claim about detection outcomes.",
+      "ai_view_snarky": "Suitable AI models are used to augment cyber security event detection and incident identification. The operative word is ‘augment’; even the ISM is careful not to promise that adding AI makes detection infallible.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:44:40Z"
@@ -14351,7 +14351,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "The organisation must independently log all access by service providers in a way the provider cannot modify or delete, and must analyse those logs promptly to detect anomalous, unexpected or unauthorised activity. This ensures the organisation retains visibility over provider actions and can respond quickly to suspicious behaviour. The logs must be protected from tampering by the provider and reviewed in a timely manner.",
-      "ai_view_snarky": "The organisation has to keep its own immutable log of every service‑provider access so the provider can’t erase its footprints. It then must actually look at those logs in a timely fashion to spot anything odd, unexpected or unauthorised. A control that reflects the practical reality that providers cannot be expected to audit their own access.",
+      "ai_view_snarky": "All service-provider access to the organisation’s systems must be independently logged by the organisation so the provider cannot modify or delete those records. The logs must then be analysed promptly for anomalous, unexpected or unauthorised activity; keeping the evidence is useful only if someone examines it.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:28:44Z"
@@ -14637,7 +14637,7 @@
       "prompt_version": "legacy-rule1-v1",
       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
       "ai_view": "The control requires that authentication tokens, session cookies and refresh tokens be cryptographically tied to the device on which they were originally issued. This binding prevents an attacker who obtains a token from using it on a different device, limiting the impact of credential theft. Implementing this measure helps ensure that compromised tokens cannot be replayed elsewhere.",
-      "ai_view_snarky": "Tokens, cookies and refresh tokens must be cryptographically bound to the issuing device, so a stolen token is useless on any other hardware. Naturally, many organisations will still copy them across servers and wonder why the breach spreads. It’s a simple rule that somehow keeps being treated as optional.",
+      "ai_view_snarky": "Authentication tokens, session cookies and refresh tokens must be cryptographically bound to the device on which they were issued. This constrains their use to that device, which is rather the point of binding them.",
       "links": [],
       "impls": [],
       "updated_at": "2026-09-03T22:43:36Z"

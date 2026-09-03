@@ -112,14 +112,14 @@ class AnnotationCacheTests(unittest.TestCase):
         }
         self.assertEqual(input_sha256(unrelated), cache["ism-0009"]["input_sha256"])
 
-    def test_only_targeted_review_controls_are_stale_against_current_cache(self) -> None:
+    def test_reviewed_targeted_controls_are_current_in_final_cache(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "rule1.sqlite3"
             build_database(ROOT, database)
             controls = load_current_controls(database)
         payload = load_cache(ROOT / "annotations/ism.json")
         _, stale, adopted = prepare_generation(controls, payload)
-        self.assertEqual({item["control_id"] for item in stale}, TARGETED_REVIEW_IDS)
+        self.assertEqual(stale, [])
         self.assertEqual(adopted, 0)
 
     def test_generation_plan_adopts_unchanged_legacy_text_and_only_generates_delta(self) -> None:
