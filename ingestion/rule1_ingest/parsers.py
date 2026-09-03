@@ -438,6 +438,206 @@ def _parse_ism(path: Path) -> Snapshot:
     return {"groups": groups, "controls": controls}
 
 
+_MODERN_ISM_HEADER = re.compile(
+    r"^Control: ISM-(\d{4}); Revision: ([^;]+); Updated: ([^;]+); "
+    r"Applicable: ([^;]+); Essential 8: (.+)$"
+)
+_ISM_PRINCIPLE = re.compile(r"^(GOV|IDE|PRO|DET|RES|REC)-(\d{2})\s+[–-]\s+([^:]+):\s*(.*)$")
+
+
+def _join_pdf_lines(lines: list[str]) -> str:
+    """Join visual PDF lines while repairing words hyphenated at line endings."""
+    result = ""
+    for raw_line in lines:
+        line = _text(raw_line)
+        if not line:
+            continue
+        if result.endswith("-"):
+            result += line
+        else:
+            result = f"{result} {line}".strip()
+    return result
+
+
+def _parse_modern_ism_pdf(path: Path, previous: Snapshot) -> Snapshot:
+    """Parse the post-OSCAL ISM layout and retain OSCAL's structured hierarchy."""
+    raw_controls: dict[str, dict[str, Any]] = {}
+    raw_principles: dict[str, tuple[str, str]] = {}
+    pending_principle: tuple[str, int] | None = None
+    current_root_title = ""
+    current_parent_title = ""
+    current_section_title = ""
+
+    with fitz.open(path) as document:
+        for page_number, page in enumerate(document):
+            for block in page.get_text("dict", sort=True).get("blocks", []):
+                if "lines" not in block:
+                    continue
+                lines = [
+                    "".join(str(span.get("text", "")) for span in line.get("spans", [])).strip()
+                    for line in block["lines"]
+                ]
+                if not lines:
+                    continue
+                visible_spans = [
+                    span for line in block["lines"] for span in line.get("spans", [])
+                    if _text(span.get("text"))
+                ]
+                if visible_spans and all("Bold" in str(span.get("font", "")) for span in visible_spans):
+                    size = round(float(visible_spans[0].get("size", 0)))
+                    heading = _join_pdf_lines(lines)
+                    if size == 24:
+                        current_root_title = _ism_root_title(heading)
+                    elif size == 18:
+                        current_parent_title = heading
+                    elif size == 16:
+                        current_section_title = heading
+                header = _MODERN_ISM_HEADER.fullmatch(lines[0])
+                if header:
+                    number, revision, updated, raw_applicability, raw_e8 = header.groups()
+                    control_id = f"ism-{number}"
+                    if control_id in raw_controls:
+                        raise ValueError(f"duplicate modern ISM control id in {path}: {control_id}")
+                    applicability_raw = [value.strip() for value in raw_applicability.split(",") if value.strip()]
+                    raw_controls[control_id] = {
+                        "statement": _join_pdf_lines(lines[1:]),
+                        "applicability": (list(_ALL_APPLICABILITY)
+                                          if applicability_raw == ["ALL"] else applicability_raw),
+                        "applicability_raw": applicability_raw,
+                        "revision": revision.strip(),
+                        "updated": updated.strip(),
+                        "e8_levels": ([] if raw_e8.strip().upper() == "N/A"
+                                      else [value.strip() for value in raw_e8.split(",") if value.strip()]),
+                        "_pdf_parent_title": current_parent_title,
+                        "_pdf_root_title": current_root_title,
+                        "_pdf_section_title": current_section_title,
+                    }
+                    pending_principle = None
+                    continue
+
+                # The principles occupy document pages 11-15. GOV-02 and DET-04
+                # continue in a plain block at the top of the following page.
+                if 10 <= page_number <= 14:
+                    principle_text = _join_pdf_lines(lines).removeprefix("\uf0b7 ").strip()
+                    principle = _ISM_PRINCIPLE.fullmatch(principle_text)
+                    if principle:
+                        family, number, title, statement = principle.groups()
+                        principle_id = f"ism-principle-{family.lower()}-{number}"
+                        if principle_id in raw_principles:
+                            raise ValueError(f"duplicate modern ISM principle id in {path}: {principle_id}")
+                        raw_principles[principle_id] = (_text(title), _text(statement))
+                        pending_principle = (principle_id, page_number)
+                    elif (pending_principle and page_number == pending_principle[1] + 1
+                          and principle_text[:1].islower()):
+                        principle_id = pending_principle[0]
+                        title, statement = raw_principles[principle_id]
+                        raw_principles[principle_id] = (title, f"{statement} {principle_text}".strip())
+                        pending_principle = None
+
+    if len(raw_controls) != 1_143:
+        raise ValueError(f"expected 1143 modern ISM controls in {path}, found {len(raw_controls)}")
+    if len(raw_principles) != 49:
+        raise ValueError(f"expected 49 modern ISM principles in {path}, found {len(raw_principles)}")
+
+    prior_controls = previous["controls"]
+    controls: dict[str, dict[str, Any]] = {}
+    groups = [dict(group) for group in previous.get("groups", [])]
+    groups_by_id = {group["id"]: group for group in groups}
+    pdf_control_ids = list(raw_controls)
+    for sequence, (control_id, pdf_fields) in enumerate(raw_controls.items(), start=1):
+        parent_title = pdf_fields.pop("_pdf_parent_title")
+        root_title = pdf_fields.pop("_pdf_root_title")
+        section_title = pdf_fields.pop("_pdf_section_title")
+        prior = prior_controls.get(control_id)
+        if prior is None:
+            pdf_index = sequence - 1
+            neighbour = next(
+                prior_controls[candidate]
+                for distance in range(1, len(pdf_control_ids))
+                for candidate_index in (pdf_index - distance, pdf_index + distance)
+                if 0 <= candidate_index < len(pdf_control_ids)
+                for candidate in (pdf_control_ids[candidate_index],)
+                if candidate in prior_controls
+            )
+            matching_groups = [
+                group for group in groups
+                if _normalized_title(str(group.get("title", ""))) == _normalized_title(section_title)
+            ]
+            matching_group = next((
+                group for group in matching_groups
+                if _normalized_title(str(groups_by_id.get(group.get("parent_id"), {}).get("title", "")))
+                == _normalized_title(parent_title)
+            ), matching_groups[0] if len(matching_groups) == 1 else None)
+            if matching_group is None:
+                matching_parents = [
+                    group for group in groups
+                    if _normalized_title(str(group.get("title", ""))) == _normalized_title(parent_title)
+                ]
+                neighbour_group = groups_by_id.get(neighbour["section_id"], {})
+                if len(matching_parents) == 1:
+                    parent_id = matching_parents[0]["id"]
+                else:
+                    matching_roots = [
+                        group for group in groups
+                        if group.get("parent_id") is None
+                        and _normalized_title(str(group.get("title", ""))) == _normalized_title(root_title)
+                    ]
+                    if len(matching_roots) == 1:
+                        parent_id = f"{matching_roots[0]['id']}/{_slug(parent_title)}"
+                        parent_group = {
+                            "id": parent_id,
+                            "title": parent_title,
+                            "overview": None,
+                            "parent_id": matching_roots[0]["id"],
+                        }
+                        groups.append(parent_group)
+                        groups_by_id[parent_id] = parent_group
+                    else:
+                        parent_id = neighbour_group.get("parent_id")
+                group_id = f"{parent_id}/{_slug(section_title)}" if parent_id else _slug(section_title)
+                matching_group = {
+                    "id": group_id,
+                    "title": section_title,
+                    "overview": None,
+                    "parent_id": parent_id,
+                }
+                groups.append(matching_group)
+                groups_by_id[group_id] = matching_group
+            control = {
+                "id": control_id,
+                "display_id": control_id.upper(),
+                "label": control_id.upper(),
+                "title": None,
+                "section_id": matching_group["id"],
+                "section_title": matching_group["title"],
+                "control_class": "ISM-control",
+                "guideline": neighbour.get("guideline"),
+                "compliance": neighbour.get("compliance"),
+                "metadata": {"authority": None},
+            }
+        else:
+            control = dict(prior)
+            control["metadata"] = dict(prior.get("metadata") or {})
+        control["metadata"]["sort_id"] = f"pdf[{sequence:04d}]"
+        control.update(pdf_fields)
+        control["source"] = "pdf"
+        controls[control_id] = control
+
+    for principle_id, (title, statement) in raw_principles.items():
+        if principle_id not in prior_controls:
+            raise ValueError(f"modern ISM principle missing from prior OSCAL structure: {principle_id}")
+        principle = dict(prior_controls[principle_id])
+        principle["metadata"] = dict(principle.get("metadata") or {})
+        principle.update({"title": title, "statement": statement, "source": "pdf"})
+        controls[principle_id] = principle
+
+    return {
+        "groups": groups,
+        "controls": controls,
+        "terms": {term_id: dict(term) for term_id, term in previous.get("terms", {}).items()},
+    }
+
+
 def _parse_ism_oscal(path: Path) -> Snapshot:
     """Parse ASD's OSCAL catalog using the reviewed original Rule1 semantics."""
     catalog = json.loads(path.read_text(encoding="utf-8"))["catalog"]
@@ -541,7 +741,12 @@ def build_all_histories(root: Path) -> list[Snapshot]:
         parsed = []
         for source in sources:
             path = root / source["path"]
-            parser = _parse_ism_oscal if framework == "ism" and path.suffix == ".json" else parsers[framework]
-            parsed.append((source, parser(path)))
+            if (framework == "ism" and path.suffix == ".pdf" and parsed
+                    and Path(parsed[-1][0]["path"]).suffix == ".json"):
+                snapshot = _parse_modern_ism_pdf(path, parsed[-1][1])
+            else:
+                parser = _parse_ism_oscal if framework == "ism" and path.suffix == ".json" else parsers[framework]
+                snapshot = parser(path)
+            parsed.append((source, snapshot))
         snapshots.extend(_history(framework, parsed))
     return snapshots

@@ -537,6 +537,14 @@
       "sha256": "f3e4512bc31eb3157001c4a9312d80840b3a3c485f1e87d6b5519b2b0dcc56cc"
     },
     {
+      "framework": "ism",
+      "version": "ISM-PDF-2026-09",
+      "date": "2026-09-03",
+      "path": "data/ism-pdf/2026-09_ISM.pdf",
+      "origin": "https://www.cyber.gov.au/sites/default/files/2026-08/Information%20security%20manual%20%28September%202026%29.pdf",
+      "sha256": "048f879e2fbd37636623320778424d92c6f17e5b0a7209432696005dd5a60f8c"
+    },
+    {
       "framework": "nist-800-53",
       "version": "800-53-Rev-4",
       "date": "2015-01-22",
