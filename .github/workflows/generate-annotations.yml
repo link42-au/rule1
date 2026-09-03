@@ -50,7 +50,7 @@ jobs:
             python -m rule1_ingest.annotations generate \
             --database build/rule1.sqlite3 \
             --cache annotations/ism.json \
-            --batch-size 10
+            --batch-size 5
 
       - name: Verify complete deterministic output
         env:
