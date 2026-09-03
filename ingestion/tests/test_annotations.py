@@ -11,8 +11,11 @@ from unittest.mock import patch
 
 from rule1_ingest.build import build_database
 from rule1_ingest.annotations import (
+    CONTROL_REVIEW_GUIDANCE,
     MODEL,
     PROMPT_VERSION,
+    TARGETED_REVIEW_RULES,
+    _batch_prompt,
     LEGACY_MANIFEST_SHA256,
     call_openrouter,
     description_sha256,
@@ -27,6 +30,14 @@ from rule1_ingest.annotations import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
+TARGETED_REVIEW_IDS = {
+    "ism-0043", "ism-1731", "ism-2008", "ism-2126", "ism-2104", "ism-2117",
+    "ism-2119", "ism-2130", "ism-1223", "ism-2097", "ism-2125", "ism-2147",
+    "ism-2151", "ism-1558", "ism-1322", "ism-0409", "ism-0411", "ism-0041",
+    "ism-0350", "ism-1163", "ism-1526", "ism-1563", "ism-1564", "ism-1565",
+    "ism-1635", "ism-1803", "ism-1636", "ism-1594", "ism-1967", "ism-1971",
+    "ism-2113", "ism-2135", "ism-0252", "ism-0408",
+}
 
 
 class AnnotationCacheTests(unittest.TestCase):
@@ -74,6 +85,43 @@ class AnnotationCacheTests(unittest.TestCase):
         self.assertEqual(MODEL, "nvidia/nemotron-3-ultra-550b-a55b:free")
         self.assertEqual(PROMPT_VERSION, "legacy-rule1-v1")
 
+    def test_targeted_review_guidance_is_in_prompt_and_input_hash(self) -> None:
+        self.assertEqual(set(CONTROL_REVIEW_GUIDANCE), TARGETED_REVIEW_IDS)
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "rule1.sqlite3"
+            build_database(ROOT, database)
+            controls = {item["control_id"]: item for item in load_current_controls(database)}
+        targeted = controls["ism-0043"]
+        self.assertIn(TARGETED_REVIEW_RULES, targeted["review_guidance"])
+        self.assertIn("all eight incident response plan elements", targeted["review_guidance"])
+        self.assertIn("2–3 complete sentences", targeted["review_guidance"])
+        without_guidance = {key: value for key, value in targeted.items() if key != "review_guidance"}
+        self.assertNotEqual(input_sha256(targeted), input_sha256(without_guidance))
+        changed_guidance = {**targeted, "review_guidance": targeted["review_guidance"] + " Updated."}
+        self.assertNotEqual(input_sha256(targeted), input_sha256(changed_guidance))
+        prompt = _batch_prompt([targeted])
+        self.assertIn("review_guidance", prompt)
+        self.assertIn(TARGETED_REVIEW_RULES, prompt)
+        self.assertIn("mandatory quality constraint", prompt)
+
+        unrelated = controls["ism-0009"]
+        self.assertNotIn("review_guidance", unrelated)
+        cache = {
+            row["control_id"]: row
+            for row in load_cache(ROOT / "annotations/ism.json")["annotations"]
+        }
+        self.assertEqual(input_sha256(unrelated), cache["ism-0009"]["input_sha256"])
+
+    def test_reviewed_targeted_controls_are_current_in_final_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "rule1.sqlite3"
+            build_database(ROOT, database)
+            controls = load_current_controls(database)
+        payload = load_cache(ROOT / "annotations/ism.json")
+        _, stale, adopted = prepare_generation(controls, payload)
+        self.assertEqual(stale, [])
+        self.assertEqual(adopted, 0)
+
     def test_generation_plan_adopts_unchanged_legacy_text_and_only_generates_delta(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "rule1.sqlite3"
@@ -107,10 +155,21 @@ class AnnotationCacheTests(unittest.TestCase):
 
 
 class AnnotationResponseTests(unittest.TestCase):
-    def test_strict_response_accepts_every_requested_id_in_request_order(self) -> None:
+    def test_strict_response_accepts_two_and_three_sentences_in_request_order(self) -> None:
         raw = json.dumps({"annotations": [
-            {"control_id": "ism-2", "ai_view": "F2", "ai_view_snarky": "P2"},
-            {"control_id": "ism-1", "ai_view": "F1", "ai_view_snarky": "P1"},
+            {
+                "control_id": "ism-2",
+                "ai_view": "First factual sentence. Second factual sentence.",
+                "ai_view_snarky": "First Professional sentence. Second Professional sentence.",
+            },
+            {
+                "control_id": "ism-1",
+                "ai_view": "First factual sentence. Second factual sentence. Third factual sentence.",
+                "ai_view_snarky": (
+                    "First Professional sentence. Second Professional sentence. "
+                    "Third Professional sentence."
+                ),
+            },
         ]})
         parsed = parse_batch_response(raw, ["ism-1", "ism-2"])
         self.assertEqual([row["control_id"] for row in parsed], ["ism-1", "ism-2"])
@@ -209,14 +268,25 @@ class AnnotationResponseTests(unittest.TestCase):
         self.assertNotIn(request_key, message)
         self.assertLessEqual(len(message), 533)
 
-    def test_semantically_invalid_batch_is_retried(self) -> None:
+    def test_one_sentence_batch_is_retried(self) -> None:
         items = [{"control_id": "ism-1"}]
-        valid = json.dumps({"annotations": [
-            {"control_id": "ism-1", "ai_view": "Factual", "ai_view_snarky": "Professional"}
+        one_sentence = json.dumps({"annotations": [
+            {
+                "control_id": "ism-1",
+                "ai_view": "Only one factual sentence.",
+                "ai_view_snarky": "Only one Professional sentence.",
+            }
         ]})
-        with patch("rule1_ingest.annotations.call_openrouter", side_effect=["not json", valid]) as request, patch("time.sleep"):
+        valid = json.dumps({"annotations": [
+            {
+                "control_id": "ism-1",
+                "ai_view": "First factual sentence. Second factual sentence.",
+                "ai_view_snarky": "First Professional sentence. Second Professional sentence.",
+            }
+        ]})
+        with patch("rule1_ingest.annotations.call_openrouter", side_effect=[one_sentence, valid]) as request, patch("time.sleep"):
             result = generate_batch(items, "secret-value", attempts=2)
-        self.assertEqual(result[0]["ai_view"], "Factual")
+        self.assertEqual(result[0]["ai_view"], "First factual sentence. Second factual sentence.")
         self.assertEqual(request.call_count, 2)
 
 

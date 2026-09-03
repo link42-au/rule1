@@ -95,7 +95,7 @@
   },
   "page_size": 4096,
   "row_counts": {
-    "annotations": 1073,
+    "annotations": 1146,
     "catalog_versions": 80,
     "control_groups": 12475,
     "control_history": 69992,

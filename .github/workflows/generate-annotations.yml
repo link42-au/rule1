@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - name: Check out main
+      - name: Check out requested ref
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Install uv and Python
@@ -50,7 +50,7 @@ jobs:
             python -m rule1_ingest.annotations generate \
             --database build/rule1.sqlite3 \
             --cache annotations/ism.json \
-            --batch-size 10
+            --batch-size 1
 
       - name: Verify complete deterministic output
         env:

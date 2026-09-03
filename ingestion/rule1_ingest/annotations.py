@@ -36,6 +36,50 @@ PROFESSIONAL_SYSTEM = (
     "control for the fifteenth time. You are concise, technically correct, and quietly "
     "judgmental. You do not make things up — you just observe reality with a raised eyebrow."
 )
+TARGETED_REVIEW_RULES = (
+    "Use Australian English. Preserve the source control's modality, including advisory and "
+    "conditional language. Do not add guarantees, unsupported outcomes, technologies, "
+    "implementation details, processes, threat scenarios or claims about organisational behaviour. "
+    "Do not allege wrongdoing, negligence, evasion, discrimination or noncompliance. The Professional "
+    "copy must communicate the substantive requirements before any restrained dry tone. Each Factual "
+    "and Professional output must contain 2–3 complete sentences."
+)
+CONTROL_REVIEW_GUIDANCE: dict[str, str] = {
+    "ism-0043": "Cover all eight incident response plan elements: incident criteria; likely incident types and responses; internal and external reporting; parties to inform; investigation and response authorities; escalation criteria for law enforcement, ASD or another authority; evidence integrity; and contingency measures or a reference to them.",
+    "ism-1731": "State that incident response planning is performed on a separate, trustworthy system rather than the potentially compromised system.",
+    "ism-2008": "List all six medical-device criteria accurately, preserve 'where possible' for disabling wireless connectivity, and do not imply that medical devices are malicious, exclude a device for a missing criterion, or guarantee an outcome.",
+    "ism-2126": "State that positive identity verification occurs before action is taken on accounts, banking or financial matters.",
+    "ism-2104": "Preserve the advisory wording for both actions: personnel are advised not to post information about their security clearance and briefings on unauthorised online services, and are advised to report cases where it is posted. Do not make reporting mandatory or invent containment outcomes.",
+    "ism-2117": "State declaratively that suitable AI models are used to augment event detection and incident identification; do not claim they replace people, guarantee detection or find otherwise missed patterns.",
+    "ism-2119": "State declaratively that suitable AI models are used to augment vulnerability assessments and penetration tests; do not invent prioritisation, false-positive or codebase outcomes.",
+    "ism-2130": "State that web-based enrolment interfaces for Microsoft AD CS servers are disabled unless required and, where enabled, require HTTPS and Extended Protection for Authentication.",
+    "ism-1223": "Preserve the ordered sanitisation preference and avoid any guarantee that no residual data remains.",
+    "ism-2097": "State only that mobile devices are configured with always-on VPN functionality. Do not invent a secure gateway, claim all traffic is encrypted, or claim the device becomes offline when the VPN drops.",
+    "ism-2125": "State that the organisation independently logs all service-provider access so the provider cannot modify or delete those logs, then analyses them promptly for anomalous, unexpected or unauthorised activity. Do not call the logs globally immutable or tamper-proof, or allege that providers delete their tracks.",
+    "ism-2147": "State that credentials are cryptographically bound to the device to which they were issued; do not invent particular hardware.",
+    "ism-2151": "State that immutability is technically enforced for the retention duration without claiming that this guarantees trustworthiness.",
+    "ism-1558": "Include every prohibited passphrase category and the exact minimums: 4 random words for non-classified, OFFICIAL: Sensitive and PROTECTED systems, 5 for SECRET, and 6 for TOP SECRET; do not suggest known phrases or copyrighted material.",
+    "ism-1322": "Cover evaluated supplicants, authenticators and authentication servers used for 802.1X; do not invent RADIUS or an approved-list constraint.",
+    "ism-0409": "Use neutral language about foreign nationals and retain the exception where effective controls prevent access to AUSTEO or REL data.",
+    "ism-0411": "Use neutral language: foreign nationals, excluding seconded foreign nationals, do not access systems processing, storing or communicating AGAO data unless effective controls make that data inaccessible to them. Do not describe anyone as getting a pass or use walls or exclusion as humour.",
+    "ism-0041": "Explain that the system security plan contains a system overview and an annex of applicable and additional controls.",
+    "ism-0350": "List microfiche and microfilm, optical discs, programmable read-only memory, read-only memory and other media that cannot be sanitised as requiring destruction before disposal. Do not prescribe shredding, melting, crushing or another method, and do not guarantee that recovery is prevented.",
+    "ism-1163": "Cover all three continuous monitoring plan elements and do not invent scan schedules, ignored findings or budget motives.",
+    "ism-1526": "State that system owners continuously monitor their systems and manage threats, risks and controls.",
+    "ism-1563": "Cover the assessor's report and its required scope, strengths, weaknesses, risks, control effectiveness and remediation information.",
+    "ism-1564": "State only that the system owner produces a plan of action and milestones after the assessment; do not invent per-finding dates or steps.",
+    "ism-1565": "State that all personnel with privileged access receive annual training tailored to their duties.",
+    "ism-1635": "State that system owners implement controls for the system and its operating environment without implying that controls are ignored.",
+    "ism-1803": "List the substantive data that the cyber security incident register records rather than characterising it as an audit exercise.",
+    "ism-1636": "Cover consultation, eligible system classifications, assessment by ASD or an IRAP assessor, and correct implementation and intended operation.",
+    "ism-1594": "Preserve the choice between a secure communication channel and splitting password delivery between the user and supervisor; do not invent technologies or wrongdoing.",
+    "ism-1967": "State that system owners, in consultation with the authorising officer, ensure assessment by ASD or its delegates of TOP SECRET and sensitive compartmented information systems and their operating environments to determine whether controls are correctly implemented and operating as intended. Do not disparage self-assessment or invent a rationale.",
+    "ism-1971": "State that providers and their TOP SECRET managed services, including sensitive compartmented information services, undergo ASD or delegate assessment at least every 24 months using the latest ISM available before assessment commencement or a later release.",
+    "ism-2113": "State only that AI applications are configured to require human approval before executing sensitive or high-impact actions. Do not invent nuclear, autonomous-decision or serious-harm scenarios, and do not broaden this to every high-stakes move.",
+    "ism-2135": "Accurately list the AI agent register fields and refer neutrally to credentials the agent uses.",
+    "ism-0252": "State that all personnel undertake annual awareness training covering exactly these five areas: its purpose; security appointments and contacts; authorised system and resource use; protection of systems and resources; and reporting incidents and suspected compromises. Do not claim attendance is recorded, comprehension is optional or the training ensures an outcome.",
+    "ism-0408": "State only that systems display a logon banner reminding personnel of their security responsibilities when accessing the system and its resources. Do not invent click-through behaviour, legal notices, policy reinforcement or user disregard.",
+}
 CLASSIFICATION_LABELS = {
     "NC": "Not Classified",
     "OS": "OFFICIAL:Sensitive",
@@ -208,7 +252,7 @@ def _expand_applicability(codes: list[str]) -> str:
 
 def _prompt_input(row: sqlite3.Row, history: list[sqlite3.Row]) -> dict[str, Any]:
     changed = [item for item in history if item["change_type"] not in ("unchanged", None)][:4]
-    return {
+    item = {
         "control_id": row["control_id"],
         "display_id": row["display_id"] or row["control_id"],
         "label": row["label"] or "",
@@ -224,6 +268,10 @@ def _prompt_input(row: sqlite3.Row, history: list[sqlite3.Row]) -> dict[str, Any
         "catalog_version": row["catalog_version"],
         "current_change_type": row["change_type"],
     }
+    guidance = CONTROL_REVIEW_GUIDANCE.get(row["control_id"])
+    if guidance:
+        item["review_guidance"] = f"{TARGETED_REVIEW_RULES} Specific remediation: {guidance}"
+    return item
 
 
 def input_sha256(item: dict[str, Any]) -> str:
@@ -277,12 +325,21 @@ Professional style instruction:
 {PROFESSIONAL_SYSTEM}
 Write a 2–3 sentence annotation explaining what the control requires, in the voice of a battle-hardened infosec practitioner who finds the whole thing mildly absurd but technically correct. Be accurate but drily sardonic. Do not restate the control ID.
 
+When an input includes review_guidance, follow it as a mandatory quality constraint for both annotation flavours.
+
 Return only one JSON object with this shape:
 {{"annotations":[{{"control_id":"ism-0000","ai_view":"...","ai_view_snarky":"..."}}]}}
 Return every requested control exactly once, with no additional IDs or keys. Both strings must be non-empty.
 
 Input:
 {canonical_json(compact)}"""
+
+
+def _complete_sentence_count(value: str) -> int:
+    stripped = value.strip()
+    if not re.search(r'[.!?](?:["”’])?$', stripped):
+        return 0
+    return len(re.findall(r'[.!?](?:["”’])?(?=\s|$)', stripped))
 
 
 def parse_batch_response(raw: str, expected_ids: list[str]) -> list[dict[str, str]]:
@@ -306,6 +363,13 @@ def parse_batch_response(raw: str, expected_ids: list[str]) -> list[dict[str, st
             raise ValueError(f"OpenRouter returned an empty factual description for {control_id}")
         if not isinstance(row["ai_view_snarky"], str) or not row["ai_view_snarky"].strip():
             raise ValueError(f"OpenRouter returned an empty Professional description for {control_id}")
+        for field, label in (("ai_view", "factual"), ("ai_view_snarky", "Professional")):
+            sentence_count = _complete_sentence_count(row[field])
+            if not 2 <= sentence_count <= 3:
+                raise ValueError(
+                    f"OpenRouter returned {sentence_count} complete {label} sentences for "
+                    f"{control_id}; expected 2–3"
+                )
         found[control_id] = row
     if set(found) != expected:
         missing = sorted(expected - set(found))
@@ -412,7 +476,7 @@ def prepare_generation(
         digest = input_sha256(item)
         if row and row.get("catalog_version") == item["catalog_version"] and row.get("input_sha256") == digest:
             continue
-        if row and item["current_change_type"] == "unchanged":
+        if row and item["current_change_type"] == "unchanged" and "review_guidance" not in item:
             row["catalog_version"] = item["catalog_version"]
             row["input_sha256"] = digest
             adopted += 1
