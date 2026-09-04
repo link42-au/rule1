@@ -12,7 +12,6 @@ from rule1_ingest.parsers import (
     _changed,
     _ism_guideline_title,
     _parse_ce,
-    _parse_modern_ism_pdf,
     _parse_ism_oscal,
     build_all_histories,
 )
@@ -31,9 +30,9 @@ class ParserTests(unittest.TestCase):
         }
 
     def test_all_retained_versions_have_stable_unique_controls(self) -> None:
-        expected = {"cyber-essentials": 3, "ism": 64, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
+        expected = {"cyber-essentials": 3, "ism": 63, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
         self.assertEqual({key: len(value) for key, value in self.by_framework.items()}, expected)
-        self.assertEqual(len(self.snapshots), 81)
+        self.assertEqual(len(self.snapshots), 80)
         for snapshot in self.snapshots:
             controls = snapshot["controls"]
             self.assertTrue(controls, snapshot["catalog_version"])
@@ -55,11 +54,11 @@ class ParserTests(unittest.TestCase):
 
     def test_reviewed_parser_regressions(self) -> None:
         ism = self.by_framework["ism"]
-        self.assertEqual(sum(len(item["controls"]) for item in ism), 55_222)
-        self.assertEqual(len(ism[-1]["controls"]), 1_192)
-        self.assertEqual(sum(len(item["terms"]) for item in ism), 4_311)
+        self.assertEqual(sum(len(item["controls"]) for item in ism), 54_030)
+        self.assertEqual(len(ism[-1]["controls"]), 1_194)
+        self.assertEqual(sum(len(item["terms"]) for item in ism), 4_063)
         self.assertEqual(len(ism[-1]["terms"]), 253)
-        self.assertEqual(len(ism[-19]["groups"]), 481)
+        self.assertEqual(len(ism[-18]["groups"]), 481)
         self.assertEqual(len(ism[-1]["groups"]), 562)
         self.assertTrue(any(item["groups"] for item in ism))
         self.assertLessEqual(max(len(control["statement"]) for item in ism for control in item["controls"].values()), 2_000)
@@ -92,46 +91,10 @@ class ParserTests(unittest.TestCase):
             "Unneeded components, services and functionality of network devices are disabled or removed.",
         )
 
-    def test_archived_september_2026_pdf_merges_with_june_structure(self) -> None:
-        current = self.by_framework["ism"][-2]
-        controls = current["controls"]
-        active_principles = {
-            control_id: control for control_id, control in controls.items()
-            if control["control_class"] == "ISM-principle" and control["change_type"] != "withdrawn"
-        }
-        prior_group_ids = {group["id"] for group in self.by_framework["ism"][-3]["groups"]}
-        self.assertTrue(prior_group_ids.issubset({group["id"] for group in current["groups"]}))
-        self.assertEqual(len(current["groups"]), 564)
-        self.assertEqual(len(current["terms"]), 248)
-        self.assertEqual(len(active_principles), 49)
-        self.assertTrue(all(control["source"] == "pdf" for control in active_principles.values()))
-        self.assertEqual(controls["ism-0521"]["change_type"], "withdrawn")
-        self.assertEqual(controls["ism-1448"]["change_type"], "withdrawn")
-        self.assertEqual(controls["ism-1372"]["change_type"], "modified")
-        self.assertEqual(controls["ism-1372"]["revision"], "4")
-        self.assertEqual(controls["ism-1372"]["updated"], "Sep-26")
-        self.assertEqual(controls["ism-2163"]["section_title"], "Media Access Control Security")
-        groups = {group["id"]: group for group in current["groups"]}
-        macsec_group = groups[controls["ism-2163"]["section_id"]]
-        self.assertEqual(groups[macsec_group["parent_id"]]["title"], "Wired networks")
-        self.assertEqual(
-            active_principles["ism-principle-gov-02"]["statement"],
-            "A chief information security officer provides leadership and oversight of cyber security "
-            "activities and delivers regular and timely risk-based reporting to the board of directors or "
-            "executive committee on their organisation’s cyber security posture, the effectiveness of security "
-            "controls, current security risks and emerging cyber threats.",
-        )
-        self.assertEqual(
-            active_principles["ism-principle-det-04"]["statement"],
-            "Baseline patterns of identity and credential access activities, privileged access activities, "
-            "and remote access activities are established and maintained for systems (infrastructure, operating "
-            "systems, applications and data) to enable the detection of anomalous or unexpected behaviour.",
-        )
-
-    def test_september_oscal_supersedes_pdf_without_false_control_changes(self) -> None:
-        archived_pdf = self.by_framework["ism"][-2]
+    def test_september_oscal_records_authoritative_changes_from_june(self) -> None:
+        june = self.by_framework["ism"][-2]
         current = self.by_framework["ism"][-1]
-        self.assertEqual(archived_pdf["catalog_version"], "ISM-PDF-2026-09")
+        self.assertEqual(june["catalog_version"], "ISM-OSCAL-2026.06.18")
         self.assertEqual(current["catalog_version"], "ISM-OSCAL-2026.09.4")
 
         oscal_path = ROOT / "data/ism-oscal/2026-09/ISM_catalog.json"
@@ -141,69 +104,24 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(metadata["oscal-version"], "1.1.2")
         self.assertEqual(oscal_path.stat().st_size, 2_677_748)
 
-        pdf_0043 = archived_pdf["controls"]["ism-0043"]
+        june_0043 = june["controls"]["ism-0043"]
         oscal_0043 = current["controls"]["ism-0043"]
         canonical_oscal = _parse_ism_oscal(oscal_path)["controls"]["ism-0043"]["statement"]
         self.assertEqual(oscal_0043["statement"], canonical_oscal)
+        self.assertEqual(june_0043["statement"], oscal_0043["statement"])
         self.assertEqual(oscal_0043["change_type"], "unchanged")
-        self.assertEqual(
-            pdf_0043["statement"].replace("\n• ", " - "),
-            oscal_0043["statement"],
-        )
 
-        # Publisher revisions belong to the September edition, not to the
-        # later representation change from the PDF to the OSCAL catalog.
-        self.assertEqual(archived_pdf["controls"]["ism-1372"]["change_type"], "modified")
-        self.assertEqual(archived_pdf["controls"]["ism-1372"]["revision"], "4")
-        self.assertEqual(archived_pdf["controls"]["ism-2162"]["change_type"], "new")
-        self.assertEqual(archived_pdf["controls"]["ism-0521"]["change_type"], "withdrawn")
-        self.assertEqual(current["controls"]["ism-1372"]["change_type"], "unchanged")
-        self.assertEqual(current["controls"]["ism-2162"]["change_type"], "unchanged")
-
-    def test_september_pdf_consumes_all_statement_continuation_blocks(self) -> None:
-        previous = _parse_ism_oscal(ROOT / "data/ism-oscal/2026-06/ISM_catalog.json")
-        parsed = _parse_modern_ism_pdf(ROOT / "data/ism-pdf/2026-09_ISM.pdf", previous)
-        self.assertEqual(set(parsed["continued_control_ids"]), {
-            "ism-0043", "ism-0138", "ism-0142", "ism-0208", "ism-0217", "ism-0252",
-            "ism-0261", "ism-0306", "ism-0350", "ism-0407", "ism-0428", "ism-0465",
-            "ism-0484", "ism-0487", "ism-0551", "ism-0634", "ism-0912", "ism-0917",
-            "ism-1088", "ism-1163", "ism-1223", "ism-1299", "ism-1300", "ism-1417",
-            "ism-1431", "ism-1491", "ism-1537", "ism-1554", "ism-1555", "ism-1556",
-            "ism-1558", "ism-1563", "ism-1590", "ism-1638", "ism-1646", "ism-1699",
-            "ism-1737", "ism-1803", "ism-1805", "ism-2008", "ism-2012", "ism-2102",
-            "ism-2135", "ism-2144",
-        })
-        controls = parsed["controls"]
-        self.assertEqual(
-            controls["ism-0043"]["statement"],
-            "Systems have a cyber security incident response plan that covers the following:\n"
-            "• guidelines on what constitutes a cyber security incident\n"
-            "• the types of cyber security incidents likely to be encountered and the expected response to each type\n"
-            "• how to report cyber security incidents, internally to an organisation and externally to relevant authorities\n"
-            "• other parties that need to be informed in the event of a cyber security incident\n"
-            "• the authority, or authorities, responsible for investigating and responding to cyber security incidents\n"
-            "• the criteria by which an investigation of a cyber security incident would be requested from a law "
-            "enforcement agency, the Australian Signals Directorate or other relevant authority\n"
-            "• the steps necessary to ensure the integrity of evidence relating to a cyber security incident\n"
-            "• system contingency measures or a reference to such details if they are in a separate document.",
-        )
-        expected_statements = {
-            "ism-1699": "A vulnerability scanner is used at least weekly to identify missing patches or updates "
-                        "for vulnerabilities in office productivity suites, web browsers and their extensions, "
-                        "email clients, PDF applications, and security products.",
-            "ism-2102": "Existing software artefacts in the authoritative source for software are periodically "
-                        "tested to detect known weaknesses using SAST, DAST or SCA, depending on the software "
-                        "artefact type, throughout the software development life cycle.",
-            "ism-0465": "Cryptographic equipment, applications or libraries that have completed a Common Criteria "
-                        "evaluation against an ASD-endorsed Protection Profile are used to protect OFFICIAL: "
-                        "Sensitive or PROTECTED data when communicated over insufficiently secure networks, outside "
-                        "of appropriately secure areas or via public network infrastructure.",
-            "ism-0142": "The compromise or suspected compromise of cryptographic equipment or associated keying "
-                        "material is reported to the chief information security officer, or one of their delegates, "
-                        "as soon as possible after it occurs.",
-        }
-        for control_id, statement in expected_statements.items():
-            self.assertEqual(controls[control_id]["statement"], statement)
+        controls = current["controls"]
+        self.assertEqual(sum(control["change_type"] == "modified" and control["control_class"] == "ISM-control"
+                             for control in controls.values()), 204)
+        self.assertEqual(sum(control["change_type"] == "new" for control in controls.values()), 44)
+        self.assertEqual(sum(control["change_type"] == "withdrawn" for control in controls.values()), 2)
+        self.assertEqual(controls["ism-1372"]["change_type"], "modified")
+        self.assertEqual(controls["ism-1372"]["revision"], "4")
+        self.assertEqual(controls["ism-2162"]["change_type"], "new")
+        self.assertEqual(controls["ism-2124"]["change_type"], "new")
+        self.assertEqual(controls["ism-0521"]["change_type"], "withdrawn")
+        self.assertEqual(controls["ism-1448"]["change_type"], "withdrawn")
 
     def test_pdf_to_oscal_boundary_records_real_changes(self) -> None:
         june_2022 = next(item for item in self.by_framework["ism"]
@@ -264,7 +182,8 @@ class ParserTests(unittest.TestCase):
             self.assertEqual(mapping_digest, profile_verified_e8_digests[directory])
         ledger = json.loads((ROOT / "data/source-ledger.json").read_text(encoding="utf-8"))["sources"]
         retained_pdfs = [item for item in ledger if item["framework"] == "ism" and item["path"].endswith(".pdf")]
-        self.assertEqual(retained_pdfs[-1]["version"], "ISM-PDF-2026-09")
+        self.assertEqual(retained_pdfs[-1]["version"], "ISM-PDF-2022-03")
+        self.assertEqual(len(retained_pdfs), 45)
         self.assertEqual(len(expected), sum(item["framework"] == "ism" and item["path"].endswith(".json")
                                             for item in ledger))
 
@@ -393,9 +312,9 @@ class DatabaseTests(unittest.TestCase):
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
                 sqlite3.sqlite_version,
             )
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 81)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 83)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_311)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 80)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 82)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_063)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM annotations").fetchone()[0], 1_146)
             annotation = connection.execute(
                 "SELECT catalog_version, ai_view, ai_view_snarky FROM annotations "

@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import io
 import json
-import sqlite3
 import tempfile
 import unittest
 import urllib.error
@@ -141,15 +140,10 @@ class AnnotationCacheTests(unittest.TestCase):
         ]
         self.assertEqual(len(current), 1_143)
 
-    def test_generation_plan_adopts_unchanged_legacy_text_and_only_generates_delta(self) -> None:
+    def test_generation_plan_uses_direct_oscal_delta_from_legacy_text(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "rule1.sqlite3"
             build_database(ROOT, database)
-            with sqlite3.connect(database) as connection:
-                connection.execute(
-                    "UPDATE catalog_versions SET ordinal=-1 "
-                    "WHERE framework='ism' AND version='ISM-OSCAL-2026.09.4'"
-                )
             controls = load_current_controls(database)
         manifest = json.loads((ROOT / "annotations/legacy-preservation.json").read_text(encoding="utf-8"))
         payload = {"annotations": [
@@ -165,14 +159,14 @@ class AnnotationCacheTests(unittest.TestCase):
             for row in payload["annotations"]
         }
         stored, stale, adopted = prepare_generation(controls, payload)
-        self.assertEqual(adopted, 936)
-        self.assertEqual(len(stale), 207)
+        self.assertEqual(adopted, 861)
+        self.assertEqual(len(stale), 282)
         self.assertEqual(
             sum(item["current_change_type"] == "modified" and ("ism", item["control_id"]) in stored for item in stale),
-            134,
+            202,
         )
         self.assertEqual(sum(("ism", item["control_id"]) not in stored for item in stale), 73)
-        self.assertLessEqual((len(stale) + 24) // 25, 9)
+        self.assertLessEqual((len(stale) + 24) // 25, 12)
         for control_id, expected in before.items():
             row = stored[("ism", control_id)]
             self.assertEqual((row["ai_view"], row["ai_view_snarky"], row["model"]), expected)

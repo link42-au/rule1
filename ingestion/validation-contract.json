@@ -70,7 +70,6 @@
       "ISM-OSCAL-2025.12.9",
       "ISM-OSCAL-2026.03.24",
       "ISM-OSCAL-2026.06.18",
-      "ISM-PDF-2026-09",
       "ISM-OSCAL-2026.09.4"
     ],
     "nist-800-53": [
@@ -97,16 +96,16 @@
   "page_size": 4096,
   "row_counts": {
     "annotations": 1146,
-    "catalog_versions": 81,
-    "control_groups": 13037,
-    "control_history": 71184,
-    "e8_mappings": 4469,
+    "catalog_versions": 80,
+    "control_groups": 12473,
+    "control_history": 69992,
+    "e8_mappings": 4213,
     "frameworks": 5,
-    "source_files": 83,
-    "term_history": 4311
+    "source_files": 82,
+    "term_history": 4063
   },
   "schema_sha256": "5f42d5eb77439374a76b85bf29cc47e64e513853d70e182699f046e8d8a283cd",
-  "source_ledger_sha256": "26d4fd87eaec2bba651787aa03f2292c177dbc8b08431ac4fc65c85eecbce26f",
+  "source_ledger_sha256": "c30d04124e9236d7e7b460bf6c09582015a97cdf6e642d18f2a2564dac132cc6",
   "tables": [
     "annotations",
     "build_counts",
@@ -226,7 +225,7 @@
       },
       "ISM-OSCAL-2026.09.4": {
         "control_groups": 562,
-        "control_history": 1192,
+        "control_history": 1194,
         "term_history": 253
       },
       "ISM-PDF-2010-11": {
@@ -453,11 +452,6 @@
         "control_groups": 22,
         "control_history": 851,
         "term_history": 0
-      },
-      "ISM-PDF-2026-09": {
-        "control_groups": 564,
-        "control_history": 1194,
-        "term_history": 248
       }
     },
     "nist-800-53": {

@@ -61,35 +61,35 @@ The shared, local UI package still contains dormant platform URL constants in it
 
 ## Current data and retained gaps
 
-- The Australian ISM now ends at ASD's authoritative September 2026 OSCAL catalog (`ISM-OSCAL-2026.09.4`), with 1,143 active controls and 49 cyber security principles. The earlier September PDF remains as an archived provisional snapshot, and the following OSCAL record supplies the current canonical text and structure without creating false changes at the format boundary.
+- The Australian ISM now ends at ASD's authoritative September 2026 OSCAL catalog (`ISM-OSCAL-2026.09.4`), with 1,143 active controls and 49 cyber security principles. It follows the June 2026 OSCAL catalog directly, so the September publisher changes are classified against the preceding official edition.
 - ISM OSCAL glossary history is retained from June 2022 onward; frameworks whose archived sources provide no glossary remain in an honest empty state.
-- The verified legacy baseline of 1,073 paired factual and Professional descriptions was imported exactly and recorded in an immutable digest manifest. The 936 unchanged current pairs and 3 historical pairs remain byte-exact; a separately approved workflow refreshes 134 stale pairs and adds 73 missing current pairs through the pinned free NVIDIA Nemotron model. Release validation prevents partial current coverage from deploying.
+- The verified legacy baseline of 1,073 paired factual and Professional descriptions was imported exactly and recorded in an immutable digest manifest. All 1,146 reviewed pairs retain their byte-exact description text after the source-history reconciliation, and all 1,143 current controls remain complete. Release validation prevents partial or stale current coverage from deploying; the separately approved Nemotron workflow remains available for genuine future content changes.
 - The Essential Eight mapping rows retain maturity levels but contain no named strategy strings.
 - The Cyber Essentials 3.2 source PDF is missing from the archive. Its committed, checksum-verified 3.2 JSON source is ingested.
-- Australian ISM Excel history is not committed; the 64 retained ISM versions use 45 historical PDFs through March 2022, 18 official ASD OSCAL catalogs from June 2022 through September 2026, and the archived September 2026 PDF that preceded its OSCAL release.
+- Australian ISM Excel history is not committed; the 63 retained ISM versions use 45 historical PDFs through March 2022 and 18 official ASD OSCAL catalogs from June 2022 through September 2026.
 
 These are provenance/data differences, not UI defects. Framework decisions should be checked against the current authoritative publisher source.
 
 ## Verification evidence
 
-The following is a dated local source-verification checkpoint. It is not hosted-CI, deployment, or live-origin evidence. `pnpm verify` passed on 3 September 2026:
+The following is a dated local verification checkpoint. It is not hosted-CI, deployment, or live-origin evidence. `pnpm verify` passed on 4 September 2026:
 
-- Biome: 74 files checked.
+- Biome: 73 files checked.
 - Svelte type checking: zero errors and zero warnings.
-- Node script tests: 12 passed.
-- Python ingestion/parser/database tests: 12 passed, including two clean byte-identical database builds, mixed PDF/OSCAL history, September 2026 merge semantics, OSCAL metadata, and original-parser parity.
-- Web tests: 18 files and 161 tests passed.
-- Browser tests: 3 passed across responsive, accessibility, loading, local-only interaction, and September 2026 catalogue coverage.
-- Database build and validation passed locally with 80 catalogue versions, 82 source files, 69,992 control-history rows, 4,058 term-history rows, 4,213 Essential Eight mappings, and `PRAGMA integrity_check` reporting `ok`; `build/rule1.sqlite3` has SHA-256 `adfd78b2d1c556eec8fe116670dbc00db32992dc480306480cd4ae7a1a67cbbd`.
-- Static verifier: 11 routes plus the fallback passed at the root; no retired deployment prefix or operated-host link was found.
+- Node workflow and source tests: 13 passed, including checksum and archive-completeness validation for 82 committed framework files.
+- Python annotation, ingestion, parser, and database tests: 26 passed, including two clean byte-identical database builds, direct June-to-September OSCAL history, OSCAL metadata, older PDF-to-OSCAL parity, and byte-exact description preservation.
+- Web tests: 18 files and 163 tests passed.
+- Browser tests: 4 passed across responsive, accessibility, loading, local-only interaction, September 2026 catalogue coverage, and the Factual/Professional annotation toggle.
+- Annotation validation: 1,143 of 1,143 current ISM controls have fresh embedded descriptions; no OpenRouter request was made.
+- Database build and complete-annotation validation passed locally with 80 catalogue versions, 82 source files, 69,992 control-history rows, 4,063 term-history rows, 4,213 Essential Eight mappings, and `PRAGMA integrity_check` reporting `ok`; `build/rule1.sqlite3` has SHA-256 `f4a8bf08ad91fd2e81b5ca922714187454ea04f7fa6c8e2e268950d2359b4eaa`.
+- Static verification passed for 11 routes plus the fallback at the root, with no retired deployment prefix or operated-host link found.
 
 The current source-controlled release gate runs the same complete verification command for pull requests and `main`, performs a second deterministic database build, and permits only a verified `main` build to publish. Its post-deployment canary checks the current HTML-referenced immutable assets, the deployed artifact manifest, and the database bytes. These workflow controls describe repository source; a named completed workflow and canary are still required before claiming a new deployment is CI-verified or live-verified.
 
 The canonical macOS local build SHA-256 is:
 
 ```text
-adfd78b2d1c556eec8fe116670dbc00db32992dc480306480cd4ae7a1a67cbbd  build/rule1.sqlite3
-adfd78b2d1c556eec8fe116670dbc00db32992dc480306480cd4ae7a1a67cbbd  apps/web/build/data/rule1.sqlite3
+f4a8bf08ad91fd2e81b5ca922714187454ea04f7fa6c8e2e268950d2359b4eaa  build/rule1.sqlite3
 ```
 
 The current catalogue heads are `CE-3.3`, `ISM-OSCAL-2026.09.4`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
