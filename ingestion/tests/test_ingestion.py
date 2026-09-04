@@ -10,6 +10,7 @@ from pathlib import Path
 from rule1_ingest.build import build_database
 from rule1_ingest.parsers import (
     _changed,
+    _canonical_nist_csf_id,
     _ism_guideline_title,
     _parse_ce,
     _parse_ism_oscal,
@@ -51,6 +52,22 @@ class ParserTests(unittest.TestCase):
             self.assertTrue(representative["display_id"])
             self.assertIn("statement", representative)
             self.assertIn("control_class", representative)
+
+    def test_nist_csf_zero_padding_preserves_control_lineage(self) -> None:
+        old, current = self.by_framework["nist-csf"]
+        self.assertEqual(_canonical_nist_csf_id("DE.AE-1"), "DE.AE-01")
+        self.assertEqual(_canonical_nist_csf_id("DE.AE-10"), "DE.AE-10")
+        self.assertNotIn("nist-csf-de.ae-1", old["controls"])
+        self.assertNotIn("nist-csf-de.ae-1", current["controls"])
+        self.assertEqual(old["controls"]["nist-csf-de.ae-01"]["display_id"], "DE.AE-1")
+        self.assertEqual(current["controls"]["nist-csf-de.ae-01"]["display_id"], "DE.AE-01")
+        self.assertEqual(current["controls"]["nist-csf-de.ae-01"]["change_type"], "modified")
+        self.assertEqual(current["controls"]["nist-csf-de.ae-05"]["change_type"], "modified")
+        self.assertEqual(current["controls"]["nist-csf-pr.ac-01"]["change_type"], "unchanged")
+        self.assertEqual(sum(control["change_type"] == "new" for control in current["controls"].values()), 88)
+        self.assertEqual(sum(control["change_type"] == "modified" for control in current["controls"].values()), 73)
+        self.assertEqual(sum(control["change_type"] == "unchanged" for control in current["controls"].values()), 58)
+        self.assertEqual(sum(control["change_type"] == "withdrawn" for control in current["controls"].values()), 0)
 
     def test_reviewed_parser_regressions(self) -> None:
         ism = self.by_framework["ism"]

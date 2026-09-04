@@ -128,7 +128,14 @@ def _parse_ism_terms(groups: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
     return terms
 
 
-def _changed(current: dict[str, Any], previous: dict[str, Any] | None) -> str:
+def _canonical_nist_csf_id(value: str) -> str:
+    """Use CSF 2.0's two-digit subcategory form as the stable identity."""
+    match = re.fullmatch(r"([a-z]{2}\.[a-z]{2}-)(\d+)", value, re.I)
+    return f"{match.group(1)}{match.group(2).zfill(2)}" if match else value
+
+
+def _changed(current: dict[str, Any], previous: dict[str, Any] | None,
+             framework: str | None = None) -> str:
     if previous is None:
         return "new"
     pdf_to_oscal = previous.get("source") == "pdf" and current.get("source") == "oscal"
@@ -145,7 +152,10 @@ def _changed(current: dict[str, Any], previous: dict[str, Any] | None) -> str:
     )
     for key in visible:
         current_value, previous_value = current.get(key), previous.get(key)
-        if key == "statement":
+        if framework == "nist-csf" and key in {"display_id", "label", "title"}:
+            current_value = _canonical_nist_csf_id(str(current_value or ""))
+            previous_value = _canonical_nist_csf_id(str(previous_value or ""))
+        elif key == "statement":
             current_value, previous_value = _text(current_value), _text(previous_value)
         elif key == "metadata":
             current_value = {name: value for name, value in (current_value or {}).items() if name != "sort_id"}
@@ -165,7 +175,9 @@ def _history(framework: str, parsed: list[tuple[dict[str, str], Snapshot]]) -> l
         for control_id in sorted(live):
             control = dict(live[control_id])
             explicit_withdrawal = control.pop("_withdrawn", False)
-            control["change_type"] = "withdrawn" if explicit_withdrawal else _changed(control, previous.get(control_id))
+            control["change_type"] = (
+                "withdrawn" if explicit_withdrawal else _changed(control, previous.get(control_id), framework)
+            )
             controls[control_id] = control
         for control_id in sorted(previous.keys() - live.keys()):
             withdrawn = dict(previous[control_id])
@@ -309,7 +321,8 @@ def _parse_nist(path: Path, framework: str) -> Snapshot:
         for base in group.get("controls", []):
             for item in [base, *base.get("controls", [])]:
                 raw_id = str(item["id"])
-                db_id = f"{framework}-{raw_id.lower()}"
+                stable_id = _canonical_nist_csf_id(raw_id) if framework == "nist-csf" else raw_id
+                db_id = f"{framework}-{stable_id.lower()}"
                 if db_id in controls:
                     raise ValueError(f"duplicate NIST control id in {path}: {db_id}")
                 props = item.get("props", [])

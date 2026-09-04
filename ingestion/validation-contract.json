@@ -98,7 +98,7 @@
     "annotations": 1146,
     "catalog_versions": 80,
     "control_groups": 12473,
-    "control_history": 69992,
+    "control_history": 69887,
     "e8_mappings": 4213,
     "frameworks": 5,
     "source_files": 82,
@@ -484,7 +484,7 @@
       },
       "NIST-CSF-2.0": {
         "control_groups": 6,
-        "control_history": 324,
+        "control_history": 219,
         "term_history": 0
       }
     },

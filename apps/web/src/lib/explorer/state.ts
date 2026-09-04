@@ -24,6 +24,17 @@ export interface ExplorerUrlState {
   selectedId: string | null;
 }
 
+/** Preserve CSF 1.1 deep links after CSF 2.0 zero-padded subcategory IDs. */
+export function canonicalControlReference(framework: FrameworkId, value: string): string {
+  const trimmed = value.trim();
+  if (framework !== "nist-csf") return trimmed;
+  const normalized = trimmed.toLowerCase();
+  return normalized.replace(
+    /^((?:nist-csf-)?[a-z]{2}\.[a-z]{2}-)(\d+)$/,
+    (_match, prefix, suffix) => `${prefix}${suffix.padStart(2, "0")}`,
+  );
+}
+
 export function readExplorerUrl(url: URL, availableFrameworks: readonly string[]): ExplorerUrlState {
   const requestedFramework = url.searchParams.get("framework");
   let framework: FrameworkId = "ism";
@@ -54,6 +65,8 @@ export function readExplorerUrl(url: URL, availableFrameworks: readonly string[]
     selectedId = search;
     search = "";
   }
+
+  if (selectedId) selectedId = canonicalControlReference(framework, selectedId);
 
   return { framework, filter, applicability, search, selectedId };
 }
