@@ -209,3 +209,36 @@ test("AI Summary switches between factual and Professional descriptions and reme
   ).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".ai-summary-block")).toHaveText(professional);
 });
+
+test("ATT&CK control mappings are ISM-only, local, and honestly empty at desktop and phone widths", async ({
+  page,
+}, testInfo) => {
+  const backendRequests: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/api/") || url.hostname !== "127.0.0.1") backendRequests.push(request.url());
+  });
+
+  for (const viewport of [
+    { width: 1280, height: 900, label: "desktop" },
+    { width: 390, height: 844, label: "phone" },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/explorer/?framework=ism&id=ism-1173&tab=attack");
+    await expect(page.locator("[data-control-heading]")).toBeVisible();
+    const attackTab = page.getByRole("tab", { name: "ATT&CK" });
+    await expect(attackTab).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("heading", { name: "MITRE ATT&CK mappings" })).toBeVisible();
+    await expect(page.getByText("No reviewed ATT&CK mappings", { exact: true })).toBeVisible();
+    await expect(page.getByText("ATT&CK 19.2", { exact: true })).toBeVisible();
+    await expect(page.getByText("ISM ISM-OSCAL-2026.09.4", { exact: true })).toBeVisible();
+    await assertDocumentDoesNotOverflow(page);
+    await assertNoSeriousAxeViolations(page, testInfo, `attack-empty-${viewport.label}`);
+  }
+
+  await page.goto("/explorer/?framework=nzism&id=nzism-127&tab=attack");
+  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "ATT&CK" })).toHaveCount(0);
+  await expect(page).not.toHaveURL(/tab=attack/);
+  expect(backendRequests).toEqual([]);
+});

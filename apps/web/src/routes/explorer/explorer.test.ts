@@ -7,6 +7,7 @@ const layoutSource = await readFile(new URL("../+layout.svelte", import.meta.url
 const historySource = await readFile(new URL("../../lib/explorer/HistoryPanel.svelte", import.meta.url), "utf8");
 const mappingSource = await readFile(new URL("../../lib/explorer/MappingPanel.svelte", import.meta.url), "utf8");
 const contextSource = await readFile(new URL("../../lib/explorer/ContextPanel.svelte", import.meta.url), "utf8");
+const attackSource = await readFile(new URL("../../lib/explorer/AttackPanel.svelte", import.meta.url), "utf8");
 const glossaryTextSource = await readFile(new URL("../../lib/explorer/GlossaryText.svelte", import.meta.url), "utf8");
 
 describe("reviewed Rule1 explorer", () => {
@@ -64,6 +65,45 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).toContain("client.e8Mappings({ framework: requestFramework, id, catalogVersion: version })");
     expect(explorerSource).toContain("client.graph({ framework: requestFramework, id })");
     expect(explorerSource).not.toMatch(/\bfetch\s*\(/);
+  });
+
+  it("lazy-loads reviewed ATT&CK mappings only for a selected ISM control", () => {
+    expect(explorerSource).toContain('if (!client || !selectedId || framework !== "ism"');
+    expect(explorerSource).toContain("client.attackMappings({ framework: requestFramework, id })");
+    expect(explorerSource).toContain('if (tab === "attack") void loadAttack()');
+    expect(explorerSource).toContain('if (activeTab === "attack") void loadAttack()');
+    expect(explorerSource).toContain("attackRequests.cancel()");
+    expect(explorerSource).toContain(
+      "!attackRequests.isCurrent(request) || selectedId !== id || framework !== requestFramework",
+    );
+    expect(explorerSource).not.toMatch(/\bfetch\s*\(/);
+  });
+
+  it("shows the ATT&CK tab only for ISM and safely restores its deep link", () => {
+    expect(explorerSource).toContain('{ value: "attack", label: "ATT&CK", ismOnly: true }');
+    expect(explorerSource).toContain("{#if !tab.ismOnly || isISM}");
+    expect(explorerSource).toContain('candidate === "attack" && requestFramework === "ism"');
+    expect(explorerSource).toContain('{:else if activeTab === "attack" && isISM}');
+  });
+
+  it("presents mapping limits, pinned versions, grouped techniques, and safe MITRE links", () => {
+    expect(attackSource).toContain("groupAttackMappings(result.mappings)");
+    expect(attackSource).toContain("ISM {result.ismCatalogVersion}");
+    expect(attackSource).toContain("ATT&amp;CK {result.attackVersion}");
+    expect(attackSource).toContain("may prevent, constrain, detect, or support recovery");
+    expect(attackSource).toContain("Confidence describes confidence in the mapping, not control effectiveness.");
+    expect(attackSource).toContain("Mapped via");
+    expect(attackSource).toContain('target="_blank" rel="noopener noreferrer"');
+    expect(attackSource).not.toContain("defeat");
+  });
+
+  it("keeps ATT&CK loading, failure, and no-reviewed-mapping states truthful", () => {
+    expect(attackSource).toContain("Loading reviewed mappings");
+    expect(attackSource).toContain("ATT&amp;CK mappings unavailable");
+    expect(attackSource).toContain("No reviewed ATT&amp;CK mappings");
+    expect(attackSource).toContain(
+      "Candidate relationships stay hidden until an exact human review decision is committed.",
+    );
   });
 
   it("does not request Essential Eight mappings outside the ISM framework", () => {

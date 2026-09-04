@@ -4,13 +4,15 @@
   import type { Control, ControlDetail, Framework, GlossaryTerm, GraphData, Group, Revision } from "@rule1/shared";
   import { showToast } from "@link42/ui";
   import { onMount } from "svelte";
-  import type { E8Mapping, Rule1DataClient } from "$lib/db/contracts";
+  import type { AttackMappingResult, E8Mapping, Rule1DataClient } from "$lib/db/contracts";
   import { openRule1DataClient } from "$lib/db/rpc";
   import ControlTree from "$lib/explorer/ControlTree.svelte";
   import GlossaryText from "$lib/explorer/GlossaryText.svelte";
   import ContextPanel from "$lib/explorer/ContextPanel.svelte";
   import HistoryPanel from "$lib/explorer/HistoryPanel.svelte";
   import MappingPanel from "$lib/explorer/MappingPanel.svelte";
+  import AttackPanel from "$lib/explorer/AttackPanel.svelte";
+  import { emptyAttackResult } from "$lib/explorer/attack-model";
   import {
     controlCsv,
     controlJson,
@@ -43,13 +45,14 @@
   } from "$lib/explorer/state";
 
   type CatalogueStatus = "loading" | "ready" | "error";
-  type DetailTab = "overview" | "changelog" | "context";
+  type DetailTab = "overview" | "changelog" | "context" | "attack";
   type RelatedStatus = "idle" | "loading" | "ready" | "error";
 
-  const DETAIL_TABS: ReadonlyArray<{ value: DetailTab; label: string }> = [
+  const DETAIL_TABS: ReadonlyArray<{ value: DetailTab; label: string; ismOnly?: boolean }> = [
     { value: "overview", label: "Overview" },
     { value: "changelog", label: "Changelog" },
     { value: "context", label: "Context" },
+    { value: "attack", label: "ATT&CK", ismOnly: true },
   ];
 
   let status = $state<CatalogueStatus>("loading");
@@ -73,6 +76,8 @@
   let mappingLevels = $state<string[]>([]);
   let mappingVersion = $state<string | null>(null);
   let mappingStatus = $state<RelatedStatus>("idle");
+  let attackResult = $state<AttackMappingResult>(emptyAttackResult());
+  let attackStatus = $state<RelatedStatus>("idle");
   let favourites = $state(new Set<string>());
   let glossaryTerms = $state<GlossaryTerm[]>([]);
   let openGroupIds = $state(new Set<string>());
@@ -90,6 +95,7 @@
   const historyRequests = new LatestRequest();
   const graphRequests = new LatestRequest();
   const mappingRequests = new LatestRequest();
+  const attackRequests = new LatestRequest();
   const navigationRequests = new LatestRequest();
   let filtered = $derived(filterControls(controls, filter, applicability, search, favourites));
   let bySection = $derived(controlsBySection(filtered));
@@ -159,14 +165,17 @@
     historyRequests.cancel();
     graphRequests.cancel();
     mappingRequests.cancel();
+    attackRequests.cancel();
     controlHistory = [];
     graph = null;
     mappings = [];
     mappingLevels = [];
     mappingVersion = null;
+    attackResult = emptyAttackResult();
     historyStatus = "idle";
     graphStatus = "idle";
     mappingStatus = "idle";
+    attackStatus = "idle";
   }
 
   function clearSelection(resetTab = true): void {
@@ -251,8 +260,9 @@
     });
   }
 
-  function tabFromUrl(url: URL): DetailTab {
+  function tabFromUrl(url: URL, requestFramework: ExplorerUrlState["framework"]): DetailTab {
     const candidate = url.searchParams.get("tab");
+    if (candidate === "attack" && requestFramework === "ism") return candidate;
     return candidate === "changelog" || candidate === "context" ? candidate : "overview";
   }
 
@@ -290,6 +300,24 @@
     }
   }
 
+  async function loadAttack(): Promise<void> {
+    if (!client || !selectedId || framework !== "ism" || attackStatus === "loading" || attackStatus === "ready") return;
+    const id = selectedId;
+    const requestFramework = framework;
+    const request = attackRequests.begin();
+    attackStatus = "loading";
+    try {
+      const result = await client.attackMappings({ framework: requestFramework, id });
+      if (!attackRequests.isCurrent(request) || selectedId !== id || framework !== requestFramework) return;
+      attackResult = result;
+      attackStatus = "ready";
+    } catch {
+      if (attackRequests.isCurrent(request) && selectedId === id && framework === requestFramework) {
+        attackStatus = "error";
+      }
+    }
+  }
+
   async function loadGraph(): Promise<void> {
     if (!client || !selectedId || graphStatus === "loading" || graphStatus === "ready") return;
     const id = selectedId;
@@ -313,6 +341,7 @@
     syncUrl();
     if (tab === "changelog") void loadHistory();
     if (tab === "context") void loadGraph();
+    if (tab === "attack") void loadAttack();
   }
 
   function setAiFlavour(flavour: "factual" | "snarky"): void {
@@ -326,15 +355,16 @@
   }
 
   function handleTabKey(event: KeyboardEvent, tab: DetailTab): void {
-    const currentIndex = DETAIL_TABS.findIndex((item) => item.value === tab);
+    const availableTabs = DETAIL_TABS.filter((item) => !item.ismOnly || framework === "ism");
+    const currentIndex = availableTabs.findIndex((item) => item.value === tab);
     let nextIndex: number | null = null;
-    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % DETAIL_TABS.length;
-    else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + DETAIL_TABS.length) % DETAIL_TABS.length;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % availableTabs.length;
+    else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + availableTabs.length) % availableTabs.length;
     else if (event.key === "Home") nextIndex = 0;
-    else if (event.key === "End") nextIndex = DETAIL_TABS.length - 1;
+    else if (event.key === "End") nextIndex = availableTabs.length - 1;
     if (nextIndex === null) return;
     event.preventDefault();
-    const nextTab = DETAIL_TABS[nextIndex].value;
+    const nextTab = availableTabs[nextIndex].value;
     switchTab(nextTab);
     document.getElementById(`control-tab-${nextTab}`)?.focus();
   }
@@ -451,6 +481,7 @@
       // Related-control counts are part of the overview, so load the local graph with the detail.
       void loadGraph();
       if (activeTab === "changelog") void loadHistory();
+      if (activeTab === "attack") void loadAttack();
     } catch {
       if (detailRequests.isCurrent(request) && selectedId === normalized && framework === requestFramework) {
         detail = null;
@@ -533,7 +564,7 @@
     if (!client || frameworks.length === 0) return;
     const request = navigationRequests.begin();
     const next = readExplorerUrl(url, frameworks.map((item) => item.id));
-    activeTab = tabFromUrl(url);
+    activeTab = tabFromUrl(url, next.framework);
     filter = next.filter;
     applicability = next.applicability;
     search = next.search;
@@ -585,7 +616,7 @@
         frameworks = await client.frameworks();
         if (!mounted) return;
         const urlState = readExplorerUrl(new URL(window.location.href), frameworks.map((item) => item.id));
-        activeTab = tabFromUrl(new URL(window.location.href));
+        activeTab = tabFromUrl(new URL(window.location.href), urlState.framework);
         framework = urlState.framework;
         filter = urlState.filter;
         applicability = urlState.applicability;
@@ -608,6 +639,7 @@
       historyRequests.cancel();
       graphRequests.cancel();
       mappingRequests.cancel();
+      attackRequests.cancel();
       navigationRequests.cancel();
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
@@ -842,17 +874,19 @@
 
         <div class="tabs" role="tablist" aria-label="Control detail views">
           {#each DETAIL_TABS as tab}
-            <button
-              id={`control-tab-${tab.value}`}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.value}
-              aria-controls="control-tabpanel"
-              tabindex={activeTab === tab.value ? 0 : -1}
-              class:active={activeTab === tab.value}
-              onclick={() => switchTab(tab.value)}
-              onkeydown={(event) => handleTabKey(event, tab.value)}
-            >{tab.label}</button>
+            {#if !tab.ismOnly || isISM}
+              <button
+                id={`control-tab-${tab.value}`}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.value}
+                aria-controls="control-tabpanel"
+                tabindex={activeTab === tab.value ? 0 : -1}
+                class:active={activeTab === tab.value}
+                onclick={() => switchTab(tab.value)}
+                onkeydown={(event) => handleTabKey(event, tab.value)}
+              >{tab.label}</button>
+            {/if}
           {/each}
         </div>
 
@@ -965,8 +999,10 @@
             </div>
           {:else if activeTab === "changelog"}
             <HistoryPanel history={controlHistory} status={historyStatus} frameworkLabel={frameworkLabel(framework)} />
-          {:else}
+          {:else if activeTab === "context"}
             <ContextPanel {graph} status={graphStatus} onSelect={(id) => void selectControl(id)} />
+          {:else if activeTab === "attack" && isISM}
+            <AttackPanel result={attackResult} status={attackStatus} />
           {/if}
         </div>
       </article>

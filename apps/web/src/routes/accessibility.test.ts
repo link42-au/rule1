@@ -107,6 +107,9 @@ describe("WCAG interaction and presentation repairs", () => {
     expect(explorer).toContain("tabindex={activeTab === tab.value ? 0 : -1}");
     expect(explorer).toMatch(/aria-labelledby=\{`control-tab-\$\{activeTab\}`\}/);
     expect(explorer).toContain("function handleTabKey(event: KeyboardEvent, tab: DetailTab)");
+    expect(explorer).toContain(
+      'const availableTabs = DETAIL_TABS.filter((item) => !item.ismOnly || framework === "ism")',
+    );
   });
 
   it("activates graph controls with Enter or Space and restores useful detail focus", () => {
