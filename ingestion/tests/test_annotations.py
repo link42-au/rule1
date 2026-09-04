@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import sqlite3
 import tempfile
 import unittest
 import urllib.error
@@ -122,10 +123,33 @@ class AnnotationCacheTests(unittest.TestCase):
         self.assertEqual(stale, [])
         self.assertEqual(adopted, 0)
 
+    def test_oscal_reconciliation_preserves_reviewed_description_corpus(self) -> None:
+        payload = load_cache(ROOT / "annotations/ism.json")
+        corpus = [
+            (row["control_id"], row["ai_view"], row["ai_view_snarky"])
+            for row in payload["annotations"]
+        ]
+        self.assertEqual(
+            hashlib.sha256(
+                json.dumps(corpus, ensure_ascii=False, separators=(",", ":")).encode()
+            ).hexdigest(),
+            "f627d9b46d4a050ddef54a4dcd50dd8708669f680651c6b716236121df296cd8",
+        )
+        current = [
+            row for row in payload["annotations"]
+            if row["catalog_version"] == "ISM-OSCAL-2026.09.4"
+        ]
+        self.assertEqual(len(current), 1_143)
+
     def test_generation_plan_adopts_unchanged_legacy_text_and_only_generates_delta(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "rule1.sqlite3"
             build_database(ROOT, database)
+            with sqlite3.connect(database) as connection:
+                connection.execute(
+                    "UPDATE catalog_versions SET ordinal=-1 "
+                    "WHERE framework='ism' AND version='ISM-OSCAL-2026.09.4'"
+                )
             controls = load_current_controls(database)
         manifest = json.loads((ROOT / "annotations/legacy-preservation.json").read_text(encoding="utf-8"))
         payload = {"annotations": [
