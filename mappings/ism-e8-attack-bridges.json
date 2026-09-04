@@ -63,9 +63,12 @@
       "effect": "prevent",
       "confidence": "medium",
       "control_ids": ["ism-1896", "ism-1861"],
-      "rationale": "The controls restrict privileged account use and administration paths, supporting ATT&CK Privileged Account Management guidance.",
+      "rationale": "The controls enable memory integrity and Local Security Authority protection, supporting ATT&CK Privileged Process Integrity guidance for protecting high-integrity processes.",
       "evidence": [
-        { "kind": "curator-note", "note": "Privilege-management abstraction; technique edges remain candidates." }
+        {
+          "kind": "curator-note",
+          "note": "Privileged-process integrity bridge; individual technique edges remain candidates."
+        }
       ]
     },
     {
@@ -112,11 +115,11 @@
         "ism-0109",
         "ism-1228"
       ],
-      "rationale": "The controls require collection and review of security-relevant events, supporting ATT&CK Audit guidance as a detection-oriented effect.",
+      "rationale": "The controls provide security-control ruleset assurance or centralized collection and review of security-relevant events, supporting ATT&CK Audit guidance as a detection-oriented effect.",
       "evidence": [
         {
           "kind": "curator-note",
-          "note": "Audit evidence can support detection; it does not itself prevent technique execution."
+          "note": "Ruleset assurance and audit evidence can support detection; they do not themselves prevent technique execution."
         }
       ]
     },
@@ -125,7 +128,7 @@
       "effect": "constrain",
       "confidence": "medium",
       "control_ids": ["ism-1859", "ism-1823", "ism-1489", "ism-1860", "ism-1824", "ism-1412", "ism-1585"],
-      "rationale": "The controls limit software and account behavior through operating-system configuration, supporting ATT&CK Software Configuration guidance.",
+      "rationale": "The controls enforce hardened security settings for Microsoft Office, PDF software, and web browsers, supporting ATT&CK Software Configuration guidance.",
       "evidence": [
         { "kind": "curator-note", "note": "Broad configuration bridge constrained to each control's stated scope." }
       ]
@@ -148,15 +151,15 @@
       "effect": "prevent",
       "confidence": "medium",
       "control_ids": ["ism-1672"],
-      "rationale": "The control limits potentially unsafe antivirus exclusions, supporting ATT&CK Antivirus or Antimalware guidance.",
-      "evidence": [{ "kind": "curator-note", "note": "Specific antimalware configuration bridge." }]
+      "rationale": "The control enables antivirus scanning of Microsoft Office macros, supporting ATT&CK Antivirus or Antimalware guidance.",
+      "evidence": [{ "kind": "curator-note", "note": "Office macro antivirus-scanning bridge." }]
     },
     {
       "mitigation_id": "M1045",
       "effect": "constrain",
       "confidence": "medium",
       "control_ids": ["ism-1890"],
-      "rationale": "The control constrains elevated administrative activity, supporting ATT&CK Code Signing guidance where signed trusted code is required.",
+      "rationale": "The control requires macros to be checked for malicious code before signing or placement in Trusted Locations, supporting ATT&CK Code Signing guidance.",
       "evidence": [
         {
           "kind": "curator-note",
@@ -169,15 +172,20 @@
       "effect": "constrain",
       "confidence": "medium",
       "control_ids": ["ism-1487", "ism-1815"],
-      "rationale": "The controls restrict the accounts and permissions used for administration, supporting ATT&CK Restrict File and Directory Permissions guidance in applicable paths.",
-      "evidence": [{ "kind": "curator-note", "note": "Permission bridge; not treated as an audit control." }]
+      "rationale": "The controls restrict write access to Trusted Locations and permissions to modify or delete event logs, supporting ATT&CK Restrict File and Directory Permissions guidance for those paths.",
+      "evidence": [
+        {
+          "kind": "curator-note",
+          "note": "Permissions and integrity bridge covering trusted macro locations and event logs."
+        }
+      ]
     },
     {
       "mitigation_id": "M1045",
       "effect": "prevent",
       "confidence": "medium",
       "control_ids": ["ism-1675", "ism-1891"],
-      "rationale": "The controls require trusted or signed code for privileged activity, supporting ATT&CK Code Signing guidance.",
+      "rationale": "The controls restrict Microsoft Office macro enablement to Trusted Locations or macros signed by trusted publishers, supporting ATT&CK Code Signing guidance.",
       "evidence": [
         { "kind": "curator-note", "note": "Signed-code requirement; exact technique applicability requires review." }
       ]
@@ -187,8 +195,8 @@
       "effect": "prevent",
       "confidence": "medium",
       "control_ids": ["ism-1485"],
-      "rationale": "The control restricts executable content in administrative environments, supporting ATT&CK Restrict Web-Based Content guidance in its stated scope.",
-      "evidence": [{ "kind": "curator-note", "note": "Administrative-environment scope only." }]
+      "rationale": "The control blocks web browsers from processing advertisements from the internet, supporting ATT&CK Restrict Web-Based Content guidance.",
+      "evidence": [{ "kind": "curator-note", "note": "Internet-advertisement blocking bridge." }]
     },
     {
       "mitigation_id": "M1026",
@@ -220,17 +228,15 @@
       "effect": "prevent",
       "confidence": "medium",
       "control_ids": ["ism-1688", "ism-1689"],
-      "rationale": "The controls restrict account creation and lifecycle behavior, supporting ATT&CK Account Use Policies guidance.",
-      "evidence": [
-        { "kind": "curator-note", "note": "Account-policy bridge limited to stated lifecycle requirements." }
-      ]
+      "rationale": "The controls restrict privileged and unprivileged account logons across their respective operating environments, supporting ATT&CK Account Use Policies guidance.",
+      "evidence": [{ "kind": "curator-note", "note": "Cross-boundary operating-environment logon policy bridge." }]
     },
     {
       "mitigation_id": "M1035",
       "effect": "constrain",
       "confidence": "medium",
       "control_ids": ["ism-1387"],
-      "rationale": "The control limits unnecessary services and features, supporting ATT&CK Limit Access to Resource Over Network guidance.",
+      "rationale": "The control requires administrative activity to pass through jump servers with limited network access, supporting ATT&CK Limit Access to Resource Over Network guidance.",
       "evidence": [
         {
           "kind": "curator-note",
@@ -272,8 +278,8 @@
       "effect": "prevent",
       "confidence": "medium",
       "control_ids": ["ism-1685"],
-      "rationale": "The control restricts password storage and handling, supporting ATT&CK Password Policies guidance.",
-      "evidence": [{ "kind": "curator-note", "note": "Credential-policy bridge limited to password handling." }]
+      "rationale": "The control requires credentials to be long, unique, unpredictable, and managed, supporting ATT&CK Password Policies guidance.",
+      "evidence": [{ "kind": "curator-note", "note": "Credential-quality and management policy bridge." }]
     },
     {
       "mitigation_id": "M1043",

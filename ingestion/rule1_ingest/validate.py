@@ -234,7 +234,7 @@ def validate_database(
         attack_releases = connection.execute(
             "SELECT version, release_date, domain FROM attack_releases ORDER BY ordinal"
         ).fetchall()
-        if attack_releases != [("19.2", "2026-08-05", "enterprise-attack")]:
+        if attack_releases != [("19.2", "2026-08-06", "enterprise-attack")]:
             raise ValueError(f"unexpected ATT&CK releases: {attack_releases}")
         invalid_attack_rows = connection.execute(
             "SELECT (SELECT COUNT(*) FROM attack_techniques WHERE TRIM(technique_id)='' "

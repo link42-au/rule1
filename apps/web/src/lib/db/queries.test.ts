@@ -382,6 +382,8 @@ describe("Rule1 query dispatcher", () => {
     const attackCall = executor.calls.find((call) => call.name === "attack-mappings");
     expect(attackCall?.bind).toEqual(["ism-1173"]);
     expect(attackCall?.sql).toContain("m.status = 'reviewed'");
+    expect(attackCall?.sql).toContain("ORDER BY m.technique_id, m.mitigation_id, b.effect");
+    expect(attackCall?.sql).not.toContain("m.effect");
     expect(attackCall?.sql).not.toContain("candidate");
 
     const callsBeforeGate = executor.calls.length;

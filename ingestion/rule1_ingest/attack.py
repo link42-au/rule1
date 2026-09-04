@@ -15,7 +15,7 @@ EFFECTS = frozenset({"prevent", "constrain", "detect", "recover"})
 CONFIDENCES = frozenset({"low", "medium", "high"})
 DECISION_STATUSES = frozenset({"reviewed", "rejected"})
 ATTACK_VERSION = "19.2"
-ATTACK_RELEASE_DATE = "2026-08-05"
+ATTACK_RELEASE_DATE = "2026-08-06"
 ISM_VERSION = "ISM-OSCAL-2026.09.4"
 E8_CONTROL_COUNT = 126
 

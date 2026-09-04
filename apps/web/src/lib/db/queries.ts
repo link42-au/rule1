@@ -378,7 +378,7 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       AND b.attack_version = (
         SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
       )
-    ORDER BY m.technique_id, m.mitigation_id, m.effect`,
+    ORDER BY m.technique_id, m.mitigation_id, b.effect`,
       [params.id.toLowerCase()],
     ),
   ]);

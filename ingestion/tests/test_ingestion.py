@@ -344,6 +344,34 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigation_techniques").fetchone()[0], 1_448)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_bridges").fetchone()[0], 122)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_mappings").fetchone()[0], 6_592)
+            m1025_bridges = connection.execute(
+                "SELECT rationale, evidence FROM control_attack_bridges "
+                "WHERE mitigation_id='M1025' ORDER BY control_id"
+            ).fetchall()
+            self.assertEqual(len(m1025_bridges), 2)
+            self.assertTrue(all("Privileged Process Integrity" in row[0] for row in m1025_bridges))
+            self.assertTrue(all("Privileged Account Management" not in row[0] for row in m1025_bridges))
+            self.assertTrue(all("privileged-process integrity" in row[1].lower() for row in m1025_bridges))
+            representative_bridge_wording = (
+                ("ism-1582", "M1047", "ruleset assurance"),
+                ("ism-1859", "M1054", "hardened security settings"),
+                ("ism-1672", "M1049", "antivirus scanning of Microsoft Office macros"),
+                ("ism-1890", "M1045", "checked for malicious code before signing"),
+                ("ism-1487", "M1022", "write access to Trusted Locations"),
+                ("ism-1675", "M1045", "macro enablement"),
+                ("ism-1485", "M1021", "processing advertisements from the internet"),
+                ("ism-1688", "M1036", "operating environments"),
+                ("ism-1387", "M1035", "jump servers"),
+                ("ism-1685", "M1027", "long, unique, unpredictable, and managed"),
+            )
+            for control_id, mitigation_id, wording in representative_bridge_wording:
+                rationale = connection.execute(
+                    "SELECT rationale FROM control_attack_bridges "
+                    "WHERE control_id=? AND mitigation_id=?",
+                    (control_id, mitigation_id),
+                ).fetchone()
+                self.assertIsNotNone(rationale)
+                self.assertIn(wording, rationale[0])
             self.assertEqual(
                 dict(connection.execute(
                     "SELECT status, COUNT(*) FROM control_attack_mappings GROUP BY status"

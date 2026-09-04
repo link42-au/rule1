@@ -3,7 +3,7 @@
     {
       "framework": "mitre-attack-enterprise",
       "version": "19.2",
-      "date": "2026-08-05",
+      "date": "2026-08-06",
       "path": "data/attack/enterprise-attack-19.2.json",
       "origin": "https://raw.githubusercontent.com/mitre/cti/ATT%26CK-v19.2/enterprise-attack/enterprise-attack.json",
       "sha256": "f7eaf37fe53b50404084fe1fe67237278f7317e61c11ad550295722d13ede259"
