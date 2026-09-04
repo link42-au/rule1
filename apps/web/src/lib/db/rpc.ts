@@ -127,6 +127,7 @@ export const createRule1DataClient = (rpc: Rule1WorkerRpc): Rule1DataClient => (
   control: (params: ControlParams) => rpc.query("control", params),
   controlHistory: (params: ControlParams) => rpc.query("controlHistory", params),
   e8Mappings: (params: E8MappingParams): Promise<E8Mapping[]> => rpc.query("e8Mappings", params),
+  attackMappings: (params: ControlParams) => rpc.query("attackMappings", params),
   graph: (params: ControlParams) => rpc.query("graph", params),
   compare: (params: CompareParams) => rpc.query("compare", params),
   terms: (params: FrameworkParams): Promise<TermsResult> => rpc.query("terms", params),

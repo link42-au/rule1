@@ -311,9 +311,16 @@ class DatabaseTests(unittest.TestCase):
             first = Path(directory) / "first.sqlite3"
             second = Path(directory) / "second.sqlite3"
             build_database(ROOT, first)
+            first_report = (ROOT / "mappings/generated/attack-mapping-review.json").read_bytes()
+            first_layer = (ROOT / "mappings/generated/attack-navigator-layer.json").read_bytes()
             build_database(ROOT, second)
             self.assertEqual(first.read_bytes(), second.read_bytes())
             self.assertEqual(hashlib.sha256(first.read_bytes()).hexdigest(), hashlib.sha256(second.read_bytes()).hexdigest())
+            self.assertEqual(first_report, (ROOT / "mappings/generated/attack-mapping-review.json").read_bytes())
+            self.assertEqual(first_layer, (ROOT / "mappings/generated/attack-navigator-layer.json").read_bytes())
+            self.assertNotIn(b'"status": "candidate"', first_layer)
+            self.assertNotIn(b'"status": "rejected"', first_layer)
+            self.assertNotIn(b"defeat", first_layer.lower())
             validate_database(ROOT, first, ROOT / "ingestion/validation-contract.json")
 
     def test_schema_versions_counts_and_integrity(self) -> None:
@@ -323,7 +330,7 @@ class DatabaseTests(unittest.TestCase):
         validate_database(ROOT, database, ROOT / "ingestion/validation-contract.json")
         with sqlite3.connect(database) as connection:
             self.assertEqual(connection.execute("PRAGMA application_id").fetchone()[0], 1_381_321_777)
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 2)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 3)
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchall(), [("ok",)])
             self.assertEqual(
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
@@ -331,6 +338,32 @@ class DatabaseTests(unittest.TestCase):
             )
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 80)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 82)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_source_files").fetchone()[0], 1)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_techniques").fetchone()[0], 697)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigations").fetchone()[0], 44)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigation_techniques").fetchone()[0], 1_448)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_bridges").fetchone()[0], 122)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_mappings").fetchone()[0], 6_592)
+            self.assertEqual(
+                dict(connection.execute(
+                    "SELECT status, COUNT(*) FROM control_attack_mappings GROUP BY status"
+                )),
+                {"candidate": 6_592},
+            )
+            indexes = {row[0] for row in connection.execute(
+                "SELECT name FROM sqlite_schema WHERE type='index'"
+            )}
+            self.assertTrue({
+                "idx_attack_technique_parent", "idx_attack_relationship_technique",
+                "idx_attack_bridge_control", "idx_attack_mapping_technique",
+                "idx_attack_mapping_status",
+            }.issubset(indexes))
+            connection.execute("PRAGMA foreign_keys=ON")
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute(
+                    "INSERT INTO control_attack_mappings VALUES "
+                    "('invalid-bridge','19.2','M1032','T1078','candidate',NULL,NULL,NULL,NULL)"
+                )
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_063)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM annotations").fetchone()[0], 1_146)
             annotation = connection.execute(

@@ -333,6 +333,64 @@ describe("Rule1 query dispatcher", () => {
     expect(executor.calls.some((call) => call.name === "e8-mappings")).toBe(false);
   });
 
+  it("exposes only reviewed ATT&CK mappings and gates non-ISM requests before SQL", async () => {
+    const executor = new FixtureExecutor({
+      "attack-mapping-versions": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+        },
+      ],
+      "attack-mappings": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+          technique_id: "T1110",
+          technique_name: "Brute Force",
+          technique_description: "Attempt credentials.",
+          technique_url: "https://attack.mitre.org/techniques/T1110/",
+          tactics: '["credential-access"]',
+          platforms: '["Windows"]',
+          parent_technique_id: null,
+          mitigation_id: "M1032",
+          mitigation_name: "Multi-factor Authentication",
+          mitigation_description: "Use MFA.",
+          mitigation_url: "https://attack.mitre.org/mitigations/M1032/",
+          effect: "prevent",
+          confidence: "high",
+          rationale: "MFA may prevent successful use of guessed credentials.",
+          bridge_evidence: '[{"kind":"bridge"}]',
+          decision_evidence: '[{"kind":"review"}]',
+        },
+      ],
+    });
+
+    await expect(
+      dispatchRule1Query(executor, "attackMappings", { framework: "ism", id: "ISM-1173" }),
+    ).resolves.toMatchObject({
+      ismCatalogVersion: "ISM-OSCAL-2026.09.4",
+      attackVersion: "19.2",
+      mappings: [
+        {
+          techniqueId: "T1110",
+          mitigationId: "M1032",
+          tactics: ["credential-access"],
+          evidence: [{ kind: "bridge" }, { kind: "review" }],
+        },
+      ],
+    });
+    const attackCall = executor.calls.find((call) => call.name === "attack-mappings");
+    expect(attackCall?.bind).toEqual(["ism-1173"]);
+    expect(attackCall?.sql).toContain("m.status = 'reviewed'");
+    expect(attackCall?.sql).not.toContain("candidate");
+
+    const callsBeforeGate = executor.calls.length;
+    await expect(
+      dispatchRule1Query(executor, "attackMappings", { framework: "nzism", id: "nzism-1" }),
+    ).resolves.toEqual({ ismCatalogVersion: null, attackVersion: null, mappings: [] });
+    expect(executor.calls).toHaveLength(callsBeforeGate);
+  });
+
   it("validates compare versions and returns term history", async () => {
     const executor = new FixtureExecutor({
       versions: [

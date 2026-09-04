@@ -19,6 +19,7 @@ import {
   type CompareParams,
   type ControlParams,
   type ControlsResult,
+  type AttackMappingResult,
   type E8Mapping,
   type E8MappingParams,
   type FrameworkParams,
@@ -39,6 +40,7 @@ export type Rule1QueryMethod =
   | "control"
   | "controlHistory"
   | "e8Mappings"
+  | "attackMappings"
   | "graph"
   | "compare"
   | "terms"
@@ -344,6 +346,68 @@ async function e8Mappings(executor: QueryExecutor, params: E8MappingParams): Pro
   return rows.map((row) => ({ level: text(row.level), strategy: text(row.strategy) }));
 }
 
+async function attackMappings(executor: QueryExecutor, params: ControlParams): Promise<AttackMappingResult> {
+  const framework = canonicalFrameworkId(params.framework);
+  if (framework !== "ism") return { ismCatalogVersion: null, attackVersion: null, mappings: [] };
+  const [versionRows, rows] = await Promise.all([
+    executor.all<Row>(`/* rule1:attack-mapping-versions */
+      SELECT
+        (SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1)
+          AS ism_catalog_version,
+        (SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1)
+          AS attack_version`),
+    executor.all<Row>(
+      `/* rule1:attack-mappings */
+    SELECT b.ism_catalog_version, b.attack_version, m.technique_id, t.name AS technique_name,
+      t.description AS technique_description, t.url AS technique_url, t.tactics, t.platforms,
+      t.parent_technique_id, b.mitigation_id, g.name AS mitigation_name,
+      g.description AS mitigation_description, g.url AS mitigation_url,
+      b.effect, b.confidence, COALESCE(m.rationale, b.rationale) AS rationale,
+      b.evidence AS bridge_evidence, m.evidence AS decision_evidence
+    FROM control_attack_mappings m
+    JOIN control_attack_bridges b ON b.bridge_id = m.bridge_id
+      AND b.attack_version = m.attack_version AND b.mitigation_id = m.mitigation_id
+    JOIN attack_techniques t ON t.attack_version = m.attack_version
+      AND t.technique_id = m.technique_id
+    JOIN attack_mitigations g ON g.attack_version = m.attack_version
+      AND g.mitigation_id = m.mitigation_id
+    WHERE b.framework = 'ism' AND b.control_id = ? AND m.status = 'reviewed'
+      AND b.ism_catalog_version = (
+        SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+      )
+      AND b.attack_version = (
+        SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
+      )
+    ORDER BY m.technique_id, m.mitigation_id, m.effect`,
+      [params.id.toLowerCase()],
+    ),
+  ]);
+  const versions = versionRows[0];
+  return {
+    ismCatalogVersion: nullableText(versions?.ism_catalog_version),
+    attackVersion: nullableText(versions?.attack_version),
+    mappings: rows.map((row) => ({
+      attackVersion: text(row.attack_version),
+      ismCatalogVersion: text(row.ism_catalog_version),
+      techniqueId: text(row.technique_id),
+      techniqueName: text(row.technique_name),
+      techniqueDescription: nullableText(row.technique_description),
+      techniqueUrl: text(row.technique_url),
+      tactics: jsonArray(row.tactics),
+      platforms: jsonArray(row.platforms),
+      parentTechniqueId: nullableText(row.parent_technique_id),
+      mitigationId: text(row.mitigation_id),
+      mitigationName: text(row.mitigation_name),
+      mitigationDescription: nullableText(row.mitigation_description),
+      mitigationUrl: text(row.mitigation_url),
+      effect: text(row.effect) as "prevent" | "constrain" | "detect" | "recover",
+      confidence: text(row.confidence) as "low" | "medium" | "high",
+      rationale: text(row.rationale),
+      evidence: [...jsonRecords(row.bridge_evidence), ...jsonRecords(row.decision_evidence)],
+    })),
+  };
+}
+
 async function control(executor: QueryExecutor, params: ControlParams): Promise<ControlDetail | null> {
   const framework = canonicalFrameworkId(params.framework);
   const id = params.id.toLowerCase();
@@ -550,6 +614,8 @@ export async function dispatchRule1Query(
       return controlHistory(executor, controlParams(params));
     case "e8Mappings":
       return e8Mappings(executor, e8Params(params));
+    case "attackMappings":
+      return attackMappings(executor, controlParams(params));
     case "graph":
       return graph(executor, controlParams(params));
     case "compare":

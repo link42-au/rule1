@@ -1,0 +1,11 @@
+{
+  "description": "Reviewed ISM Essential Eight mappings. A mapping indicates that a control may prevent, constrain, detect, or support recovery from a technique; it is not a guarantee.",
+  "domain": "enterprise-attack",
+  "name": "Rule1 Essential Eight to Enterprise ATT&CK",
+  "techniques": [],
+  "versions": {
+    "attack": "19.2",
+    "layer": "4.5",
+    "navigator": "5.1.0"
+  }
+}

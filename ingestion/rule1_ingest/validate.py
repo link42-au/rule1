@@ -12,7 +12,9 @@ from typing import Any
 from .annotations import LEGACY_MANIFEST_SHA256
 
 TABLES = (
-    "annotations", "build_counts", "build_metadata", "catalog_versions", "control_groups", "control_history",
+    "annotations", "attack_mitigation_techniques", "attack_mitigations", "attack_releases",
+    "attack_source_files", "attack_techniques", "build_counts", "build_metadata", "catalog_versions",
+    "control_attack_bridges", "control_attack_mappings", "control_groups", "control_history",
     "e8_mappings", "frameworks", "source_files", "term_history",
 )
 
@@ -58,6 +60,14 @@ def _database_contract(connection: sqlite3.Connection, ledger_sha: str) -> dict[
         "source_ledger_sha256": ledger_sha,
         "schema_sha256": _schema_fingerprint(connection),
         "tables": list(TABLES),
+        "attack_versions": [row[0] for row in connection.execute(
+            "SELECT version FROM attack_releases ORDER BY ordinal"
+        )],
+        "attack_mapping_status_counts": {
+            status: count for status, count in connection.execute(
+                "SELECT status, COUNT(*) FROM control_attack_mappings GROUP BY status ORDER BY status"
+            )
+        },
         "framework_versions": versions,
         "row_counts": overall,
         "version_row_counts": version_counts,
@@ -85,6 +95,7 @@ def validate_database(
     ledger_sha = hashlib.sha256(ledger_payload).hexdigest()
     seen_paths: set[str] = set()
     expected_sources: list[tuple[str, str, str, str, str, str]] = []
+    expected_attack_sources: list[tuple[str, str, str, str, str]] = []
     root_real = root.resolve()
     for source in ledger:
         required = ("path", "framework", "version", "date", "origin", "sha256")
@@ -107,8 +118,16 @@ def validate_database(
         actual_sha = _sha256(path)
         if actual_sha != source["sha256"]:
             raise ValueError(f"source checksum mismatch: {relative}")
-        expected_sources.append((relative, source["framework"], source["version"], source["date"], source["origin"], source["sha256"]))
-    expected_versions = sorted({(item["framework"], item["version"], item["date"]) for item in ledger})
+        if source["framework"] == "mitre-attack-enterprise":
+            expected_attack_sources.append(
+                (relative, source["version"], source["date"], source["origin"], source["sha256"])
+            )
+        else:
+            expected_sources.append((relative, source["framework"], source["version"], source["date"], source["origin"], source["sha256"]))
+    expected_versions = sorted({
+        (item["framework"], item["version"], item["date"])
+        for item in ledger if item["framework"] != "mitre-attack-enterprise"
+    })
 
     with sqlite3.connect(f"file:{database}?mode=ro", uri=True) as connection:
         tables = tuple(row[0] for row in connection.execute(
@@ -118,7 +137,7 @@ def validate_database(
             raise ValueError(f"unexpected database tables: {tables}")
         if connection.execute("PRAGMA application_id").fetchone()[0] != 1381321777:
             raise ValueError("unexpected application_id")
-        if connection.execute("PRAGMA user_version").fetchone()[0] != 2:
+        if connection.execute("PRAGMA user_version").fetchone()[0] != 3:
             raise ValueError("unexpected user_version")
         if connection.execute("PRAGMA page_size").fetchone()[0] != 4096:
             raise ValueError("unexpected page_size")
@@ -127,6 +146,11 @@ def validate_database(
         annotation_manifest_path = root / "annotations/legacy-preservation.json"
         annotation_sha = _sha256(annotation_path)
         annotation_manifest_sha = _sha256(annotation_manifest_path)
+        bridges_path = root / "mappings/ism-e8-attack-bridges.json"
+        decisions_path = root / "mappings/ism-e8-attack-decisions.json"
+        attack_source = next(
+            item for item in ledger if item["framework"] == "mitre-attack-enterprise"
+        )
         if annotation_manifest_sha != LEGACY_MANIFEST_SHA256:
             raise ValueError("legacy annotation preservation manifest checksum mismatch")
         expected_metadata = {
@@ -134,7 +158,10 @@ def validate_database(
             "annotation_legacy_manifest_sha256": annotation_manifest_sha,
             "annotation_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
             "annotation_prompt_version": "legacy-rule1-v1",
-            "schema_version": "2",
+            "attack_bridge_sha256": _sha256(bridges_path),
+            "attack_decisions_sha256": _sha256(decisions_path),
+            "attack_source_sha256": attack_source["sha256"],
+            "schema_version": "3",
             "source_ledger_sha256": ledger_sha,
             "sqlite_version": sqlite3.sqlite_version,
         }
@@ -199,6 +226,49 @@ def validate_database(
         ).fetchall()
         if actual_sources != sorted(expected_sources):
             raise ValueError("database provenance rows do not exactly match source ledger")
+        actual_attack_sources = connection.execute(
+            "SELECT path, version, source_date, origin, sha256 FROM attack_source_files ORDER BY path"
+        ).fetchall()
+        if actual_attack_sources != sorted(expected_attack_sources):
+            raise ValueError("database ATT&CK provenance rows do not exactly match source ledger")
+        attack_releases = connection.execute(
+            "SELECT version, release_date, domain FROM attack_releases ORDER BY ordinal"
+        ).fetchall()
+        if attack_releases != [("19.2", "2026-08-05", "enterprise-attack")]:
+            raise ValueError(f"unexpected ATT&CK releases: {attack_releases}")
+        invalid_attack_rows = connection.execute(
+            "SELECT (SELECT COUNT(*) FROM attack_techniques WHERE TRIM(technique_id)='' "
+            "OR TRIM(stix_id)='' OR TRIM(name)='' OR TRIM(url)='' OR json_valid(tactics)=0 "
+            "OR json_valid(platforms)=0) + "
+            "(SELECT COUNT(*) FROM attack_mitigations WHERE TRIM(mitigation_id)='' "
+            "OR TRIM(stix_id)='' OR TRIM(name)='' OR TRIM(url)='') + "
+            "(SELECT COUNT(*) FROM attack_mitigation_techniques WHERE TRIM(relationship_stix_id)='')"
+        ).fetchone()[0]
+        if invalid_attack_rows:
+            raise ValueError(f"invalid ATT&CK rows: {invalid_attack_rows}")
+        invalid_bridges = connection.execute(
+            "SELECT COUNT(*) FROM control_attack_bridges WHERE framework!='ism' "
+            "OR ism_catalog_version!='ISM-OSCAL-2026.09.4' OR attack_version!='19.2' "
+            "OR json_valid(evidence)=0 OR json_array_length(evidence)=0 OR TRIM(rationale)=''"
+        ).fetchone()[0]
+        if invalid_bridges:
+            raise ValueError(f"invalid control-to-ATT&CK bridges: {invalid_bridges}")
+        invalid_mappings = connection.execute(
+            "SELECT COUNT(*) FROM control_attack_mappings WHERE attack_version!='19.2' "
+            "OR (status='candidate' AND (rationale IS NOT NULL OR evidence IS NOT NULL "
+            "OR reviewed_by IS NOT NULL OR reviewed_at IS NOT NULL)) "
+            "OR (status IN ('reviewed','rejected') AND (TRIM(rationale)='' OR json_valid(evidence)=0 "
+            "OR json_array_length(evidence)=0 OR reviewed_by IS NULL OR reviewed_at IS NULL))"
+        ).fetchone()[0]
+        if invalid_mappings:
+            raise ValueError(f"invalid control-to-ATT&CK mappings: {invalid_mappings}")
+        non_e8_mappings = connection.execute(
+            "SELECT COUNT(*) FROM control_attack_bridges b WHERE NOT EXISTS ("
+            "SELECT 1 FROM e8_mappings e WHERE e.framework=b.framework "
+            "AND e.catalog_version=b.ism_catalog_version AND e.control_id=b.control_id)"
+        ).fetchone()[0]
+        if non_e8_mappings:
+            raise ValueError(f"non-Essential Eight ATT&CK mappings: {non_e8_mappings}")
         actual_versions = connection.execute(
             "SELECT framework, version, commit_date FROM catalog_versions ORDER BY framework, version, commit_date"
         ).fetchall()

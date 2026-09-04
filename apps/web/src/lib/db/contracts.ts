@@ -57,6 +57,32 @@ export interface E8Mapping {
   strategy: string;
 }
 
+export interface AttackMapping {
+  attackVersion: string;
+  ismCatalogVersion: string;
+  techniqueId: string;
+  techniqueName: string;
+  techniqueDescription: string | null;
+  techniqueUrl: string;
+  tactics: string[];
+  platforms: string[];
+  parentTechniqueId: string | null;
+  mitigationId: string;
+  mitigationName: string;
+  mitigationDescription: string | null;
+  mitigationUrl: string;
+  effect: "prevent" | "constrain" | "detect" | "recover";
+  confidence: "low" | "medium" | "high";
+  rationale: string;
+  evidence: Record<string, unknown>[];
+}
+
+export interface AttackMappingResult {
+  ismCatalogVersion: string | null;
+  attackVersion: string | null;
+  mappings: AttackMapping[];
+}
+
 export interface Rule1DataClient {
   frameworks(): Promise<Framework[]>;
   stats(params: FrameworkParams): Promise<Stats>;
@@ -69,6 +95,7 @@ export interface Rule1DataClient {
   control(params: ControlParams): Promise<ControlDetail | null>;
   controlHistory(params: ControlParams): Promise<Revision[]>;
   e8Mappings(params: E8MappingParams): Promise<E8Mapping[]>;
+  attackMappings(params: ControlParams): Promise<AttackMappingResult>;
   graph(params: ControlParams): Promise<GraphData>;
   compare(params: CompareParams): Promise<CompareResponse>;
   terms(params: FrameworkParams): Promise<TermsResult>;
