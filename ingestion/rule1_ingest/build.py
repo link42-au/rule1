@@ -14,7 +14,13 @@ from .parsers import Snapshot, build_all_histories
 from .annotations import MODEL as ANNOTATION_MODEL
 from .annotations import PROMPT_VERSION as ANNOTATION_PROMPT_VERSION
 from .annotations import load_cache as load_annotation_cache
-from .attack import load_and_expand_mappings, parse_attack_bundle, write_review_artifacts
+from .attack import (
+    apply_decisions,
+    expand_discovery_relationships,
+    load_mapping_inputs,
+    parse_attack_bundle,
+    write_review_artifacts,
+)
 
 FRAMEWORKS = (
     ("cyber-essentials", "Cyber Essentials", "CE", "UK National Cyber Security Centre", "https://www.ncsc.gov.uk/cyberessentials/overview", "United Kingdom", "#2563eb"),
@@ -152,8 +158,10 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
     )
     attack_catalog = parse_attack_bundle(root / attack_source["path"])
     bridges_path = root / "mappings/ism-e8-attack-bridges.json"
+    candidates_path = root / "mappings/ism-e8-attack-candidates.json"
     decisions_path = root / "mappings/ism-e8-attack-decisions.json"
     bridges_sha = hashlib.sha256(bridges_path.read_bytes()).hexdigest()
+    candidates_sha = hashlib.sha256(candidates_path.read_bytes()).hexdigest()
     decisions_sha = hashlib.sha256(decisions_path.read_bytes()).hexdigest()
     with sqlite3.connect(output) as connection:
         connection.execute("PRAGMA journal_mode=OFF")
@@ -173,18 +181,23 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
                 (current_ism_version,),
             )
         }
-        bridges, decisions, attack_mappings = load_and_expand_mappings(
-            bridges_path, decisions_path, allowed_controls, attack_catalog
-        )
         ism_source = next(
             source for source in sources
             if source["framework"] == "ism" and source["version"] == current_ism_version
         )
-        control_statements = dict(connection.execute(
+        all_control_statements = dict(connection.execute(
             "SELECT control_id, COALESCE(statement, '') FROM control_history "
             "WHERE framework='ism' AND catalog_version=?",
             (current_ism_version,),
         ))
+        control_statements = {
+            control_id: all_control_statements[control_id] for control_id in allowed_controls
+        }
+        bridges, candidates, decisions = load_mapping_inputs(
+            bridges_path, candidates_path, decisions_path, control_statements, attack_catalog
+        )
+        discovery_relationships = expand_discovery_relationships(bridges, attack_catalog)
+        attack_mappings = apply_decisions(candidates, decisions)
         mitigations_by_id = {
             item["mitigation_id"]: item for item in attack_catalog["mitigations"]
         }
@@ -197,7 +210,7 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
             mitigation = mitigations_by_id[mapping["mitigation_id"]]
             technique = techniques_by_id[mapping["technique_id"]]
             review_mappings.append({**mapping, "evidence": [*mapping["evidence"], {
-                "kind": "ism-control",
+                "kind": "ism-source-provenance",
                 "framework": "ism",
                 "catalog_version": current_ism_version,
                 "control_id": mapping["control_id"],
@@ -211,12 +224,15 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
                 "url": mitigation["url"],
                 "source_sha256": attack_source["sha256"],
             }, {
-                "kind": "attack-technique-relationship",
+                "kind": "attack-technique-provenance",
                 "technique_id": technique["technique_id"],
                 "technique_stix_id": technique["stix_id"],
                 "technique_url": technique["url"],
                 "relationship_stix_id": mapping["relationship_stix_id"],
             }]})
+        review_mappings_by_id = {
+            mapping["candidate_id"]: mapping for mapping in review_mappings
+        }
         bridge_evidence = {}
         for bridge in bridges:
             statement = control_statements[bridge["control_id"]]
@@ -285,13 +301,15 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
                 ),
             )
         for mapping in attack_mappings:
+            review_mapping = review_mappings_by_id[mapping["candidate_id"]]
             connection.execute(
-                "INSERT INTO control_attack_mappings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO control_attack_mappings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
+                    mapping["candidate_id"],
                     mapping["bridge_id"], mapping["attack_version"], mapping["mitigation_id"],
-                    mapping["technique_id"], mapping["status"],
-                    mapping["rationale"] if mapping["status"] != "candidate" else None,
-                    canonical_json(mapping["evidence"]) if mapping["status"] != "candidate" else None,
+                    mapping["technique_id"], mapping["relationship_stix_id"], mapping["effect"],
+                    mapping["confidence"], mapping["status"], mapping["rationale"],
+                    canonical_json(review_mapping["evidence"]),
                     mapping["reviewed_by"], mapping["reviewed_at"],
                 ),
             )
@@ -320,16 +338,19 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
             ("annotation_model", ANNOTATION_MODEL),
             ("annotation_prompt_version", ANNOTATION_PROMPT_VERSION),
             ("attack_bridge_sha256", bridges_sha),
+            ("attack_candidates_sha256", candidates_sha),
             ("attack_decisions_sha256", decisions_sha),
             ("attack_source_sha256", attack_source["sha256"]),
-            ("schema_version", "3"),
+            ("schema_version", "4"),
             ("sqlite_version", sqlite3.sqlite_version),
             ("source_ledger_sha256", ledger_sha),
         ))
         _record_counts(connection)
         connection.commit()
         connection.execute("VACUUM")
-    write_review_artifacts(root, attack_catalog, bridges, review_mappings)
+    write_review_artifacts(
+        root, attack_catalog, bridges, discovery_relationships, review_mappings
+    )
     return output
 
 

@@ -311,16 +311,21 @@ class DatabaseTests(unittest.TestCase):
             first = Path(directory) / "first.sqlite3"
             second = Path(directory) / "second.sqlite3"
             build_database(ROOT, first)
+            first_discovery = (ROOT / "mappings/generated/attack-discovery-report.json").read_bytes()
             first_report = (ROOT / "mappings/generated/attack-mapping-review.json").read_bytes()
             first_layer = (ROOT / "mappings/generated/attack-navigator-layer.json").read_bytes()
             build_database(ROOT, second)
             self.assertEqual(first.read_bytes(), second.read_bytes())
             self.assertEqual(hashlib.sha256(first.read_bytes()).hexdigest(), hashlib.sha256(second.read_bytes()).hexdigest())
+            self.assertEqual(first_discovery, (ROOT / "mappings/generated/attack-discovery-report.json").read_bytes())
             self.assertEqual(first_report, (ROOT / "mappings/generated/attack-mapping-review.json").read_bytes())
             self.assertEqual(first_layer, (ROOT / "mappings/generated/attack-navigator-layer.json").read_bytes())
             self.assertNotIn(b'"status": "candidate"', first_layer)
             self.assertNotIn(b'"status": "rejected"', first_layer)
             self.assertNotIn(b"defeat", first_layer.lower())
+            discovery = json.loads(first_discovery)
+            self.assertEqual(discovery["counts"]["discovery_relationships"], 6_592)
+            self.assertIn("not candidates or mappings", discovery["purpose"])
             validate_database(ROOT, first, ROOT / "ingestion/validation-contract.json")
 
     def test_schema_versions_counts_and_integrity(self) -> None:
@@ -330,7 +335,7 @@ class DatabaseTests(unittest.TestCase):
         validate_database(ROOT, database, ROOT / "ingestion/validation-contract.json")
         with sqlite3.connect(database) as connection:
             self.assertEqual(connection.execute("PRAGMA application_id").fetchone()[0], 1_381_321_777)
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 3)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 4)
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchall(), [("ok",)])
             self.assertEqual(
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
@@ -343,7 +348,7 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigations").fetchone()[0], 44)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigation_techniques").fetchone()[0], 1_448)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_bridges").fetchone()[0], 122)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_mappings").fetchone()[0], 6_592)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_mappings").fetchone()[0], 16)
             m1025_bridges = connection.execute(
                 "SELECT rationale, evidence FROM control_attack_bridges "
                 "WHERE mitigation_id='M1025' ORDER BY control_id"
@@ -376,8 +381,25 @@ class DatabaseTests(unittest.TestCase):
                 dict(connection.execute(
                     "SELECT status, COUNT(*) FROM control_attack_mappings GROUP BY status"
                 )),
-                {"candidate": 6_592},
+                {"candidate": 16},
             )
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(DISTINCT b.control_id) FROM control_attack_mappings m "
+                "JOIN control_attack_bridges b USING (bridge_id)"
+            ).fetchone()[0], 15)
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM control_attack_mappings m "
+                "JOIN control_attack_bridges b USING (bridge_id) "
+                "WHERE b.control_id IN ('ism-1698','ism-1701','ism-1702')"
+            ).fetchone()[0], 0)
+            direct = connection.execute(
+                "SELECT effect, confidence, rationale, evidence FROM control_attack_mappings "
+                "WHERE candidate_id='ism-e8-1622-m1038-prevent-t1059-001'"
+            ).fetchone()
+            self.assertEqual(direct[:2], ("constrain", "high"))
+            self.assertIn("PowerShell (T1059.001)", direct[2])
+            self.assertIn('"kind":"ism-control"', direct[3])
+            self.assertIn('"kind":"attack-relationship"', direct[3])
             indexes = {row[0] for row in connection.execute(
                 "SELECT name FROM sqlite_schema WHERE type='index'"
             )}
@@ -390,7 +412,9 @@ class DatabaseTests(unittest.TestCase):
             with self.assertRaises(sqlite3.IntegrityError):
                 connection.execute(
                     "INSERT INTO control_attack_mappings VALUES "
-                    "('invalid-bridge','19.2','M1032','T1078','candidate',NULL,NULL,NULL,NULL)"
+                    "('invalid-candidate','invalid-bridge','19.2','M1032','T1078',"
+                    "'relationship--98167cc6-96de-4f02-83b1-78d7633c4106',"
+                    "'prevent','high','candidate','Specific rationale','[{\"kind\":\"test\"}]',NULL,NULL)"
                 )
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_063)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM annotations").fetchone()[0], 1_146)

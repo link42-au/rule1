@@ -2,7 +2,7 @@
   "schema_version": 1,
   "ism_catalog_version": "ISM-OSCAL-2026.09.4",
   "attack_version": "19.2",
-  "method": "Conservatively curated ISM control to ATT&CK mitigation bridges. Expansion through official ATT&CK mitigates relationships produces candidates only and is not authoritative without an exact human review decision.",
+  "method": "Conservatively curated ISM control-to-ATT&CK mitigation bridges. Expansion through official ATT&CK mitigates relationships is discovery-only; it does not create candidates or mappings.",
   "bridges": [
     {
       "mitigation_id": "M1051",

@@ -10,6 +10,8 @@ The NZISM CSVs are pinned to the already-approved `jlaundry/nzism` commit record
 
 Enterprise ATT&CK 19.2 is pinned to MITRE CTI's signed immutable `ATT&CK-v19.2` tag. Rule1 ingests only active Enterprise techniques, sub-techniques, mitigations, and official `mitigates` relationships from the committed bundle. ATT&CK content is © The MITRE Corporation and used under Apache License 2.0; the project already retains that licence text at `LICENSES/Apache-2.0.txt`.
 
+Rule1 keeps ATT&CK discovery separate from mapping authority. Curated control-to-mitigation bridges are expanded through official relationships only into `mappings/generated/attack-discovery-report.json`; those 6,592 discovery rows are neither candidates nor mappings and are not stored in the browser database. `mappings/ism-e8-attack-candidates.json` is the explicit direct control-to-technique review input. Each candidate carries the exact bridge and ATT&CK relationship, candidate-specific effect, confidence, rationale, and evidence from both the current ISM statement and ATT&CK. Only candidates with a separate named human review decision can be exposed by the reviewed-only browser query.
+
 Known gaps kept outside this feature:
 
 - ASD's official OSCAL repository does not cover ISM editions before June 2022. Standalone ingestion therefore retains 45 PDFs through March 2022, then uses official OSCAL catalogs from June 2022 onward.

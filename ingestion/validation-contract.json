@@ -1,7 +1,7 @@
 {
   "application_id": 1381321777,
   "attack_mapping_status_counts": {
-    "candidate": 6592
+    "candidate": 16
   },
   "attack_versions": [
     "19.2"
@@ -109,7 +109,7 @@
     "attack_techniques": 697,
     "catalog_versions": 80,
     "control_attack_bridges": 122,
-    "control_attack_mappings": 6592,
+    "control_attack_mappings": 16,
     "control_groups": 12473,
     "control_history": 69887,
     "e8_mappings": 4213,
@@ -117,7 +117,7 @@
     "source_files": 82,
     "term_history": 4063
   },
-  "schema_sha256": "cbac2bee9283f7d7948314fe1d31bb8158911e05384f7a88abec7de75b434682",
+  "schema_sha256": "7da383d99093a54471105e5da00b96ae3c572a678bf707bd24986a7f479888dd",
   "source_ledger_sha256": "61ea7e9a3a4f6d20cc420b9f46f0ca70b58d6182c9cd8a4b92350306ff10f99e",
   "tables": [
     "annotations",
@@ -138,7 +138,7 @@
     "source_files",
     "term_history"
   ],
-  "user_version": 3,
+  "user_version": 4,
   "version_row_counts": {
     "cyber-essentials": {
       "CE-3.1": {

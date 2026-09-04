@@ -1,4 +1,4 @@
-"""Deterministic Enterprise ATT&CK parsing and ISM mapping expansion."""
+"""Deterministic Enterprise ATT&CK parsing, discovery, and direct ISM mappings."""
 
 from __future__ import annotations
 
@@ -65,8 +65,7 @@ class MappingBridge(TypedDict):
 
 
 class MappingDecision(TypedDict):
-    bridge_id: str
-    technique_id: str
+    candidate_id: str
     status: Literal["reviewed", "rejected"]
     rationale: str
     evidence: list[dict[str, Any]]
@@ -74,7 +73,7 @@ class MappingDecision(TypedDict):
     reviewed_at: str | None
 
 
-class ExpandedMapping(TypedDict):
+class DiscoveryRelationship(TypedDict):
     framework: Literal["ism"]
     ism_catalog_version: str
     attack_version: str
@@ -84,13 +83,32 @@ class ExpandedMapping(TypedDict):
     technique_id: str
     effect: Effect
     confidence: Confidence
+    bridge_rationale: str
+    bridge_evidence: list[dict[str, Any]]
+    relationship_stix_id: str
+    relationship_description: str
+
+
+class DirectCandidate(TypedDict):
+    candidate_id: str
+    framework: Literal["ism"]
+    ism_catalog_version: str
+    attack_version: str
+    bridge_id: str
+    control_id: str
+    mitigation_id: str
+    technique_id: str
+    relationship_stix_id: str
+    effect: Effect
+    confidence: Confidence
     rationale: str
     evidence: list[dict[str, Any]]
+
+
+class DirectMapping(DirectCandidate):
     status: MappingStatus
     reviewed_by: str | None
     reviewed_at: str | None
-    relationship_stix_id: str
-    relationship_description: str
 
 
 def _read_json(source: Path | dict[str, Any]) -> dict[str, Any]:
@@ -378,84 +396,194 @@ def load_bridges(
     return sorted(bridges, key=lambda item: item["bridge_id"])
 
 
+def load_candidates(
+    source: Path | dict[str, Any],
+    bridges: list[MappingBridge],
+    catalog: AttackCatalog,
+    control_statements: dict[str, str],
+) -> list[DirectCandidate]:
+    """Load explicitly selected, technique-specific direct candidates."""
+    document = _read_json(source)
+    _validate_versions(document, "direct candidate document")
+    values = document.get("candidates")
+    if not isinstance(values, list):
+        raise ValueError("direct candidate document must contain a candidates list")
+    unmapped_values = document.get("unmapped")
+    if not isinstance(unmapped_values, list):
+        raise ValueError("direct candidate document must contain an unmapped list")
+    unmapped_controls: set[str] = set()
+    for value in unmapped_values:
+        if not isinstance(value, dict):
+            raise ValueError("direct candidate unmapped group must be an object")
+        reason = _required_text(value, "reason", "direct candidate unmapped group")
+        control_ids = _string_list(
+            value, "control_ids", f"direct candidate unmapped group {reason}"
+        )
+        for control_id in control_ids:
+            if control_id not in control_statements:
+                raise ValueError(f"direct candidate unmapped list has unknown control: {control_id}")
+            if control_id in unmapped_controls:
+                raise ValueError(f"duplicate direct candidate unmapped control: {control_id}")
+            unmapped_controls.add(control_id)
+    bridges_by_id = {item["bridge_id"]: item for item in bridges}
+    techniques_by_id = {item["technique_id"]: item for item in catalog["techniques"]}
+    relationships_by_edge = {
+        (item["mitigation_id"], item["technique_id"]): item
+        for item in catalog["relationships"]
+    }
+    seen: set[str] = set()
+    candidates: list[DirectCandidate] = []
+    for value in values:
+        if not isinstance(value, dict):
+            raise ValueError("direct candidate must be an object")
+        candidate_id = _required_text(value, "candidate_id", "direct candidate")
+        bridge_id = _required_text(value, "bridge_id", f"direct candidate {candidate_id}")
+        technique_id = _required_text(value, "technique_id", f"direct candidate {candidate_id}")
+        relationship_stix_id = _required_text(
+            value, "relationship_stix_id", f"direct candidate {candidate_id}"
+        )
+        bridge = bridges_by_id.get(bridge_id)
+        if bridge is None:
+            raise ValueError(f"direct candidate has unknown bridge: {bridge_id}")
+        technique = techniques_by_id.get(technique_id)
+        if technique is None:
+            raise ValueError(f"direct candidate has unknown technique: {technique_id}")
+        relationship = relationships_by_edge.get((bridge["mitigation_id"], technique_id))
+        if relationship is None:
+            raise ValueError(
+                f"direct candidate technique is not related to bridge mitigation: {candidate_id}"
+            )
+        if relationship_stix_id != relationship["relationship_stix_id"]:
+            raise ValueError(f"direct candidate has incorrect relationship: {candidate_id}")
+        expected_id = f"{bridge_id}-{technique_id.lower().replace('.', '-')}"
+        if candidate_id != expected_id:
+            raise ValueError(f"direct candidate id must be {expected_id}")
+        if candidate_id in seen:
+            raise ValueError(f"duplicate direct candidate: {candidate_id}")
+        seen.add(candidate_id)
+        effect = _required_text(value, "effect", f"direct candidate {candidate_id}")
+        confidence = _required_text(value, "confidence", f"direct candidate {candidate_id}")
+        if effect not in EFFECTS:
+            raise ValueError(f"direct candidate has malformed effect: {effect}")
+        if confidence not in CONFIDENCES:
+            raise ValueError(f"direct candidate has malformed confidence: {confidence}")
+        rationale = _required_text(value, "rationale", f"direct candidate {candidate_id}")
+        if rationale == bridge["rationale"] or technique["name"].casefold() not in rationale.casefold():
+            raise ValueError(f"direct candidate has generic rationale: {candidate_id}")
+        evidence = _evidence_list(value, f"direct candidate {candidate_id}")
+        ism_evidence = [item for item in evidence if item.get("kind") == "ism-control"]
+        attack_evidence = [item for item in evidence if item.get("kind") == "attack-relationship"]
+        statement = control_statements.get(bridge["control_id"])
+        if len(ism_evidence) != 1 or statement is None or any(
+            item.get("control_id") != bridge["control_id"]
+            or item.get("catalog_version") != ISM_VERSION
+            or item.get("statement") != statement
+            for item in ism_evidence
+        ):
+            raise ValueError(f"direct candidate has incomplete ISM evidence: {candidate_id}")
+        if len(attack_evidence) != 1 or any(
+            item.get("attack_version") != ATTACK_VERSION
+            or item.get("mitigation_id") != bridge["mitigation_id"]
+            or item.get("technique_id") != technique_id
+            or item.get("technique_name") != technique["name"]
+            or item.get("relationship_stix_id") != relationship_stix_id
+            or not isinstance(item.get("relationship_summary"), str)
+            or not str(item["relationship_summary"]).strip()
+            for item in attack_evidence
+        ):
+            raise ValueError(f"direct candidate has incomplete ATT&CK evidence: {candidate_id}")
+        candidates.append({
+            "candidate_id": candidate_id,
+            "framework": "ism",
+            "ism_catalog_version": ISM_VERSION,
+            "attack_version": catalog["version"],
+            "bridge_id": bridge_id,
+            "control_id": bridge["control_id"],
+            "mitigation_id": bridge["mitigation_id"],
+            "technique_id": technique_id,
+            "relationship_stix_id": relationship_stix_id,
+            "effect": effect,  # type: ignore[typeddict-item]
+            "confidence": confidence,  # type: ignore[typeddict-item]
+            "rationale": rationale,
+            "evidence": evidence,
+        })
+    mapped_controls = {item["control_id"] for item in candidates}
+    overlap = mapped_controls & unmapped_controls
+    if overlap:
+        raise ValueError(f"direct candidate controls cannot also be unmapped: {sorted(overlap)}")
+    covered = mapped_controls | unmapped_controls
+    if covered != set(control_statements):
+        missing = sorted(set(control_statements) - covered)
+        extra = sorted(covered - set(control_statements))
+        raise ValueError(
+            f"direct candidate coverage must equal allowed controls; missing={missing}, extra={extra}"
+        )
+    return sorted(candidates, key=lambda item: item["candidate_id"])
+
+
 def load_decisions(
-    source: Path | dict[str, Any], bridges: list[MappingBridge], catalog: AttackCatalog
+    source: Path | dict[str, Any], candidates: list[DirectCandidate]
 ) -> list[MappingDecision]:
-    """Load exact bridge/technique review decisions."""
+    """Load exact human review decisions for explicit direct candidates."""
     document = _read_json(source)
     _validate_versions(document, "mapping decision document")
     values = document.get("decisions")
     if not isinstance(values, list):
         raise ValueError("mapping decision document must contain a decisions list")
-    bridge_ids = {item["bridge_id"] for item in bridges}
-    technique_ids = {item["technique_id"] for item in catalog["techniques"]}
-    expandable = {
-        (bridge["bridge_id"], relationship["technique_id"])
-        for bridge in bridges
-        for relationship in catalog["relationships"]
-        if bridge["mitigation_id"] == relationship["mitigation_id"]
-    }
-    seen: set[tuple[str, str]] = set()
+    candidate_ids = {item["candidate_id"] for item in candidates}
+    seen: set[str] = set()
     decisions: list[MappingDecision] = []
     for value in values:
         if not isinstance(value, dict):
             raise ValueError("mapping decision must be an object")
-        bridge_id = _required_text(value, "bridge_id", "mapping decision")
-        technique_id = _required_text(value, "technique_id", f"decision for {bridge_id}")
-        status = _required_text(value, "status", f"decision for {bridge_id}/{technique_id}")
-        key = (bridge_id, technique_id)
-        if bridge_id not in bridge_ids:
-            raise ValueError(f"orphan decision has unknown bridge: {bridge_id}")
-        if technique_id not in technique_ids:
-            raise ValueError(f"decision has unknown technique: {technique_id}")
-        if key not in expandable:
-            raise ValueError(f"orphan decision does not match a mitigation relationship: {key}")
+        candidate_id = _required_text(value, "candidate_id", "mapping decision")
+        status = _required_text(value, "status", f"decision for {candidate_id}")
+        if candidate_id not in candidate_ids:
+            raise ValueError(f"orphan decision has unknown direct candidate: {candidate_id}")
         if status not in DECISION_STATUSES:
             raise ValueError(f"decision has malformed status: {status}")
-        if key in seen:
-            raise ValueError(f"duplicate mapping decision: {key}")
-        seen.add(key)
+        if candidate_id in seen:
+            raise ValueError(f"duplicate mapping decision: {candidate_id}")
+        seen.add(candidate_id)
         reviewed_by = _optional_text(
-            value, "reviewed_by", f"decision for {bridge_id}/{technique_id}"
+            value, "reviewed_by", f"decision for {candidate_id}"
         )
-        reviewed_at = _optional_text(value, "reviewed_at", f"decision for {bridge_id}/{technique_id}")
+        reviewed_at = _optional_text(value, "reviewed_at", f"decision for {candidate_id}")
         if reviewed_by is None or reviewed_at is None:
-            raise ValueError(f"decision requires reviewed_by and reviewed_at: {key}")
+            raise ValueError(f"decision requires reviewed_by and reviewed_at: {candidate_id}")
         decisions.append({
-            "bridge_id": bridge_id,
-            "technique_id": technique_id,
+            "candidate_id": candidate_id,
             "status": status,  # type: ignore[typeddict-item]
-            "rationale": _required_text(value, "rationale", f"decision for {bridge_id}/{technique_id}"),
-            "evidence": _evidence_list(value, f"decision for {bridge_id}/{technique_id}"),
+            "rationale": _required_text(value, "rationale", f"decision for {candidate_id}"),
+            "evidence": _evidence_list(value, f"decision for {candidate_id}"),
             "reviewed_by": reviewed_by,
             "reviewed_at": reviewed_at,
         })
-    return sorted(decisions, key=lambda item: (item["bridge_id"], item["technique_id"]))
+    return sorted(decisions, key=lambda item: item["candidate_id"])
 
 
-def expand_mappings(
-    bridges: list[MappingBridge], decisions: list[MappingDecision], catalog: AttackCatalog
-) -> list[ExpandedMapping]:
-    """Expand bridge rules through official mitigation relationships."""
-    decision_by_key = {(item["bridge_id"], item["technique_id"]): item for item in decisions}
+def expand_discovery_relationships(
+    bridges: list[MappingBridge], catalog: AttackCatalog
+) -> list[DiscoveryRelationship]:
+    """Expand bridge rules solely as deterministic discovery evidence."""
     relationships_by_mitigation: dict[str, list[AttackRelationship]] = {}
     for relationship in catalog["relationships"]:
         relationships_by_mitigation.setdefault(relationship["mitigation_id"], []).append(relationship)
-    expanded: list[ExpandedMapping] = []
+    expanded: list[DiscoveryRelationship] = []
     for bridge in bridges:
         for relationship in relationships_by_mitigation.get(bridge["mitigation_id"], []):
-            decision = decision_by_key.get((bridge["bridge_id"], relationship["technique_id"]))
             expanded.append({
                 "framework": "ism",
                 "ism_catalog_version": ISM_VERSION,
                 "attack_version": catalog["version"],
-                **bridge,
+                "bridge_id": bridge["bridge_id"],
+                "control_id": bridge["control_id"],
+                "mitigation_id": bridge["mitigation_id"],
+                "effect": bridge["effect"],
+                "confidence": bridge["confidence"],
                 "technique_id": relationship["technique_id"],
-                "rationale": decision["rationale"] if decision else bridge["rationale"],
-                "evidence": decision["evidence"] if decision else list(bridge["evidence"]),
-                "status": decision["status"] if decision else "candidate",
-                "reviewed_by": decision["reviewed_by"] if decision else None,
-                "reviewed_at": decision["reviewed_at"] if decision else None,
+                "bridge_rationale": bridge["rationale"],
+                "bridge_evidence": list(bridge["evidence"]),
                 "relationship_stix_id": relationship["relationship_stix_id"],
                 "relationship_description": relationship["description"],
             })
@@ -467,43 +595,57 @@ def expand_mappings(
     )
 
 
-def load_and_expand_mappings(
-    bridges_source: Path | dict[str, Any],
-    decisions_source: Path | dict[str, Any],
-    allowed_controls: set[str],
-    catalog: AttackCatalog,
-) -> tuple[list[MappingBridge], list[MappingDecision], list[ExpandedMapping]]:
-    """Load both curated inputs and return their deterministic expansion."""
-    bridges, decisions = load_mapping_inputs(
-        bridges_source, decisions_source, allowed_controls, catalog
-    )
-    return bridges, decisions, expand_mappings(bridges, decisions, catalog)
+def apply_decisions(
+    candidates: list[DirectCandidate], decisions: list[MappingDecision]
+) -> list[DirectMapping]:
+    """Apply exact human decisions without promoting unreviewed candidates."""
+    decisions_by_id = {item["candidate_id"]: item for item in decisions}
+    mappings: list[DirectMapping] = []
+    for candidate in candidates:
+        decision = decisions_by_id.get(candidate["candidate_id"])
+        mappings.append({
+            **candidate,
+            "rationale": decision["rationale"] if decision else candidate["rationale"],
+            "evidence": [
+                *candidate["evidence"],
+                *(decision["evidence"] if decision else []),
+            ],
+            "status": decision["status"] if decision else "candidate",
+            "reviewed_by": decision["reviewed_by"] if decision else None,
+            "reviewed_at": decision["reviewed_at"] if decision else None,
+        })
+    return sorted(mappings, key=lambda item: item["candidate_id"])
 
 
 def load_mapping_inputs(
     bridges_source: Path | dict[str, Any],
+    candidates_source: Path | dict[str, Any],
     decisions_source: Path | dict[str, Any],
-    allowed_controls: set[str],
+    control_statements: dict[str, str],
     catalog: AttackCatalog,
-) -> tuple[list[MappingBridge], list[MappingDecision]]:
-    """Load and validate the curated bridge and exact-decision documents."""
-    bridges = load_bridges(bridges_source, allowed_controls, catalog)
-    decisions = load_decisions(decisions_source, bridges, catalog)
-    return bridges, decisions
+) -> tuple[list[MappingBridge], list[DirectCandidate], list[MappingDecision]]:
+    """Load and validate bridges, explicit candidates, and exact decisions."""
+    bridges = load_bridges(bridges_source, set(control_statements), catalog)
+    candidates = load_candidates(candidates_source, bridges, catalog, control_statements)
+    decisions = load_decisions(decisions_source, candidates)
+    return bridges, candidates, decisions
 
 
 def review_artifacts(
     catalog: AttackCatalog,
-    bridges: list[MappingBridge],
-    mappings: list[ExpandedMapping],
+    mappings: list[DirectMapping],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Build deterministic review and ATT&CK Navigator documents."""
+    """Build deterministic direct-candidate review and Navigator documents."""
     techniques = {item["technique_id"]: item for item in catalog["techniques"]}
     mitigations = {item["mitigation_id"]: item for item in catalog["mitigations"]}
+    relationships = {
+        item["relationship_stix_id"]: item for item in catalog["relationships"]
+    }
     enriched: list[dict[str, Any]] = []
     for mapping in mappings:
         technique = techniques[mapping["technique_id"]]
         mitigation = mitigations[mapping["mitigation_id"]]
+        relationship = relationships[mapping["relationship_stix_id"]]
         enriched.append({
             **mapping,
             "technique_name": technique["name"],
@@ -512,24 +654,25 @@ def review_artifacts(
             "mitigation_name": mitigation["name"],
             "mitigation_url": mitigation["url"],
             "mitigation_stix_id": mitigation["stix_id"],
+            "relationship_description": relationship["description"],
         })
     enriched.sort(key=lambda item: (
         item["control_id"], item["technique_id"], item["effect"], item["bridge_id"]
     ))
-    bridged_controls = {item["control_id"] for item in bridges}
+    mapped_controls = {item["control_id"] for item in mappings}
     status_counts = Counter(item["status"] for item in mappings)
     effect_counts = Counter(item["effect"] for item in mappings)
     confidence_counts = Counter(item["confidence"] for item in mappings)
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
+        "purpose": "Explicit direct control-to-technique candidates for human review.",
         "ism_catalog_version": ISM_VERSION,
         "attack_version": catalog["version"],
         "attack_release_date": catalog["release_date"],
         "counts": {
-            "bridges": len(bridges),
-            "mappings": len(mappings),
-            "mapped_controls": len(bridged_controls),
-            "unmapped_controls": max(0, E8_CONTROL_COUNT - len(bridged_controls)),
+            "direct_candidates": len(mappings),
+            "mapped_controls": len(mapped_controls),
+            "unmapped_controls": max(0, E8_CONTROL_COUNT - len(mapped_controls)),
             "by_status": {status: status_counts[status] for status in sorted({"candidate", "reviewed", "rejected"})},
             "by_effect": {effect: effect_counts[effect] for effect in sorted(EFFECTS)},
             "by_confidence": {
@@ -539,7 +682,7 @@ def review_artifacts(
         "mappings": enriched,
     }
 
-    reviewed_by_technique: dict[str, list[ExpandedMapping]] = {}
+    reviewed_by_technique: dict[str, list[DirectMapping]] = {}
     for mapping in mappings:
         if mapping["status"] == "reviewed":
             reviewed_by_technique.setdefault(mapping["technique_id"], []).append(mapping)
@@ -572,18 +715,67 @@ def review_artifacts(
     return report, navigator
 
 
+def discovery_artifact(
+    catalog: AttackCatalog,
+    bridges: list[MappingBridge],
+    discoveries: list[DiscoveryRelationship],
+) -> dict[str, Any]:
+    """Build the deterministic broad expansion as explicitly non-reviewable evidence."""
+    techniques = {item["technique_id"]: item for item in catalog["techniques"]}
+    mitigations = {item["mitigation_id"]: item for item in catalog["mitigations"]}
+    relationships = []
+    for discovery in discoveries:
+        technique = techniques[discovery["technique_id"]]
+        mitigation = mitigations[discovery["mitigation_id"]]
+        relationships.append({
+            **discovery,
+            "technique_name": technique["name"],
+            "technique_url": technique["url"],
+            "technique_stix_id": technique["stix_id"],
+            "mitigation_name": mitigation["name"],
+            "mitigation_url": mitigation["url"],
+            "mitigation_stix_id": mitigation["stix_id"],
+        })
+    relationships.sort(key=lambda item: (
+        item["control_id"], item["technique_id"], item["effect"], item["bridge_id"]
+    ))
+    return {
+        "schema_version": 1,
+        "purpose": (
+            "Discovery-only expansion of control-to-mitigation bridges through official ATT&CK "
+            "relationships. These rows are not candidates or mappings and cannot be published."
+        ),
+        "ism_catalog_version": ISM_VERSION,
+        "attack_version": catalog["version"],
+        "attack_release_date": catalog["release_date"],
+        "counts": {
+            "bridges": len(bridges),
+            "discovery_relationships": len(discoveries),
+            "controls": len({item["control_id"] for item in bridges}),
+        },
+        "relationships": relationships,
+    }
+
+
 def write_review_artifacts(
     root: Path,
     catalog: AttackCatalog,
     bridges: list[MappingBridge],
-    mappings: list[ExpandedMapping],
-) -> tuple[Path, Path]:
-    """Write deterministic review artifacts beneath ``mappings/generated``."""
-    report, navigator = review_artifacts(catalog, bridges, mappings)
+    discoveries: list[DiscoveryRelationship],
+    mappings: list[DirectMapping],
+) -> tuple[Path, Path, Path]:
+    """Write deterministic discovery, review, and Navigator artifacts."""
+    discovery = discovery_artifact(catalog, bridges, discoveries)
+    report, navigator = review_artifacts(catalog, mappings)
     output = root / "mappings" / "generated"
     output.mkdir(parents=True, exist_ok=True)
+    discovery_path = output / "attack-discovery-report.json"
     report_path = output / "attack-mapping-review.json"
     navigator_path = output / "attack-navigator-layer.json"
+    discovery_path.write_text(
+        json.dumps(discovery, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     report_path.write_text(
         json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -592,4 +784,4 @@ def write_review_artifacts(
         json.dumps(navigator, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    return report_path, navigator_path
+    return discovery_path, report_path, navigator_path

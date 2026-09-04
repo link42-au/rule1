@@ -137,7 +137,7 @@ def validate_database(
             raise ValueError(f"unexpected database tables: {tables}")
         if connection.execute("PRAGMA application_id").fetchone()[0] != 1381321777:
             raise ValueError("unexpected application_id")
-        if connection.execute("PRAGMA user_version").fetchone()[0] != 3:
+        if connection.execute("PRAGMA user_version").fetchone()[0] != 4:
             raise ValueError("unexpected user_version")
         if connection.execute("PRAGMA page_size").fetchone()[0] != 4096:
             raise ValueError("unexpected page_size")
@@ -147,6 +147,7 @@ def validate_database(
         annotation_sha = _sha256(annotation_path)
         annotation_manifest_sha = _sha256(annotation_manifest_path)
         bridges_path = root / "mappings/ism-e8-attack-bridges.json"
+        candidates_path = root / "mappings/ism-e8-attack-candidates.json"
         decisions_path = root / "mappings/ism-e8-attack-decisions.json"
         attack_source = next(
             item for item in ledger if item["framework"] == "mitre-attack-enterprise"
@@ -159,9 +160,10 @@ def validate_database(
             "annotation_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
             "annotation_prompt_version": "legacy-rule1-v1",
             "attack_bridge_sha256": _sha256(bridges_path),
+            "attack_candidates_sha256": _sha256(candidates_path),
             "attack_decisions_sha256": _sha256(decisions_path),
             "attack_source_sha256": attack_source["sha256"],
-            "schema_version": "3",
+            "schema_version": "4",
             "source_ledger_sha256": ledger_sha,
             "sqlite_version": sqlite3.sqlite_version,
         }
@@ -255,13 +257,22 @@ def validate_database(
             raise ValueError(f"invalid control-to-ATT&CK bridges: {invalid_bridges}")
         invalid_mappings = connection.execute(
             "SELECT COUNT(*) FROM control_attack_mappings WHERE attack_version!='19.2' "
-            "OR (status='candidate' AND (rationale IS NOT NULL OR evidence IS NOT NULL "
-            "OR reviewed_by IS NOT NULL OR reviewed_at IS NOT NULL)) "
-            "OR (status IN ('reviewed','rejected') AND (TRIM(rationale)='' OR json_valid(evidence)=0 "
-            "OR json_array_length(evidence)=0 OR reviewed_by IS NULL OR reviewed_at IS NULL))"
+            "OR TRIM(candidate_id)='' OR TRIM(relationship_stix_id)='' "
+            "OR TRIM(rationale)='' OR json_valid(evidence)=0 OR json_array_length(evidence)=0 "
+            "OR (status='candidate' AND (reviewed_by IS NOT NULL OR reviewed_at IS NOT NULL)) "
+            "OR (status IN ('reviewed','rejected') AND (reviewed_by IS NULL OR reviewed_at IS NULL))"
         ).fetchone()[0]
         if invalid_mappings:
             raise ValueError(f"invalid control-to-ATT&CK mappings: {invalid_mappings}")
+        candidate_payload = json.loads(candidates_path.read_text(encoding="utf-8"))
+        expected_candidate_ids = sorted(
+            item["candidate_id"] for item in candidate_payload["candidates"]
+        )
+        actual_candidate_ids = [row[0] for row in connection.execute(
+            "SELECT candidate_id FROM control_attack_mappings ORDER BY candidate_id"
+        )]
+        if actual_candidate_ids != expected_candidate_ids:
+            raise ValueError("database mappings do not exactly match direct candidate input")
         non_e8_mappings = connection.execute(
             "SELECT COUNT(*) FROM control_attack_bridges b WHERE NOT EXISTS ("
             "SELECT 1 FROM e8_mappings e WHERE e.framework=b.framework "

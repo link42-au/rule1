@@ -360,7 +360,7 @@ describe("Rule1 query dispatcher", () => {
           confidence: "high",
           rationale: "MFA may prevent successful use of guessed credentials.",
           bridge_evidence: '[{"kind":"bridge"}]',
-          decision_evidence: '[{"kind":"review"}]',
+          direct_evidence: '[{"kind":"direct-candidate"}]',
         },
       ],
     });
@@ -375,15 +375,15 @@ describe("Rule1 query dispatcher", () => {
           techniqueId: "T1110",
           mitigationId: "M1032",
           tactics: ["credential-access"],
-          evidence: [{ kind: "bridge" }, { kind: "review" }],
+          evidence: [{ kind: "bridge" }, { kind: "direct-candidate" }],
         },
       ],
     });
     const attackCall = executor.calls.find((call) => call.name === "attack-mappings");
     expect(attackCall?.bind).toEqual(["ism-1173"]);
     expect(attackCall?.sql).toContain("m.status = 'reviewed'");
-    expect(attackCall?.sql).toContain("ORDER BY m.technique_id, m.mitigation_id, b.effect");
-    expect(attackCall?.sql).not.toContain("m.effect");
+    expect(attackCall?.sql).toContain("ORDER BY m.technique_id, m.mitigation_id, m.effect");
+    expect(attackCall?.sql).toContain("m.rationale");
     expect(attackCall?.sql).not.toContain("candidate");
 
     const callsBeforeGate = executor.calls.length;

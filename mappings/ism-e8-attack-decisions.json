@@ -2,6 +2,6 @@
   "schema_version": 1,
   "ism_catalog_version": "ISM-OSCAL-2026.09.4",
   "attack_version": "19.2",
-  "method": "Exact per-technique human review decisions. Every deterministic expansion remains a non-public candidate until a named human reviewer records a reviewed or rejected decision.",
+  "method": "Exact human review decisions for explicitly curated direct candidates. Discovery-only expansions can never be reviewed or published.",
   "decisions": []
 }

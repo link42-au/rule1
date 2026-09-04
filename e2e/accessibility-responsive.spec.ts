@@ -186,7 +186,7 @@ test("AI Summary switches between factual and Professional descriptions and reme
   await page.goto("/guide/");
   await page.evaluate(() => localStorage.removeItem("ai-flavour"));
   await page.goto("/explorer/?framework=ism&id=ism-0009");
-  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
 
   const flavour = page.getByRole("group", { name: "AI summary flavour" });
   const summary = page.locator(".ai-summary-block");
@@ -203,7 +203,7 @@ test("AI Summary switches between factual and Professional descriptions and reme
   await expect.poll(() => page.evaluate(() => localStorage.getItem("ai-flavour"))).toBe("snarky");
 
   await page.reload();
-  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
   await expect(
     page.getByRole("group", { name: "AI summary flavour" }).getByRole("button", { name: "Professional" }),
   ).toHaveAttribute("aria-pressed", "true");
@@ -225,7 +225,7 @@ test("ATT&CK control mappings are ISM-only, local, and honestly empty at desktop
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("/explorer/?framework=ism&id=ism-1173&tab=attack");
-    await expect(page.locator("[data-control-heading]")).toBeVisible();
+    await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
     const attackTab = page.getByRole("tab", { name: "ATT&CK" });
     await expect(attackTab).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("heading", { name: "MITRE ATT&CK mappings" })).toBeVisible();

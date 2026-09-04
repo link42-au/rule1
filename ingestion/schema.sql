@@ -2,7 +2,7 @@ PRAGMA page_size = 4096;
 PRAGMA encoding = 'UTF-8';
 PRAGMA auto_vacuum = NONE;
 PRAGMA application_id = 1381321777;
-PRAGMA user_version = 3;
+PRAGMA user_version = 4;
 
 CREATE TABLE frameworks (
   id TEXT PRIMARY KEY,
@@ -162,6 +162,7 @@ CREATE TABLE attack_mitigation_techniques (
   description TEXT,
   PRIMARY KEY (attack_version, mitigation_id, technique_id),
   UNIQUE (attack_version, relationship_stix_id),
+  UNIQUE (attack_version, mitigation_id, technique_id, relationship_stix_id),
   FOREIGN KEY (attack_version, mitigation_id)
     REFERENCES attack_mitigations(attack_version, mitigation_id),
   FOREIGN KEY (attack_version, technique_id)
@@ -187,26 +188,30 @@ CREATE TABLE control_attack_bridges (
 );
 
 CREATE TABLE control_attack_mappings (
+  candidate_id TEXT PRIMARY KEY,
   bridge_id TEXT NOT NULL,
   attack_version TEXT NOT NULL,
   mitigation_id TEXT NOT NULL,
   technique_id TEXT NOT NULL,
+  relationship_stix_id TEXT NOT NULL,
+  effect TEXT NOT NULL CHECK (effect IN ('prevent', 'constrain', 'detect', 'recover')),
+  confidence TEXT NOT NULL CHECK (confidence IN ('low', 'medium', 'high')),
   status TEXT NOT NULL CHECK (status IN ('candidate', 'reviewed', 'rejected')),
-  rationale TEXT,
-  evidence TEXT CHECK (evidence IS NULL OR json_valid(evidence)),
+  rationale TEXT NOT NULL CHECK (length(trim(rationale)) > 0),
+  evidence TEXT NOT NULL CHECK (json_valid(evidence) AND json_array_length(evidence) > 0),
   reviewed_by TEXT,
   reviewed_at TEXT,
-  PRIMARY KEY (bridge_id, technique_id),
+  UNIQUE (bridge_id, technique_id),
   CHECK (
-    (status = 'candidate' AND rationale IS NULL AND evidence IS NULL
-      AND reviewed_by IS NULL AND reviewed_at IS NULL)
-    OR (status IN ('reviewed', 'rejected') AND length(trim(rationale)) > 0
-      AND json_array_length(evidence) > 0 AND reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL)
+    (status = 'candidate' AND reviewed_by IS NULL AND reviewed_at IS NULL)
+    OR (status IN ('reviewed', 'rejected') AND reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL)
   ),
   FOREIGN KEY (bridge_id, attack_version, mitigation_id)
     REFERENCES control_attack_bridges(bridge_id, attack_version, mitigation_id),
-  FOREIGN KEY (attack_version, mitigation_id, technique_id)
-    REFERENCES attack_mitigation_techniques(attack_version, mitigation_id, technique_id)
+  FOREIGN KEY (attack_version, mitigation_id, technique_id, relationship_stix_id)
+    REFERENCES attack_mitigation_techniques(
+      attack_version, mitigation_id, technique_id, relationship_stix_id
+    )
 );
 
 CREATE TABLE build_metadata (
@@ -235,6 +240,6 @@ CREATE INDEX idx_attack_relationship_technique
 CREATE INDEX idx_attack_bridge_control
   ON control_attack_bridges(framework, ism_catalog_version, control_id, bridge_id);
 CREATE INDEX idx_attack_mapping_technique
-  ON control_attack_mappings(attack_version, technique_id, status, bridge_id);
+  ON control_attack_mappings(attack_version, technique_id, status, candidate_id);
 CREATE INDEX idx_attack_mapping_status
-  ON control_attack_mappings(bridge_id, status, technique_id);
+  ON control_attack_mappings(bridge_id, status, technique_id, candidate_id);

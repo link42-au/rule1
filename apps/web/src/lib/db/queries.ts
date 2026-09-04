@@ -362,8 +362,8 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       t.description AS technique_description, t.url AS technique_url, t.tactics, t.platforms,
       t.parent_technique_id, b.mitigation_id, g.name AS mitigation_name,
       g.description AS mitigation_description, g.url AS mitigation_url,
-      b.effect, b.confidence, COALESCE(m.rationale, b.rationale) AS rationale,
-      b.evidence AS bridge_evidence, m.evidence AS decision_evidence
+      m.effect, m.confidence, m.rationale,
+      b.evidence AS bridge_evidence, m.evidence AS direct_evidence
     FROM control_attack_mappings m
     JOIN control_attack_bridges b ON b.bridge_id = m.bridge_id
       AND b.attack_version = m.attack_version AND b.mitigation_id = m.mitigation_id
@@ -378,7 +378,7 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       AND b.attack_version = (
         SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
       )
-    ORDER BY m.technique_id, m.mitigation_id, b.effect`,
+    ORDER BY m.technique_id, m.mitigation_id, m.effect`,
       [params.id.toLowerCase()],
     ),
   ]);
@@ -403,7 +403,7 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       effect: text(row.effect) as "prevent" | "constrain" | "detect" | "recover",
       confidence: text(row.confidence) as "low" | "medium" | "high",
       rationale: text(row.rationale),
-      evidence: [...jsonRecords(row.bridge_evidence), ...jsonRecords(row.decision_evidence)],
+      evidence: [...jsonRecords(row.bridge_evidence), ...jsonRecords(row.direct_evidence)],
     })),
   };
 }
