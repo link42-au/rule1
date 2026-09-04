@@ -61,12 +61,12 @@ The shared, local UI package still contains dormant platform URL constants in it
 
 ## Current data and retained gaps
 
-- The Australian ISM now ends at the authoritative September 2026 PDF (`ISM-PDF-2026-09`), published without a corresponding ASD OSCAL catalog at the 3 September archive checkpoint, with 1,143 active controls and 49 cyber security principles. The PDF is authoritative for active control and principle text, applicability, revision and updated metadata, and Essential Eight mappings. June 2026 OSCAL hierarchy and glossary data is carried forward only where the PDF lacks equivalent machine-readable structure; ingestion adds 14 visible PDF-derived groups and treats controls absent from the September PDF as withdrawals.
+- The Australian ISM now ends at ASD's authoritative September 2026 OSCAL catalog (`ISM-OSCAL-2026.09.4`), with 1,143 active controls and 49 cyber security principles. The earlier September PDF remains as an archived provisional snapshot, and the following OSCAL record supplies the current canonical text and structure without creating false changes at the format boundary.
 - ISM OSCAL glossary history is retained from June 2022 onward; frameworks whose archived sources provide no glossary remain in an honest empty state.
 - The verified legacy baseline of 1,073 paired factual and Professional descriptions was imported exactly and recorded in an immutable digest manifest. The 936 unchanged current pairs and 3 historical pairs remain byte-exact; a separately approved workflow refreshes 134 stale pairs and adds 73 missing current pairs through the pinned free NVIDIA Nemotron model. Release validation prevents partial current coverage from deploying.
 - The Essential Eight mapping rows retain maturity levels but contain no named strategy strings.
 - The Cyber Essentials 3.2 source PDF is missing from the archive. Its committed, checksum-verified 3.2 JSON source is ingested.
-- Australian ISM Excel history is not committed; the 63 retained ISM versions use 45 historical PDFs through March 2022, 17 official ASD OSCAL catalogs covering June 2022 through June 2026, and ASD's official September 2026 PDF.
+- Australian ISM Excel history is not committed; the 64 retained ISM versions use 45 historical PDFs through March 2022, 18 official ASD OSCAL catalogs from June 2022 through September 2026, and the archived September 2026 PDF that preceded its OSCAL release.
 
 These are provenance/data differences, not UI defects. Framework decisions should be checked against the current authoritative publisher source.
 
@@ -92,7 +92,7 @@ adfd78b2d1c556eec8fe116670dbc00db32992dc480306480cd4ae7a1a67cbbd  build/rule1.sq
 adfd78b2d1c556eec8fe116670dbc00db32992dc480306480cd4ae7a1a67cbbd  apps/web/build/data/rule1.sqlite3
 ```
 
-The current catalogue heads are `CE-3.3`, `ISM-PDF-2026-09`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
+The current catalogue heads are `CE-3.3`, `ISM-OSCAL-2026.09.4`, `NZISM-3.9`, `NIST-CSF-2.0`, and `800-53-Rev-5.2.0`. Database integrity reports `ok`.
 
 ### Historical live-release verification
 

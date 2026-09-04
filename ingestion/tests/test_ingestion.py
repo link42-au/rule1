@@ -31,9 +31,9 @@ class ParserTests(unittest.TestCase):
         }
 
     def test_all_retained_versions_have_stable_unique_controls(self) -> None:
-        expected = {"cyber-essentials": 3, "ism": 63, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
+        expected = {"cyber-essentials": 3, "ism": 64, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
         self.assertEqual({key: len(value) for key, value in self.by_framework.items()}, expected)
-        self.assertEqual(len(self.snapshots), 80)
+        self.assertEqual(len(self.snapshots), 81)
         for snapshot in self.snapshots:
             controls = snapshot["controls"]
             self.assertTrue(controls, snapshot["catalog_version"])
@@ -55,12 +55,12 @@ class ParserTests(unittest.TestCase):
 
     def test_reviewed_parser_regressions(self) -> None:
         ism = self.by_framework["ism"]
-        self.assertEqual(sum(len(item["controls"]) for item in ism), 54_030)
-        self.assertEqual(len(ism[-1]["controls"]), 1_194)
-        self.assertEqual(sum(len(item["terms"]) for item in ism), 4_058)
-        self.assertEqual(len(ism[-1]["terms"]), 248)
-        self.assertEqual(len(ism[-18]["groups"]), 481)
-        self.assertEqual(len(ism[-1]["groups"]), 564)
+        self.assertEqual(sum(len(item["controls"]) for item in ism), 55_222)
+        self.assertEqual(len(ism[-1]["controls"]), 1_192)
+        self.assertEqual(sum(len(item["terms"]) for item in ism), 4_311)
+        self.assertEqual(len(ism[-1]["terms"]), 253)
+        self.assertEqual(len(ism[-19]["groups"]), 481)
+        self.assertEqual(len(ism[-1]["groups"]), 562)
         self.assertTrue(any(item["groups"] for item in ism))
         self.assertLessEqual(max(len(control["statement"]) for item in ism for control in item["controls"].values()), 2_000)
         self.assertTrue(any("C" in (control.get("applicability") or []) for item in ism for control in item["controls"].values()))
@@ -70,14 +70,14 @@ class ParserTests(unittest.TestCase):
         if fallback:
             self.assertEqual(fallback["display_id"], "AC-2(1)")
 
-    def test_september_2026_pdf_is_the_current_complete_ism(self) -> None:
+    def test_september_2026_oscal_is_the_current_complete_ism(self) -> None:
         current = self.by_framework["ism"][-1]
-        self.assertEqual(current["catalog_version"], "ISM-PDF-2026-09")
+        self.assertEqual(current["catalog_version"], "ISM-OSCAL-2026.09.4")
         active = [control for control in current["controls"].values() if control["change_type"] != "withdrawn"]
         self.assertEqual(sum(control["control_class"] == "ISM-control" for control in active), 1_143)
         self.assertEqual(sum(control["control_class"] == "ISM-principle" for control in active), 49)
-        self.assertEqual(current["controls"]["ism-2116"]["source"], "pdf")
-        self.assertEqual(current["controls"]["ism-2124"]["source"], "pdf")
+        self.assertEqual(current["controls"]["ism-2116"]["source"], "oscal")
+        self.assertEqual(current["controls"]["ism-2124"]["source"], "oscal")
         self.assertEqual(current["controls"]["ism-principle-gov-01"]["display_id"], "GOV-01")
         self.assertEqual(current["controls"]["ism-0123"]["e8_levels"], ["ML2", "ML3"])
         self.assertEqual(current["controls"]["ism-1636"]["applicability"], ["NC", "OS", "P", "S"])
@@ -92,14 +92,14 @@ class ParserTests(unittest.TestCase):
             "Unneeded components, services and functionality of network devices are disabled or removed.",
         )
 
-    def test_september_2026_pdf_merges_with_june_structure(self) -> None:
-        current = self.by_framework["ism"][-1]
+    def test_archived_september_2026_pdf_merges_with_june_structure(self) -> None:
+        current = self.by_framework["ism"][-2]
         controls = current["controls"]
         active_principles = {
             control_id: control for control_id, control in controls.items()
             if control["control_class"] == "ISM-principle" and control["change_type"] != "withdrawn"
         }
-        prior_group_ids = {group["id"] for group in self.by_framework["ism"][-2]["groups"]}
+        prior_group_ids = {group["id"] for group in self.by_framework["ism"][-3]["groups"]}
         self.assertTrue(prior_group_ids.issubset({group["id"] for group in current["groups"]}))
         self.assertEqual(len(current["groups"]), 564)
         self.assertEqual(len(current["terms"]), 248)
@@ -127,6 +127,38 @@ class ParserTests(unittest.TestCase):
             "and remote access activities are established and maintained for systems (infrastructure, operating "
             "systems, applications and data) to enable the detection of anomalous or unexpected behaviour.",
         )
+
+    def test_september_oscal_supersedes_pdf_without_false_control_changes(self) -> None:
+        archived_pdf = self.by_framework["ism"][-2]
+        current = self.by_framework["ism"][-1]
+        self.assertEqual(archived_pdf["catalog_version"], "ISM-PDF-2026-09")
+        self.assertEqual(current["catalog_version"], "ISM-OSCAL-2026.09.4")
+
+        oscal_path = ROOT / "data/ism-oscal/2026-09/ISM_catalog.json"
+        metadata = json.loads(oscal_path.read_text(encoding="utf-8"))["catalog"]["metadata"]
+        self.assertEqual(metadata["version"], "2026.09.4")
+        self.assertEqual(metadata["last-modified"], "2026-09-03T23:10:47.63884244Z")
+        self.assertEqual(metadata["oscal-version"], "1.1.2")
+        self.assertEqual(oscal_path.stat().st_size, 2_677_748)
+
+        pdf_0043 = archived_pdf["controls"]["ism-0043"]
+        oscal_0043 = current["controls"]["ism-0043"]
+        canonical_oscal = _parse_ism_oscal(oscal_path)["controls"]["ism-0043"]["statement"]
+        self.assertEqual(oscal_0043["statement"], canonical_oscal)
+        self.assertEqual(oscal_0043["change_type"], "unchanged")
+        self.assertEqual(
+            pdf_0043["statement"].replace("\n• ", " - "),
+            oscal_0043["statement"],
+        )
+
+        # Publisher revisions belong to the September edition, not to the
+        # later representation change from the PDF to the OSCAL catalog.
+        self.assertEqual(archived_pdf["controls"]["ism-1372"]["change_type"], "modified")
+        self.assertEqual(archived_pdf["controls"]["ism-1372"]["revision"], "4")
+        self.assertEqual(archived_pdf["controls"]["ism-2162"]["change_type"], "new")
+        self.assertEqual(archived_pdf["controls"]["ism-0521"]["change_type"], "withdrawn")
+        self.assertEqual(current["controls"]["ism-1372"]["change_type"], "unchanged")
+        self.assertEqual(current["controls"]["ism-2162"]["change_type"], "unchanged")
 
     def test_september_pdf_consumes_all_statement_continuation_blocks(self) -> None:
         previous = _parse_ism_oscal(ROOT / "data/ism-oscal/2026-06/ISM_catalog.json")
@@ -194,7 +226,7 @@ class ParserTests(unittest.TestCase):
             "2023-12": "2023.12.1", "2024-03": "2024.03.12", "2024-06": "2024.06.18",
             "2024-09": "2024.10.4", "2024-12": "2024.12.19", "2025-03": "2025.03.31",
             "2025-06": "2025.07.16", "2025-09": "2025.10.8", "2025-12": "2025.12.9",
-            "2026-03": "2026.03.24", "2026-06": "2026.06.18",
+            "2026-03": "2026.03.24", "2026-06": "2026.06.18", "2026-09": "2026.09.4",
         }
         profile_verified_e8_digests = {
             "2022-06": "06513f48efc0570ab68e79061ebb98bde95ce87f77e53ec59e3b3853496f07e2",
@@ -214,6 +246,7 @@ class ParserTests(unittest.TestCase):
             "2025-12": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
             "2026-03": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
             "2026-06": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
+            "2026-09": "42b282d739bf8eed397d35d191beb7b99b54e3961cff9cef0fef2f1e72f1f8b5",
         }
         for directory, version in expected.items():
             path = ROOT / "data/ism-oscal" / directory / "ISM_catalog.json"
@@ -360,23 +393,23 @@ class DatabaseTests(unittest.TestCase):
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
                 sqlite3.sqlite_version,
             )
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 80)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 82)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_058)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 81)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 83)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_311)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM annotations").fetchone()[0], 1_146)
             annotation = connection.execute(
                 "SELECT catalog_version, ai_view, ai_view_snarky FROM annotations "
                 "WHERE framework='ism' AND control_id='ism-0043'"
             ).fetchone()
-            self.assertEqual(annotation[0], "ISM-PDF-2026-09")
+            self.assertEqual(annotation[0], "ISM-OSCAL-2026.09.4")
             self.assertIn("incident response plan", annotation[1].lower())
             self.assertIn("plan sits on a shelf", annotation[2])
             self.assertEqual(connection.execute(
-                "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-PDF-2026-09'"
+                "SELECT COUNT(*) FROM e8_mappings WHERE framework='ism' AND catalog_version='ISM-OSCAL-2026.09.4'"
             ).fetchone()[0], 256)
             ordered_controls = connection.execute(
                 "SELECT control_id FROM control_history WHERE framework='ism' "
-                "AND catalog_version='ISM-PDF-2026-09' ORDER BY ordinal LIMIT 3"
+                "AND catalog_version='ISM-OSCAL-2026.09.4' ORDER BY ordinal LIMIT 3"
             ).fetchall()
             self.assertEqual(ordered_controls, [
                 ("ism-principle-gov-01",), ("ism-principle-gov-08",), ("ism-principle-gov-02",),
