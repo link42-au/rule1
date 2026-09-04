@@ -28,6 +28,7 @@
     SIDEBAR_WIDTH_MAX,
     SIDEBAR_WIDTH_MIN,
     changeFrequency,
+    canonicalControlReference,
     clampSidebarWidth,
     controlsBySection,
     expandableGroupIds,
@@ -398,7 +399,7 @@
   }
 
   function normalizeControlId(value: string): string | null {
-    const query = value.trim().toLowerCase();
+    const query = canonicalControlReference(framework, value).toLowerCase();
     const direct = controls.find((control) => control.id.toLowerCase() === query || control.display_id.toLowerCase() === query);
     if (direct) return direct.id;
     const numeric = query.replace(new RegExp(`^${framework}-`, "i"), "");

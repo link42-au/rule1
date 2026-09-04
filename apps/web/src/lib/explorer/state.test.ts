@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FRAMEWORK_IDS } from "$lib/db/contracts";
 import {
   LatestRequest,
+  canonicalControlReference,
   changeFrequency,
   clampSidebarWidth,
   controlsBySection,
@@ -66,6 +67,18 @@ describe("explorer URL state", () => {
     const state = readExplorerUrl(new URL("https://rule1.link42.app/explorer/?search=ISM-1749"), FRAMEWORK_IDS);
     expect(state.search).toBe("");
     expect(state.selectedId).toBe("ISM-1749");
+  });
+
+  it("canonicalises CSF 1.1 subcategory links without changing their framework lineage", () => {
+    expect(canonicalControlReference("nist-csf", "nist-csf-de.ae-1")).toBe("nist-csf-de.ae-01");
+    expect(canonicalControlReference("nist-csf", "DE.AE-1")).toBe("de.ae-01");
+    expect(canonicalControlReference("nist-csf", "nist-csf-de.ae-10")).toBe("nist-csf-de.ae-10");
+    expect(canonicalControlReference("ism", "ISM-0043")).toBe("ISM-0043");
+    const state = readExplorerUrl(
+      new URL("https://rule1.link42.app/explorer/?framework=nist-csf&id=nist-csf-de.ae-1"),
+      FRAMEWORK_IDS,
+    );
+    expect(state.selectedId).toBe("nist-csf-de.ae-01");
   });
 
   it("opens an exact control from a legacy q link", () => {
