@@ -16,7 +16,7 @@ The same verified release build is also published as a LinuxServer.io-based, mul
 docker run --rm -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p 8080:80 ghcr.io/link42-au/rule1:latest
 ```
 
-The GHCR package is currently private and requires registry authentication before it can be pulled. See [Container deployment](docs/CONTAINER-DEPLOYMENT.md) for Compose, authentication, reverse-proxy, update, rollback, and verification guidance.
+The GHCR package is public, so deployment hosts can pull it without registry credentials. See [Container deployment](docs/CONTAINER-DEPLOYMENT.md) for Compose, reverse-proxy, update, rollback, and verification guidance.
 
 ## Feedback and support
 

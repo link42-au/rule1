@@ -36,8 +36,9 @@ test("container deployment guidance covers publication, operation, updates, and 
   const deployment = read("docs/CONTAINER-DEPLOYMENT.md");
 
   assert.match(deployment, /ghcr\.io\/link42-au\/rule1/);
-  assert.match(deployment, /package as private/);
-  assert.match(deployment, /docker login ghcr\.io/);
+  assert.match(deployment, /package publicly/);
+  assert.match(deployment, /pull it anonymously/);
+  assert.doesNotMatch(deployment, /docker login ghcr\.io/);
   assert.match(deployment, /linux\/amd64/);
   assert.match(deployment, /linux\/arm64/);
   assert.match(deployment, /PUID/);
@@ -49,10 +50,10 @@ test("container deployment guidance covers publication, operation, updates, and 
   assert.match(deployment, /not registry-enforced immutable/);
   assert.match(deployment, /ghcr\.io\/link42-au\/rule1@sha256:<index-digest>/);
   assert.match(deployment, /post-deploy-canary\.mjs/);
-  assert.match(deployment, /33932765951/);
+  assert.match(deployment, /33938976627/);
   assert.match(deployment, /Documentation-only and test-only pushes do not rebuild SQLite/);
   assert.match(deployment, /workflow_dispatch/);
-  assert.match(deployment, /2c3e6f7684e64373dbeaccbc9568a6f5543e03369f6919ee858b47b7105cea47/);
+  assert.match(deployment, /bd12c133b3f49b3ff3362dfef94e77ca105ecbec601b5a65e2b99a38928ce396/);
   assert.doesNotMatch(deployment, /\/app\/www\/public:\s*$/m);
 });
 

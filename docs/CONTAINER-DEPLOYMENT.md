@@ -10,11 +10,7 @@ The image is published to:
 ghcr.io/link42-au/rule1
 ```
 
-GitHub Container Registry currently reports the package as private. Authenticate before pulling it with a GitHub token that can read packages. Keep the token in the deployment system's secret store and never commit it to this repository or a Compose file.
-
-```sh
-printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username YOUR_GITHUB_USER --password-stdin
-```
+GitHub Container Registry publishes the package publicly. Deployment hosts can pull it anonymously; no GitHub account, token, or `docker login` is required. GitHub Actions still authenticates when publishing new releases.
 
 Two tag forms are published after each successful `main` build:
 
@@ -136,6 +132,6 @@ node scripts/post-deploy-canary.mjs \
 
 ## Current publication evidence
 
-Feature 46 was published from commit `cc58c8be55dc8399b4b366f36e44057c103e68f0` by [GitHub Actions run 33932765951](https://github.com/link42-au/rule1/actions/runs/33932765951). Its `build-sqlite`, `deploy-pages`, and `publish-container` jobs all completed successfully.
+Feature 48 was published from commit `bcc98dcef67dc6976ee18ee5bbd2c0258f18ec0b` by [GitHub Actions run 33938976627](https://github.com/link42-au/rule1/actions/runs/33938976627). Its `build-sqlite`, `deploy-pages`, and `publish-container` jobs all completed successfully.
 
-The published image index digest was `sha256:2c3e6f7684e64373dbeaccbc9568a6f5543e03369f6919ee858b47b7105cea47`, with AMD64 and ARM64 manifests. Pulling the revision-specific commit tag and reading the served database produced SHA-256 `039f02af124b14e35d1c9987ce64cd6addd11c7822bf29de307b0991bf8bf406`, matching the manifest embedded in that image. These values record that release only; use the current workflow run and image manifest for later releases.
+The public image index digest was `sha256:bd12c133b3f49b3ff3362dfef94e77ca105ecbec601b5a65e2b99a38928ce396`, with AMD64 and ARM64 manifests. An anonymous GHCR token request fetched the `latest` OCI index with HTTP 200 and that digest. The served database remained SHA-256 `039f02af124b14e35d1c9987ce64cd6addd11c7822bf29de307b0991bf8bf406`, matching the manifest embedded in the verified build. These values record that release only; use the current workflow run and image manifest for later releases.
