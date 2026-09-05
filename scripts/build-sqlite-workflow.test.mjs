@@ -19,6 +19,31 @@ test("SQLite workflow publishes its verified build to Pages", () => {
     "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9",
   );
 
+  const mainPushTrigger = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  pull_request:"));
+  for (const deployablePath of [
+    ".dockerignore",
+    ".github/workflows/build-sqlite.yml",
+    "Dockerfile",
+    "annotations/**",
+    "apps/web/**",
+    "data/**",
+    "deploy/container/**",
+    "ingestion/**",
+    "package.json",
+    "packages/**",
+    "pnpm-lock.yaml",
+    "pyproject.toml",
+    "scripts/write-artifact-manifest.mjs",
+    "uv.lock",
+  ]) {
+    assert.match(mainPushTrigger, new RegExp(`^ {6}- ${deployablePath.replaceAll("*", "\\*")}$`, "m"));
+  }
+  for (const nonDeployablePath of ["README.md", "PLAN.md", "docs/**", "scripts/*.test.mjs", "e2e/**"]) {
+    assert.doesNotMatch(mainPushTrigger, new RegExp(nonDeployablePath.replaceAll("*", "\\*")));
+  }
+  assert.match(workflow, /^ {2}pull_request:$/m);
+  assert.match(workflow, /^ {2}workflow_dispatch:$/m);
+
   assert.match(workflow, /pnpm exec playwright install --with-deps chromium/);
   assert.match(buildJob, /run: pnpm validate:sources/);
   assert.equal(buildJob.match(/run: pnpm verify/g)?.length, 1);

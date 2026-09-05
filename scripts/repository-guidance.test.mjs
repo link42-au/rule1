@@ -50,6 +50,8 @@ test("container deployment guidance covers publication, operation, updates, and 
   assert.match(deployment, /ghcr\.io\/link42-au\/rule1@sha256:<index-digest>/);
   assert.match(deployment, /post-deploy-canary\.mjs/);
   assert.match(deployment, /33932765951/);
+  assert.match(deployment, /Documentation-only and test-only pushes do not rebuild SQLite/);
+  assert.match(deployment, /workflow_dispatch/);
   assert.match(deployment, /2c3e6f7684e64373dbeaccbc9568a6f5543e03369f6919ee858b47b7105cea47/);
   assert.doesNotMatch(deployment, /\/app\/www\/public:\s*$/m);
 });

@@ -3,6 +3,28 @@ name: Build SQLite
 on:
   push:
     branches: [main]
+    paths:
+      - .dockerignore
+      - .github/workflows/build-sqlite.yml
+      - Dockerfile
+      - annotations/**
+      - apps/web/**
+      - data/**
+      - deploy/container/**
+      - ingestion/**
+      - package.json
+      - packages/**
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - pyproject.toml
+      - scripts/copy-sqlite-wasm-assets.mjs
+      - scripts/post-deploy-canary.mjs
+      - scripts/stage-static-database.mjs
+      - scripts/validate-sources.mjs
+      - scripts/verify-static.mjs
+      - scripts/write-artifact-manifest.mjs
+      - tsconfig.json
+      - uv.lock
   pull_request:
   workflow_dispatch:
 

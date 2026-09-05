@@ -40,7 +40,9 @@ The `Build SQLite` workflow is the only publication path. It performs these oper
 5. Upload the exact verified static build as a short-lived workflow artifact.
 6. Deploy that build to GitHub Pages and build the GHCR image from the same artifact.
 
-Pull requests run the verification and container smoke test but cannot publish. A successful push or manual run on `main` publishes both `latest` and the commit tag. Any source, application, or database update reaching `main` therefore rebuilds the database and container together. A failed verification leaves the previous GHCR tags unchanged.
+Pull requests run the verification and container smoke test but cannot publish. On `main`, the workflow starts automatically only when a deployable input changes: catalogue data, ingestion or annotations, the web application, runtime packages and locks, database/static build scripts, container files, or the release workflow itself. Documentation-only and test-only pushes do not rebuild SQLite, deploy Pages, or publish a container. `workflow_dispatch` remains the explicit way to force a verified release from `main`.
+
+A successful eligible push or manual run publishes both `latest` and the commit tag. A failed verification leaves the previous GHCR tags unchanged. This is a release-trigger boundary rather than an attempt to infer whether two generated databases would be byte-identical after the job has started.
 
 The SQLite bytes are architecture-independent and are built once. The AMD64 and ARM64 runtime images receive the same verified static directory rather than generating separate databases under emulation.
 
@@ -89,7 +91,7 @@ For a reverse-proxy deployment, route HTTP to container port `80` and terminate 
 
 ## Updating
 
-Publishing a new image does not recreate a running container. Deployment automation must pull and recreate it:
+Publishing a new image does not recreate a running container. Documentation and test-only changes publish nothing, while eligible application or catalogue changes move `latest` only after the full gate succeeds. Deployment automation must then pull and recreate it:
 
 ```sh
 docker compose pull rule1
