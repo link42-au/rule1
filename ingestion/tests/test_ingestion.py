@@ -400,6 +400,18 @@ class DatabaseTests(unittest.TestCase):
             self.assertIn("PowerShell (T1059.001)", direct[2])
             self.assertIn('"kind":"ism-control"', direct[3])
             self.assertIn('"kind":"attack-relationship"', direct[3])
+            self.assertEqual(
+                connection.execute(
+                    "SELECT CASE WHEN effect IN ('prevent','constrain','detect') "
+                    "THEN 'technique-disruption' ELSE 'consequence-treatment' END, COUNT(*) "
+                    "FROM control_attack_mappings GROUP BY 1 ORDER BY 1"
+                ).fetchall(),
+                [("consequence-treatment", 2), ("technique-disruption", 14)],
+            )
+            mapping_schema = connection.execute(
+                "SELECT sql FROM sqlite_schema WHERE type='table' AND name='control_attack_mappings'"
+            ).fetchone()[0]
+            self.assertIn("'contain'", mapping_schema)
             indexes = {row[0] for row in connection.execute(
                 "SELECT name FROM sqlite_schema WHERE type='index'"
             )}

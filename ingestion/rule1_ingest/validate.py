@@ -251,6 +251,7 @@ def validate_database(
         invalid_bridges = connection.execute(
             "SELECT COUNT(*) FROM control_attack_bridges WHERE framework!='ism' "
             "OR ism_catalog_version!='ISM-OSCAL-2026.09.4' OR attack_version!='19.2' "
+            "OR effect NOT IN ('prevent','constrain','detect','contain','recover') "
             "OR json_valid(evidence)=0 OR json_array_length(evidence)=0 OR TRIM(rationale)=''"
         ).fetchone()[0]
         if invalid_bridges:
@@ -258,6 +259,7 @@ def validate_database(
         invalid_mappings = connection.execute(
             "SELECT COUNT(*) FROM control_attack_mappings WHERE attack_version!='19.2' "
             "OR TRIM(candidate_id)='' OR TRIM(relationship_stix_id)='' "
+            "OR effect NOT IN ('prevent','constrain','detect','contain','recover') "
             "OR TRIM(rationale)='' OR json_valid(evidence)=0 OR json_array_length(evidence)=0 "
             "OR (status='candidate' AND (reviewed_by IS NOT NULL OR reviewed_at IS NOT NULL)) "
             "OR (status IN ('reviewed','rejected') AND (reviewed_by IS NULL OR reviewed_at IS NULL))"

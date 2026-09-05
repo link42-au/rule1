@@ -16,6 +16,7 @@ import type {
 import { compareSnapshots, type ComparisonRecord } from "./compare";
 import {
   canonicalFrameworkId,
+  type AttackMapping,
   type CompareParams,
   type ControlParams,
   type ControlsResult,
@@ -362,7 +363,10 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       t.description AS technique_description, t.url AS technique_url, t.tactics, t.platforms,
       t.parent_technique_id, b.mitigation_id, g.name AS mitigation_name,
       g.description AS mitigation_description, g.url AS mitigation_url,
-      m.effect, m.confidence, m.rationale,
+      m.effect,
+      CASE WHEN m.effect IN ('prevent', 'constrain', 'detect')
+        THEN 'technique-disruption' ELSE 'consequence-treatment' END AS outcome_class,
+      m.confidence, m.rationale,
       b.evidence AS bridge_evidence, m.evidence AS direct_evidence
     FROM control_attack_mappings m
     JOIN control_attack_bridges b ON b.bridge_id = m.bridge_id
@@ -378,7 +382,7 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       AND b.attack_version = (
         SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
       )
-    ORDER BY m.technique_id, m.mitigation_id, m.effect`,
+    ORDER BY m.technique_id, m.mitigation_id, m.effect, m.bridge_id`,
       [params.id.toLowerCase()],
     ),
   ]);
@@ -400,7 +404,8 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       mitigationName: text(row.mitigation_name),
       mitigationDescription: nullableText(row.mitigation_description),
       mitigationUrl: text(row.mitigation_url),
-      effect: text(row.effect) as "prevent" | "constrain" | "detect" | "recover",
+      effect: text(row.effect) as AttackMapping["effect"],
+      outcomeClass: text(row.outcome_class) as AttackMapping["outcomeClass"],
       confidence: text(row.confidence) as "low" | "medium" | "high",
       rationale: text(row.rationale),
       evidence: [...jsonRecords(row.bridge_evidence), ...jsonRecords(row.direct_evidence)],

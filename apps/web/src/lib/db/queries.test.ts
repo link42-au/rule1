@@ -357,10 +357,32 @@ describe("Rule1 query dispatcher", () => {
           mitigation_description: "Use MFA.",
           mitigation_url: "https://attack.mitre.org/mitigations/M1032/",
           effect: "prevent",
+          outcome_class: "technique-disruption",
           confidence: "high",
           rationale: "MFA may prevent successful use of guessed credentials.",
           bridge_evidence: '[{"kind":"bridge"}]',
           direct_evidence: '[{"kind":"direct-candidate"}]',
+        },
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+          technique_id: "T1110",
+          technique_name: "Brute Force",
+          technique_description: "Attempt credentials.",
+          technique_url: "https://attack.mitre.org/techniques/T1110/",
+          tactics: '["credential-access"]',
+          platforms: '["Windows"]',
+          parent_technique_id: null,
+          mitigation_id: "M1053",
+          mitigation_name: "Data Backup",
+          mitigation_description: "Retain recoverable data.",
+          mitigation_url: "https://attack.mitre.org/mitigations/M1053/",
+          effect: "recover",
+          outcome_class: "consequence-treatment",
+          confidence: "high",
+          rationale: "Backups may support recovery after an impact.",
+          bridge_evidence: '[{"kind":"bridge-recovery"}]',
+          direct_evidence: '[{"kind":"direct-recovery"}]',
         },
       ],
     });
@@ -374,16 +396,25 @@ describe("Rule1 query dispatcher", () => {
         {
           techniqueId: "T1110",
           mitigationId: "M1032",
+          outcomeClass: "technique-disruption",
           tactics: ["credential-access"],
           evidence: [{ kind: "bridge" }, { kind: "direct-candidate" }],
+        },
+        {
+          techniqueId: "T1110",
+          mitigationId: "M1053",
+          effect: "recover",
+          outcomeClass: "consequence-treatment",
+          evidence: [{ kind: "bridge-recovery" }, { kind: "direct-recovery" }],
         },
       ],
     });
     const attackCall = executor.calls.find((call) => call.name === "attack-mappings");
     expect(attackCall?.bind).toEqual(["ism-1173"]);
     expect(attackCall?.sql).toContain("m.status = 'reviewed'");
-    expect(attackCall?.sql).toContain("ORDER BY m.technique_id, m.mitigation_id, m.effect");
+    expect(attackCall?.sql).toContain("ORDER BY m.technique_id, m.mitigation_id, m.effect, m.bridge_id");
     expect(attackCall?.sql).toContain("m.rationale");
+    expect(attackCall?.sql).toContain("THEN 'technique-disruption' ELSE 'consequence-treatment'");
     expect(attackCall?.sql).not.toContain("candidate");
 
     const callsBeforeGate = executor.calls.length;

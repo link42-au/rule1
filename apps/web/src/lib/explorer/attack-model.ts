@@ -1,4 +1,4 @@
-import type { AttackMapping, AttackMappingResult } from "$lib/db/contracts";
+import type { AttackEffect, AttackMapping, AttackMappingResult, AttackOutcomeClass } from "$lib/db/contracts";
 
 export const ATTACK_TACTICS = [
   "reconnaissance",
@@ -22,6 +22,7 @@ export interface AttackTechniqueMapping {
   mitigationName: string;
   mitigationUrl: string | null;
   effect: AttackMapping["effect"];
+  outcomeClass: AttackOutcomeClass;
   confidence: AttackMapping["confidence"];
   rationale: string;
   evidenceNotes: string[];
@@ -45,7 +46,41 @@ export interface AttackTacticSummary {
   count: number;
 }
 
-const EFFECT_ORDER: AttackMapping["effect"][] = ["prevent", "constrain", "detect", "recover"];
+export interface AttackOutcomeSection {
+  outcomeClass: AttackOutcomeClass;
+  title: string;
+  description: string;
+  techniques: AttackTechniqueGroup[];
+}
+
+const EFFECT_ORDER: AttackMapping["effect"][] = ["prevent", "constrain", "detect", "contain", "recover"];
+const OUTCOME_SECTIONS: ReadonlyArray<Omit<AttackOutcomeSection, "techniques">> = [
+  {
+    outcomeClass: "technique-disruption",
+    title: "Technique disruption",
+    description: "Controls that may prevent, constrain, or detect technique execution.",
+  },
+  {
+    outcomeClass: "consequence-treatment",
+    title: "Consequence treatment",
+    description: "Controls that may contain consequences or support recovery after technique execution.",
+  },
+];
+
+export function effectRelationshipPhrase(effect: AttackEffect): string {
+  const phrases: Record<AttackEffect, string> = {
+    prevent: "prevents",
+    constrain: "constrains",
+    detect: "detects",
+    contain: "contains",
+    recover: "recovers from",
+  };
+  return phrases[effect];
+}
+
+export function effectInfinitive(effect: AttackEffect): string {
+  return effect === "recover" ? "recover from" : effect;
+}
 
 export function formatAttackLabel(value: string): string {
   return value
@@ -96,26 +131,25 @@ export function groupAttackMappings(rows: readonly AttackMapping[]): AttackTechn
     technique.effects = [...new Set([...technique.effects, row.effect])].sort(
       (left, right) => EFFECT_ORDER.indexOf(left) - EFFECT_ORDER.indexOf(right),
     );
-    const mappingKey = `${row.mitigationId}\u0000${row.effect}\u0000${row.confidence}\u0000${row.rationale}`;
-    if (
-      !technique.mappings.some(
-        (mapping) =>
-          `${mapping.mitigationId}\u0000${mapping.effect}\u0000${mapping.confidence}\u0000${mapping.rationale}` ===
-          mappingKey,
-      )
-    ) {
-      technique.mappings.push({
-        mitigationId: row.mitigationId,
-        mitigationName: row.mitigationName,
-        mitigationUrl: safeMitreUrl(row.mitigationUrl),
-        effect: row.effect,
-        confidence: row.confidence,
-        rationale: row.rationale,
-        evidenceNotes: evidenceNotes(row.evidence),
-      });
-    }
+    technique.mappings.push({
+      mitigationId: row.mitigationId,
+      mitigationName: row.mitigationName,
+      mitigationUrl: safeMitreUrl(row.mitigationUrl),
+      effect: row.effect,
+      outcomeClass: row.outcomeClass,
+      confidence: row.confidence,
+      rationale: row.rationale,
+      evidenceNotes: evidenceNotes(row.evidence),
+    });
   }
   return [...grouped.values()].sort((left, right) => left.techniqueId.localeCompare(right.techniqueId));
+}
+
+export function attackOutcomeSections(rows: readonly AttackMapping[]): AttackOutcomeSection[] {
+  return OUTCOME_SECTIONS.map((section) => ({
+    ...section,
+    techniques: groupAttackMappings(rows.filter((row) => row.outcomeClass === section.outcomeClass)),
+  })).filter((section) => section.techniques.length > 0);
 }
 
 export function attackTacticSummary(groups: readonly AttackTechniqueGroup[]): AttackTacticSummary[] {

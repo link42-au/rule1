@@ -229,6 +229,7 @@ test("ATT&CK control mappings are ISM-only, local, and honestly empty at desktop
     const attackTab = page.getByRole("tab", { name: "ATT&CK" });
     await expect(attackTab).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("heading", { name: "MITRE ATT&CK mappings" })).toBeVisible();
+    await expect(page.getByText(/may prevent, constrain, detect, contain, or support recovery/)).toBeVisible();
     await expect(page.getByText("No reviewed ATT&CK mappings", { exact: true })).toBeVisible();
     await expect(page.getByText("ATT&CK 19.2", { exact: true })).toBeVisible();
     await expect(page.getByText("ISM ISM-OSCAL-2026.09.4", { exact: true })).toBeVisible();

@@ -7,11 +7,19 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
-Effect = Literal["prevent", "constrain", "detect", "recover"]
+Effect = Literal["prevent", "constrain", "detect", "contain", "recover"]
+OutcomeClass = Literal["technique-disruption", "consequence-treatment"]
 Confidence = Literal["low", "medium", "high"]
 MappingStatus = Literal["candidate", "reviewed", "rejected"]
 
-EFFECTS = frozenset({"prevent", "constrain", "detect", "recover"})
+EFFECTS = frozenset({"prevent", "constrain", "detect", "contain", "recover"})
+EFFECT_PHRASES: dict[Effect, str] = {
+    "prevent": "prevent",
+    "constrain": "constrain",
+    "detect": "detect",
+    "contain": "contain",
+    "recover": "recover from",
+}
 CONFIDENCES = frozenset({"low", "medium", "high"})
 DECISION_STATUSES = frozenset({"reviewed", "rejected"})
 ATTACK_VERSION = "19.2"
@@ -100,6 +108,7 @@ class DirectCandidate(TypedDict):
     technique_id: str
     relationship_stix_id: str
     effect: Effect
+    outcome_class: OutcomeClass
     confidence: Confidence
     rationale: str
     evidence: list[dict[str, Any]]
@@ -109,6 +118,13 @@ class DirectMapping(DirectCandidate):
     status: MappingStatus
     reviewed_by: str | None
     reviewed_at: str | None
+
+
+def outcome_class(effect: Effect) -> OutcomeClass:
+    """Derive the non-overlapping treatment class from the specific edge effect."""
+    if effect in {"prevent", "constrain", "detect"}:
+        return "technique-disruption"
+    return "consequence-treatment"
 
 
 def _read_json(source: Path | dict[str, Any]) -> dict[str, Any]:
@@ -503,6 +519,7 @@ def load_candidates(
             "technique_id": technique_id,
             "relationship_stix_id": relationship_stix_id,
             "effect": effect,  # type: ignore[typeddict-item]
+            "outcome_class": outcome_class(effect),  # type: ignore[arg-type]
             "confidence": confidence,  # type: ignore[typeddict-item]
             "rationale": rationale,
             "evidence": evidence,
@@ -662,9 +679,10 @@ def review_artifacts(
     mapped_controls = {item["control_id"] for item in mappings}
     status_counts = Counter(item["status"] for item in mappings)
     effect_counts = Counter(item["effect"] for item in mappings)
+    outcome_counts = Counter(item["outcome_class"] for item in mappings)
     confidence_counts = Counter(item["confidence"] for item in mappings)
     report = {
-        "schema_version": 2,
+        "schema_version": 3,
         "purpose": "Explicit direct control-to-technique candidates for human review.",
         "ism_catalog_version": ISM_VERSION,
         "attack_version": catalog["version"],
@@ -675,6 +693,10 @@ def review_artifacts(
             "unmapped_controls": max(0, E8_CONTROL_COUNT - len(mapped_controls)),
             "by_status": {status: status_counts[status] for status in sorted({"candidate", "reviewed", "rejected"})},
             "by_effect": {effect: effect_counts[effect] for effect in sorted(EFFECTS)},
+            "by_outcome_class": {
+                outcome: outcome_counts[outcome]
+                for outcome in sorted({"technique-disruption", "consequence-treatment"})
+            },
             "by_confidence": {
                 confidence: confidence_counts[confidence] for confidence in sorted(CONFIDENCES)
             },
@@ -689,7 +711,8 @@ def review_artifacts(
     navigator_techniques = []
     for technique_id, reviewed in sorted(reviewed_by_technique.items()):
         statements = sorted({
-            f"{item['control_id']} may {item['effect']} this technique via {item['mitigation_id']}."
+            f"{item['control_id']} supports {mitigations[item['mitigation_id']]['name']} "
+            f"({item['mitigation_id']}) to {EFFECT_PHRASES[item['effect']]} this technique."
             for item in reviewed
         })
         navigator_techniques.append({
@@ -706,7 +729,7 @@ def review_artifacts(
         "name": "Rule1 Essential Eight to Enterprise ATT&CK",
         "description": (
             "Reviewed ISM Essential Eight mappings. A mapping indicates that a control may "
-            "prevent, constrain, detect, or support recovery from a technique; it is not a guarantee."
+            "prevent, constrain, detect, contain, or support recovery from a technique; it is not a guarantee."
         ),
         "domain": "enterprise-attack",
         "versions": {"attack": catalog["version"], "layer": "4.5", "navigator": "5.1.0"},

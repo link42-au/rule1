@@ -1,6 +1,13 @@
 <script lang="ts">
   import type { AttackMappingResult } from "$lib/db/contracts";
-  import { attackTacticSummary, formatAttackLabel, groupAttackMappings } from "./attack-model";
+  import {
+    attackOutcomeSections,
+    attackTacticSummary,
+    effectInfinitive,
+    effectRelationshipPhrase,
+    formatAttackLabel,
+    groupAttackMappings,
+  } from "./attack-model";
 
   let {
     result,
@@ -11,6 +18,7 @@
   } = $props();
 
   let techniques = $derived(groupAttackMappings(result.mappings));
+  let outcomeSections = $derived(attackOutcomeSections(result.mappings));
   let tacticSummary = $derived(attackTacticSummary(techniques));
 </script>
 
@@ -29,7 +37,7 @@
   </div>
 
   <p class="mapping-caveat">
-    Reviewed mappings show where this control may prevent, constrain, detect, or support recovery from a technique.
+    Reviewed mappings show where this control may prevent, constrain, detect, contain, or support recovery from a technique.
     Outcomes depend on implementation and context. Confidence describes confidence in the mapping, not control effectiveness.
   </p>
 
@@ -65,57 +73,80 @@
       {tacticSummary.filter((tactic) => tactic.count > 0).length} tactic{tacticSummary.filter((tactic) => tactic.count > 0).length === 1 ? "" : "s"}.
     </p>
 
-    <div class="technique-list">
-      {#each techniques as technique (technique.techniqueId)}
-        <article class="technique-card">
-          <header class="technique-header">
-            <div class="technique-title">
-              {#if technique.techniqueUrl}
-                <a class="technique-id" href={technique.techniqueUrl} target="_blank" rel="noopener noreferrer">
-                  {technique.techniqueId}<span class="sr-only"> on MITRE ATT&amp;CK</span><span aria-hidden="true"> ↗</span>
-                </a>
-              {:else}
-                <span class="technique-id">{technique.techniqueId}</span>
-              {/if}
-              <h3>{technique.techniqueName}</h3>
+    <div class="outcome-sections">
+      {#each outcomeSections as outcome (outcome.outcomeClass)}
+        <section class="outcome-section" aria-labelledby={`attack-outcome-${outcome.outcomeClass}`}>
+          <div class="outcome-heading">
+            <div>
+              <p class="eyebrow">Outcome class</p>
+              <h3 id={`attack-outcome-${outcome.outcomeClass}`}>{outcome.title}</h3>
             </div>
-            <div class="effect-row" aria-label="Mapping effects">
-              {#each technique.effects as effect}<span class="effect-chip" data-effect={effect}>{effect}</span>{/each}
-            </div>
-          </header>
-
-          <div class="badge-row">
-            {#each technique.tactics as tactic}<span class="tactic-badge">{formatAttackLabel(tactic)}</span>{/each}
-            {#each technique.platforms as platform}<span class="platform-badge">{platform}</span>{/each}
+            <span>{outcome.techniques.length} technique{outcome.techniques.length === 1 ? "" : "s"}</span>
           </div>
+          <p class="outcome-description">{outcome.description}</p>
 
-          {#if technique.techniqueDescription}<p class="technique-description">{technique.techniqueDescription}</p>{/if}
-
-          <div class="mapping-list">
-            {#each technique.mappings as mapping (`${mapping.mitigationId}-${mapping.effect}-${mapping.confidence}-${mapping.rationale}`)}
-              <section class="mapping-row">
-                <div class="mapping-heading">
-                  <span>Mapped via</span>
-                  {#if mapping.mitigationUrl}
-                    <a href={mapping.mitigationUrl} target="_blank" rel="noopener noreferrer">
-                      {mapping.mitigationId} — {mapping.mitigationName}<span class="sr-only"> on MITRE ATT&amp;CK</span><span aria-hidden="true"> ↗</span>
-                    </a>
-                  {:else}
-                    <strong>{mapping.mitigationId} — {mapping.mitigationName}</strong>
-                  {/if}
-                  <span class="confidence-chip" data-confidence={mapping.confidence}>{mapping.confidence} mapping confidence</span>
-                </div>
-                <p>{mapping.rationale}</p>
-                {#if mapping.evidenceNotes.length > 0}
-                  <div class="evidence">
-                    <strong>Review evidence</strong>
-                    {#each mapping.evidenceNotes as note}<p>{note}</p>{/each}
+          <div class="technique-list">
+            {#each outcome.techniques as technique (technique.techniqueId)}
+              <article class="technique-card">
+                <header class="technique-header">
+                  <div class="technique-title">
+                    {#if technique.techniqueUrl}
+                      <a class="technique-id" href={technique.techniqueUrl} target="_blank" rel="noopener noreferrer">
+                        {technique.techniqueId}<span class="sr-only"> on MITRE ATT&amp;CK</span><span aria-hidden="true"> ↗</span>
+                      </a>
+                    {:else}
+                      <span class="technique-id">{technique.techniqueId}</span>
+                    {/if}
+                    <h4>{technique.techniqueName}</h4>
                   </div>
-                {/if}
-              </section>
+                  <div class="effect-row" aria-label="Relationship outcomes">
+                    {#each technique.effects as effect}<span class="effect-chip" data-effect={effect}>{effectRelationshipPhrase(effect)}</span>{/each}
+                  </div>
+                </header>
+
+                <div class="badge-row">
+                  {#each technique.tactics as tactic}<span class="tactic-badge">{formatAttackLabel(tactic)}</span>{/each}
+                  {#each technique.platforms as platform}<span class="platform-badge">{platform}</span>{/each}
+                </div>
+
+                {#if technique.techniqueDescription}<p class="technique-description">{technique.techniqueDescription}</p>{/if}
+
+                <div class="mapping-list">
+                  {#each technique.mappings as mapping, index (`${mapping.mitigationId}-${mapping.effect}-${mapping.confidence}-${index}`)}
+                    <section
+                      class="mapping-row"
+                      aria-label={`This control supports ${mapping.mitigationName} (${mapping.mitigationId}) to ${effectInfinitive(mapping.effect)} ${technique.techniqueName} (${technique.techniqueId})`}
+                    >
+                      <p class="relationship-copy">
+                        This control supports
+                        {#if mapping.mitigationUrl}
+                          <a href={mapping.mitigationUrl} target="_blank" rel="noopener noreferrer">
+                            {mapping.mitigationName} ({mapping.mitigationId})<span class="sr-only"> on MITRE ATT&amp;CK</span><span aria-hidden="true"> ↗</span>
+                          </a>
+                        {:else}
+                          <strong>{mapping.mitigationName} ({mapping.mitigationId})</strong>
+                        {/if}
+                        to <strong>{effectInfinitive(mapping.effect)}</strong>
+                        {technique.techniqueName} ({technique.techniqueId}).
+                      </p>
+                      <div class="mapping-meta">
+                        <span class="outcome-chip" data-effect={mapping.effect}>{effectRelationshipPhrase(mapping.effect)}</span>
+                        <span class="confidence-chip" data-confidence={mapping.confidence}>{mapping.confidence} mapping confidence</span>
+                      </div>
+                      <p class="rationale">{mapping.rationale}</p>
+                      {#if mapping.evidenceNotes.length > 0}
+                        <div class="evidence">
+                          <strong>Review evidence</strong>
+                          {#each mapping.evidenceNotes as note}<p>{note}</p>{/each}
+                        </div>
+                      {/if}
+                    </section>
+                  {/each}
+                </div>
+              </article>
             {/each}
           </div>
-        </article>
+        </section>
       {/each}
     </div>
   {/if}
@@ -140,19 +171,27 @@
   .tactic-cell span { font-size: 9px; line-height: 1.15; text-align: center; }
   .tactic-cell strong { font-family: var(--font-mono); font-size: 16px; }
   .coverage-summary { margin: 7px 0 14px; color: var(--text-dim); font-size: 11px; }
-  .technique-list { display: grid; gap: 12px; }
+  .outcome-sections, .technique-list { display: grid; gap: 12px; }
+  .outcome-sections { gap: 22px; }
+  .outcome-section { min-width: 0; }
+  .outcome-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .outcome-heading .eyebrow { margin-bottom: 2px; }
+  .outcome-heading h3 { margin: 0; color: var(--text); font-size: 15px; }
+  .outcome-heading > span { color: var(--text-dim); font-family: var(--font-mono); font-size: 10px; }
+  .outcome-description { margin: 8px 0 10px; color: var(--text-dim); font-size: 11px; line-height: 1.5; }
   .technique-card { overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card); }
   .technique-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; }
   .technique-title { min-width: 0; }
   .technique-id { color: var(--accent-text); font-family: var(--font-mono); font-size: 11px; font-weight: 650; text-decoration: none; }
-  a.technique-id:hover, .mapping-heading a:hover { text-decoration: underline; }
-  .technique-title h3 { margin: 3px 0 0; color: var(--text); font-size: 15px; }
+  a.technique-id:hover { text-decoration: underline; }
+  .technique-title h4 { margin: 3px 0 0; color: var(--text); font-size: 15px; }
   .effect-row, .badge-row { display: flex; flex-wrap: wrap; gap: 5px; }
   .effect-row { justify-content: flex-end; }
   .effect-chip, .tactic-badge, .platform-badge, .confidence-chip { padding: 3px 7px; border: 1px solid var(--border); border-radius: 999px; font-size: 9px; font-weight: 650; }
   .effect-chip { background: var(--accent-bg); color: var(--accent-text); text-transform: capitalize; }
   .effect-chip[data-effect="detect"] { border-color: var(--purple-border); background: var(--purple-bg); color: var(--purple); }
   .effect-chip[data-effect="recover"] { border-color: var(--green-border); background: var(--green-bg); color: var(--green); }
+  .effect-chip[data-effect="contain"] { border-color: var(--green-border); background: var(--green-bg); color: var(--green); }
   .effect-chip[data-effect="constrain"] { border-color: var(--amber-border); background: var(--amber-bg); color: var(--amber); }
   .badge-row { padding: 0 16px 12px; }
   .tactic-badge { border-color: var(--accent-border); color: var(--accent-text); }
@@ -161,11 +200,17 @@
   .mapping-list { border-top: 1px solid var(--border); }
   .mapping-row { padding: 13px 16px; background: var(--bg-subtle); }
   .mapping-row + .mapping-row { border-top: 1px solid var(--border); }
-  .mapping-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--text-dim); font-size: 10px; }
-  .mapping-heading a, .mapping-heading strong { color: var(--text); font-family: var(--font-mono); font-size: 10px; text-decoration: none; }
-  .confidence-chip { margin-left: auto; color: var(--text-dim); text-transform: capitalize; }
+  .relationship-copy { margin: 0; color: var(--text-mid); font-size: 12px; line-height: 1.55; }
+  .relationship-copy a, .relationship-copy strong { color: var(--text); font-weight: 650; text-decoration: none; }
+  .relationship-copy a:hover { text-decoration: underline; }
+  .mapping-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .outcome-chip { padding: 3px 7px; border: 1px solid var(--accent-border); border-radius: 999px; background: var(--accent-bg); color: var(--accent-text); font-size: 9px; font-weight: 650; }
+  .outcome-chip[data-effect="constrain"] { border-color: var(--amber-border); background: var(--amber-bg); color: var(--amber); }
+  .outcome-chip[data-effect="detect"] { border-color: var(--purple-border); background: var(--purple-bg); color: var(--purple); }
+  .outcome-chip[data-effect="contain"], .outcome-chip[data-effect="recover"] { border-color: var(--green-border); background: var(--green-bg); color: var(--green); }
+  .confidence-chip { color: var(--text-dim); text-transform: capitalize; }
   .confidence-chip[data-confidence="high"] { border-color: var(--green-border); background: var(--green-bg); color: var(--green); }
-  .mapping-row > p, .evidence p { margin: 8px 0 0; color: var(--text-mid); font-size: 12px; line-height: 1.55; }
+  .mapping-row > p.rationale, .evidence p { margin: 8px 0 0; color: var(--text-mid); font-size: 12px; line-height: 1.55; }
   .evidence { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--border); }
   .evidence strong { color: var(--text-dim); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; }
   .evidence p { margin-top: 4px; color: var(--text-dim); }
@@ -174,7 +219,6 @@
     .attack-intro, .technique-header { flex-direction: column; }
     .version-row, .effect-row { justify-content: flex-start; }
     .tactic-cell { min-width: 64px; flex-basis: 64px; }
-    .mapping-heading { align-items: flex-start; flex-direction: column; }
-    .confidence-chip { margin-left: 0; }
+    .outcome-heading { align-items: flex-start; flex-direction: column; }
   }
 </style>

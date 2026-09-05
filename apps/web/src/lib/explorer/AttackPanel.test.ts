@@ -10,56 +10,66 @@ const reviewedResult: AttackMappingResult = {
     {
       attackVersion: "19.2",
       ismCatalogVersion: "ISM-OSCAL-2026.09.4",
-      techniqueId: "T1110",
-      techniqueName: "Brute Force",
-      techniqueDescription: "Attempt to gain access by guessing credentials.",
-      techniqueUrl: "https://attack.mitre.org/techniques/T1110/",
-      tactics: ["credential-access"],
+      techniqueId: "T1485",
+      techniqueName: "Data Destruction",
+      techniqueDescription: "Destroy data to interrupt availability.",
+      techniqueUrl: "https://attack.mitre.org/techniques/T1485/",
+      tactics: ["impact"],
       platforms: ["Windows"],
       parentTechniqueId: null,
-      mitigationId: "M1032",
-      mitigationName: "Multi-factor Authentication",
-      mitigationDescription: "Use MFA.",
-      mitigationUrl: "https://attack.mitre.org/mitigations/M1032/",
-      effect: "prevent",
+      mitigationId: "M1047",
+      mitigationName: "Audit",
+      mitigationDescription: "Review activity.",
+      mitigationUrl: "https://attack.mitre.org/mitigations/M1047/",
+      effect: "detect",
+      outcomeClass: "technique-disruption",
       confidence: "high",
-      rationale: "MFA may prevent successful use of guessed credentials.",
+      rationale: "Audit evidence may detect destructive activity.",
       evidence: [{ kind: "curator-note", note: "Effect depends on the authentication path." }],
     },
     {
       attackVersion: "19.2",
       ismCatalogVersion: "ISM-OSCAL-2026.09.4",
-      techniqueId: "T1110",
-      techniqueName: "Brute Force",
-      techniqueDescription: "Attempt to gain access by guessing credentials.",
-      techniqueUrl: "https://attack.mitre.org/techniques/T1110/",
-      tactics: ["credential-access"],
+      techniqueId: "T1485",
+      techniqueName: "Data Destruction",
+      techniqueDescription: "Destroy data to interrupt availability.",
+      techniqueUrl: "https://attack.mitre.org/techniques/T1485/",
+      tactics: ["impact"],
       platforms: ["Linux"],
       parentTechniqueId: null,
-      mitigationId: "M1027",
-      mitigationName: "Password Policies",
-      mitigationDescription: "Set password policies.",
-      mitigationUrl: "https://attack.mitre.org/mitigations/M1027/",
-      effect: "constrain",
-      confidence: "medium",
-      rationale: "Password policy may constrain password guessing.",
+      mitigationId: "M1053",
+      mitigationName: "Data Backup",
+      mitigationDescription: "Retain restorable data.",
+      mitigationUrl: "https://attack.mitre.org/mitigations/M1053/",
+      effect: "recover",
+      outcomeClass: "consequence-treatment",
+      confidence: "high",
+      rationale: "Restorable backups support recovery after data destruction.",
       evidence: [],
     },
   ],
 };
 
 describe("ATT&CK control panel", () => {
-  it("renders reviewed many-to-many fixtures as one technique with distinct mitigation evidence", () => {
+  it("renders one technique in both outcome classes without losing its independent edges", () => {
     const { body } = render(AttackPanel, { props: { result: reviewedResult, status: "ready" } });
-    expect(body.split('class="technique-card').length - 1).toBe(1);
-    expect(body).toContain("T1110");
-    expect(body).toContain("Brute Force");
-    expect(body).toContain("M1032 — Multi-factor Authentication");
-    expect(body).toContain("M1027 — Password Policies");
+    expect(body.split('class="technique-card').length - 1).toBe(2);
+    expect(body).toContain("Technique disruption");
+    expect(body).toContain("Consequence treatment");
+    expect(body).toContain("T1485");
+    expect(body).toContain("Data Destruction");
+    expect(body).toContain("This control supports");
+    expect(body).toContain("Audit (M1047)");
+    expect(body).toContain("Data Backup (M1053)");
+    expect(body).toContain('aria-label="This control supports Audit (M1047) to detect Data Destruction (T1485)"');
+    expect(body).toContain(
+      'aria-label="This control supports Data Backup (M1053) to recover from Data Destruction (T1485)"',
+    );
+    expect(body).toContain("recovers from");
     expect(body).toContain("high mapping confidence");
     expect(body).toContain("Effect depends on the authentication path.");
     expect(body).toContain("ATT&amp;CK 19.2");
-    expect(body).toContain('href="https://attack.mitre.org/techniques/T1110/"');
+    expect(body).toContain('href="https://attack.mitre.org/techniques/T1485/"');
   });
 
   it("renders explicit loading, error, and reviewed-empty states", () => {

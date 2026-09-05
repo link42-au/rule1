@@ -14,6 +14,7 @@ const compare = await source("./compare/+page.svelte");
 const glossary = await source("./glossary/+page.svelte");
 const tree = await source("../lib/explorer/ControlTree.svelte");
 const context = await source("../lib/explorer/ContextPanel.svelte");
+const attack = await source("../lib/explorer/AttackPanel.svelte");
 const splash = await source("../lib/DatabaseLoadingSplash.svelte");
 
 const luminance = (hex: string): number => {
@@ -110,6 +111,8 @@ describe("WCAG interaction and presentation repairs", () => {
     expect(explorer).toContain(
       'const availableTabs = DETAIL_TABS.filter((item) => !item.ismOnly || framework === "ism")',
     );
+    expect(attack).toContain("aria-labelledby={`attack-outcome-");
+    expect(attack).toContain("aria-label={`This control supports ");
   });
 
   it("activates graph controls with Enter or Space and restores useful detail focus", () => {

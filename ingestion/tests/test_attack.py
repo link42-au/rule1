@@ -15,6 +15,7 @@ from rule1_ingest.attack import (
     load_bridges,
     load_candidates,
     load_decisions,
+    outcome_class,
     parse_attack_bundle,
     review_artifacts,
     write_review_artifacts,
@@ -260,6 +261,38 @@ class AttackMappingTests(unittest.TestCase):
             {(item["control_id"], item["technique_id"]) for item in candidates},
         )
 
+    def test_outcome_class_is_derived_and_same_technique_edges_remain_independent(self) -> None:
+        self.assertEqual(outcome_class("prevent"), "technique-disruption")
+        self.assertEqual(outcome_class("constrain"), "technique-disruption")
+        self.assertEqual(outcome_class("detect"), "technique-disruption")
+        self.assertEqual(outcome_class("contain"), "consequence-treatment")
+        self.assertEqual(outcome_class("recover"), "consequence-treatment")
+
+        fixture = candidate_fixture()
+        second = copy.deepcopy(fixture["candidates"][0])
+        second.update({
+            "candidate_id": "ism-e8-0002-m1001-prevent-t1000-001",
+            "bridge_id": "ism-e8-0002-m1001-prevent",
+            "effect": "recover",
+            "rationale": "The second control may recover from Name T1000.001 after its consequences.",
+        })
+        second["evidence"][0].update({
+            "control_id": "ism-0002",
+            "statement": "Statement two.",
+        })
+        fixture["candidates"].append(second)
+        fixture["unmapped"][0]["control_ids"] = ["ism-0003"]
+
+        candidates = load_candidates(fixture, self._bridges(), self.catalog, self.statements)
+        same_technique = [item for item in candidates if item["technique_id"] == "T1000.001"]
+        self.assertEqual(
+            [(item["control_id"], item["effect"], item["outcome_class"]) for item in same_technique],
+            [
+                ("ism-0001", "prevent", "technique-disruption"),
+                ("ism-0002", "recover", "consequence-treatment"),
+            ],
+        )
+
     def test_exact_decisions_apply_only_to_direct_candidates(self) -> None:
         candidates = self._candidates()
         decisions = load_decisions({"decisions": [{
@@ -301,6 +334,12 @@ class AttackMappingTests(unittest.TestCase):
         )
 
     def test_bridge_validation_rejects_invalid_values(self) -> None:
+        contained = bridge_fixture()
+        contained["bridges"][1]["effect"] = "contain"
+        self.assertEqual(
+            load_bridges(contained, set(self.statements), self.catalog)[0]["effect"],
+            "contain",
+        )
         mutations = [
             ("unknown or non-E8 control", {"control_ids": ["ism-9999"]}),
             ("unknown mitigation", {"mitigation_id": "M9999"}),
@@ -448,16 +487,21 @@ class AttackMappingTests(unittest.TestCase):
             self.catalog, bridges, expand_discovery_relationships(bridges, self.catalog)
         )
 
+        self.assertEqual(report["schema_version"], 3)
         self.assertEqual(report["counts"]["direct_candidates"], 2)
         self.assertEqual(report["counts"]["by_status"], {
             "candidate": 1, "rejected": 0, "reviewed": 1,
         })
+        self.assertEqual(report["counts"]["by_outcome_class"], {
+            "consequence-treatment": 0, "technique-disruption": 2,
+        })
+        self.assertEqual(report["mappings"][0]["outcome_class"], "technique-disruption")
         self.assertEqual(report["mappings"][0]["technique_stix_id"], "attack-pattern--parent")
         self.assertEqual(report["mappings"][0]["mitigation_name"], "Name M1002")
         self.assertEqual(navigator["domain"], "enterprise-attack")
         self.assertEqual(navigator["versions"]["layer"], "4.5")
         self.assertEqual([item["techniqueID"] for item in navigator["techniques"]], ["T1000.001"])
-        self.assertIn("may prevent", navigator["techniques"][0]["comment"])
+        self.assertIn("supports Name M1001 (M1001) to prevent this technique", navigator["techniques"][0]["comment"])
         self.assertNotIn("defeat", str(navigator).lower())
         self.assertEqual(discovery["counts"]["discovery_relationships"], 5)
         self.assertIn("not candidates or mappings", discovery["purpose"])

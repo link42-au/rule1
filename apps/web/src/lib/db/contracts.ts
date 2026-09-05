@@ -57,6 +57,9 @@ export interface E8Mapping {
   strategy: string;
 }
 
+export type AttackEffect = "prevent" | "constrain" | "detect" | "contain" | "recover";
+export type AttackOutcomeClass = "technique-disruption" | "consequence-treatment";
+
 export interface AttackMapping {
   attackVersion: string;
   ismCatalogVersion: string;
@@ -71,7 +74,8 @@ export interface AttackMapping {
   mitigationName: string;
   mitigationDescription: string | null;
   mitigationUrl: string;
-  effect: "prevent" | "constrain" | "detect" | "recover";
+  effect: AttackEffect;
+  outcomeClass: AttackOutcomeClass;
   confidence: "low" | "medium" | "high";
   rationale: string;
   evidence: Record<string, unknown>[];

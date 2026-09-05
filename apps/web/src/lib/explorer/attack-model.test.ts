@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { AttackMapping } from "$lib/db/contracts";
-import { attackTacticSummary, formatAttackLabel, groupAttackMappings, safeMitreUrl } from "./attack-model";
+import {
+  attackOutcomeSections,
+  attackTacticSummary,
+  effectInfinitive,
+  effectRelationshipPhrase,
+  formatAttackLabel,
+  groupAttackMappings,
+  safeMitreUrl,
+} from "./attack-model";
 
 const row = (overrides: Partial<AttackMapping> = {}): AttackMapping => ({
   attackVersion: "19.2",
@@ -17,6 +25,7 @@ const row = (overrides: Partial<AttackMapping> = {}): AttackMapping => ({
   mitigationDescription: "Use MFA.",
   mitigationUrl: "https://attack.mitre.org/mitigations/M1032/",
   effect: "prevent",
+  outcomeClass: "technique-disruption",
   confidence: "high",
   rationale: "MFA may prevent successful use of guessed credentials.",
   evidence: [{ kind: "curator-note", note: "The result depends on implementation and authentication path." }],
@@ -24,7 +33,7 @@ const row = (overrides: Partial<AttackMapping> = {}): AttackMapping => ({
 });
 
 describe("ATT&CK mapping presentation", () => {
-  it("groups many-to-many rows into one technique and keeps distinct mitigation effects", () => {
+  it("groups a technique without removing its independent outcome edges", () => {
     const groups = groupAttackMappings([
       row(),
       row({ mitigationId: "M1027", mitigationName: "Password Policies", effect: "constrain", confidence: "medium" }),
@@ -33,10 +42,29 @@ describe("ATT&CK mapping presentation", () => {
 
     expect(groups).toHaveLength(1);
     expect(groups[0]).toMatchObject({ techniqueId: "T1110", effects: ["prevent", "constrain"] });
-    expect(groups[0].mappings).toHaveLength(2);
+    expect(groups[0].mappings).toHaveLength(3);
     expect(groups[0].mappings[0].evidenceNotes).toEqual([
       "The result depends on implementation and authentication path.",
     ]);
+  });
+
+  it("separates technique disruption from consequence treatment for the same technique", () => {
+    const sections = attackOutcomeSections([
+      row({ effect: "detect", outcomeClass: "technique-disruption" }),
+      row({
+        mitigationId: "M1053",
+        mitigationName: "Data Backup",
+        effect: "recover",
+        outcomeClass: "consequence-treatment",
+      }),
+    ]);
+    expect(sections.map((section) => [section.outcomeClass, section.techniques[0].mappings[0].effect])).toEqual([
+      ["technique-disruption", "detect"],
+      ["consequence-treatment", "recover"],
+    ]);
+    expect(effectRelationshipPhrase("contain")).toBe("contains");
+    expect(effectRelationshipPhrase("recover")).toBe("recovers from");
+    expect(effectInfinitive("recover")).toBe("recover from");
   });
 
   it("summarises tactics by unique technique and retains zero-count Enterprise tactics", () => {

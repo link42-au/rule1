@@ -8,6 +8,7 @@ const historySource = await readFile(new URL("../../lib/explorer/HistoryPanel.sv
 const mappingSource = await readFile(new URL("../../lib/explorer/MappingPanel.svelte", import.meta.url), "utf8");
 const contextSource = await readFile(new URL("../../lib/explorer/ContextPanel.svelte", import.meta.url), "utf8");
 const attackSource = await readFile(new URL("../../lib/explorer/AttackPanel.svelte", import.meta.url), "utf8");
+const attackModelSource = await readFile(new URL("../../lib/explorer/attack-model.ts", import.meta.url), "utf8");
 const glossaryTextSource = await readFile(new URL("../../lib/explorer/GlossaryText.svelte", import.meta.url), "utf8");
 
 describe("reviewed Rule1 explorer", () => {
@@ -90,9 +91,11 @@ describe("reviewed Rule1 explorer", () => {
     expect(attackSource).toContain("groupAttackMappings(result.mappings)");
     expect(attackSource).toContain("ISM {result.ismCatalogVersion}");
     expect(attackSource).toContain("ATT&amp;CK {result.attackVersion}");
-    expect(attackSource).toContain("may prevent, constrain, detect, or support recovery");
+    expect(attackSource).toContain("may prevent, constrain, detect, contain, or support recovery");
     expect(attackSource).toContain("Confidence describes confidence in the mapping, not control effectiveness.");
-    expect(attackSource).toContain("Mapped via");
+    expect(attackSource).toContain("This control supports");
+    expect(attackModelSource).toContain('title: "Technique disruption"');
+    expect(attackModelSource).toContain('title: "Consequence treatment"');
     expect(attackSource).toContain('target="_blank" rel="noopener noreferrer"');
     expect(attackSource).not.toContain("defeat");
   });
