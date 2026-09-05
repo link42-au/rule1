@@ -29,6 +29,29 @@ test("repository guidance documents hosting, technology, and durable feedback ro
   assert.match(readme, /Python ingestion pipeline/);
   assert.match(readme, /deterministic build/);
   assert.match(readme, /GitHub Pages/);
+  assert.match(readme, /docs\/CONTAINER-DEPLOYMENT\.md/);
+});
+
+test("container deployment guidance covers publication, operation, updates, and rollback", () => {
+  const deployment = read("docs/CONTAINER-DEPLOYMENT.md");
+
+  assert.match(deployment, /ghcr\.io\/link42-au\/rule1/);
+  assert.match(deployment, /package as private/);
+  assert.match(deployment, /docker login ghcr\.io/);
+  assert.match(deployment, /linux\/amd64/);
+  assert.match(deployment, /linux\/arm64/);
+  assert.match(deployment, /PUID/);
+  assert.match(deployment, /PGID/);
+  assert.match(deployment, /\/app\/www\/public/);
+  assert.match(deployment, /docker compose pull rule1/);
+  assert.match(deployment, /docker compose up -d --no-deps rule1/);
+  assert.match(deployment, /Rollback is image-based/);
+  assert.match(deployment, /not registry-enforced immutable/);
+  assert.match(deployment, /ghcr\.io\/link42-au\/rule1@sha256:<index-digest>/);
+  assert.match(deployment, /post-deploy-canary\.mjs/);
+  assert.match(deployment, /33932765951/);
+  assert.match(deployment, /2c3e6f7684e64373dbeaccbc9568a6f5543e03369f6919ee858b47b7105cea47/);
+  assert.doesNotMatch(deployment, /\/app\/www\/public:\s*$/m);
 });
 
 test("issue forms route bugs and suggestions without enabling public security reports", () => {

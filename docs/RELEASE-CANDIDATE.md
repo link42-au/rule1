@@ -86,6 +86,10 @@ The following is a dated local verification checkpoint. It is not hosted-CI, dep
 
 The current source-controlled release gate runs the same complete verification command for pull requests and `main`, performs a second deterministic database build, and permits only a verified `main` build to publish. Its post-deployment canary checks the current HTML-referenced immutable assets, the deployed artifact manifest, and the database bytes. These workflow controls describe repository source; a named completed workflow and canary are still required before claiming a new deployment is CI-verified or live-verified.
 
+The same verified build now has a second deployment target: a LinuxServer.io Nginx image in GHCR. The image contains the static application and exact CI-built SQLite catalogue, supports AMD64 and ARM64, and is tagged as both `latest` and `sha-<full-commit>`. Image publication does not recreate an operator's running container; deployment automation must pull and recreate it. The full runtime, authentication, update, and rollback contract is documented in [CONTAINER-DEPLOYMENT.md](CONTAINER-DEPLOYMENT.md).
+
+GitHub Actions run [33932765951](https://github.com/link42-au/rule1/actions/runs/33932765951) completed `build-sqlite`, `deploy-pages`, and `publish-container` for commit `cc58c8be55dc8399b4b366f36e44057c103e68f0`. The published multi-platform image index was `sha256:2c3e6f7684e64373dbeaccbc9568a6f5543e03369f6919ee858b47b7105cea47`; its embedded database was independently read back at SHA-256 `039f02af124b14e35d1c9987ce64cd6addd11c7822bf29de307b0991bf8bf406`. The GHCR package was private at this checkpoint and required authenticated pulls.
+
 The canonical macOS local build SHA-256 is:
 
 ```text
