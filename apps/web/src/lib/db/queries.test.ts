@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { DatabaseSync } from "node:sqlite";
 import { compareSnapshots, type ComparisonRecord } from "./compare";
-import { canonicalFrameworkId } from "./contracts";
+import { canonicalFrameworkId, type AttackMappingResult } from "./contracts";
 import { filterControls } from "./filters";
 import { dispatchRule1Query, type QueryExecutor, type SqlValue } from "./queries";
 
@@ -19,6 +20,18 @@ class FixtureExecutor implements QueryExecutor {
     const fixture = this.fixtures[name];
     if (!fixture) return [];
     return (typeof fixture === "function" ? fixture(bind) : fixture) as T[];
+  }
+}
+
+class SqliteExecutor implements QueryExecutor {
+  readonly calls: { name: string; sql: string; bind: readonly SqlValue[] }[] = [];
+
+  constructor(private readonly database: DatabaseSync) {}
+
+  async all<T extends Row>(sql: string, bind: readonly SqlValue[] = []): Promise<T[]> {
+    const name = /\/\* rule1:([\w-]+) \*\//.exec(sql)?.[1] ?? "unknown";
+    this.calls.push({ name, sql, bind });
+    return this.database.prepare(sql).all(...bind) as T[];
   }
 }
 
@@ -385,6 +398,39 @@ describe("Rule1 query dispatcher", () => {
           direct_evidence: '[{"kind":"direct-recovery"}]',
         },
       ],
+      "attack-procedures": [
+        {
+          attack_version: "19.2",
+          technique_id: "T1110",
+          relationship_stix_id: "relationship--uses-group",
+          procedure_description: "The group attempted password guessing.",
+          procedure_references:
+            '[{"source_name":"Example report","url":"https://example.test/report","description":"Report citation."}]',
+          entity_stix_id: "intrusion-set--one",
+          entity_type: "intrusion-set",
+          entity_external_id: "G0001",
+          entity_name: "Example Group",
+          entity_description: "A reported intrusion set.",
+          entity_url: "https://attack.mitre.org/groups/G0001/",
+          total_count: 8,
+          example_rank: 1,
+        },
+        {
+          attack_version: "19.2",
+          technique_id: "T1110",
+          relationship_stix_id: "relationship--uses-malware",
+          procedure_description: "The malware attempted password guessing.",
+          procedure_references: "[]",
+          entity_stix_id: "malware--one",
+          entity_type: "malware",
+          entity_external_id: "S0001",
+          entity_name: "Example Malware",
+          entity_description: "Reported malware.",
+          entity_url: "https://attack.mitre.org/software/S0001/",
+          total_count: 8,
+          example_rank: 2,
+        },
+      ],
     });
 
     await expect(
@@ -408,6 +454,32 @@ describe("Rule1 query dispatcher", () => {
           evidence: [{ kind: "bridge-recovery" }, { kind: "direct-recovery" }],
         },
       ],
+      procedures: [
+        {
+          techniqueId: "T1110",
+          total: 8,
+          returned: 2,
+          examples: [
+            {
+              entityType: "intrusion-set",
+              entityName: "Example Group",
+              description: "The group attempted password guessing.",
+              references: [
+                {
+                  sourceName: "Example report",
+                  url: "https://example.test/report",
+                  description: "Report citation.",
+                },
+              ],
+            },
+            {
+              entityType: "malware",
+              entityName: "Example Malware",
+              references: [],
+            },
+          ],
+        },
+      ],
     });
     const attackCall = executor.calls.find((call) => call.name === "attack-mappings");
     expect(attackCall?.bind).toEqual(["ism-1173"]);
@@ -416,12 +488,159 @@ describe("Rule1 query dispatcher", () => {
     expect(attackCall?.sql).toContain("m.rationale");
     expect(attackCall?.sql).toContain("THEN 'technique-disruption' ELSE 'consequence-treatment'");
     expect(attackCall?.sql).not.toContain("candidate");
+    const procedureCall = executor.calls.find((call) => call.name === "attack-procedures");
+    expect(procedureCall?.bind).toEqual(["ism-1173", 5]);
+    expect(procedureCall?.sql).toContain("m.status = 'reviewed'");
+    expect(procedureCall?.sql).toContain("ROW_NUMBER() OVER");
+    expect(procedureCall?.sql).toContain("example_rank <= ?");
+    expect(procedureCall?.sql).toContain("ORDER BY technique_id, example_rank");
+
+    const emptyExecutor = new FixtureExecutor({
+      "attack-mapping-versions": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+        },
+      ],
+      "attack-mappings": [],
+    });
+    await expect(
+      dispatchRule1Query(emptyExecutor, "attackMappings", { framework: "ism", id: "ism-0001" }),
+    ).resolves.toEqual({
+      ismCatalogVersion: "ISM-OSCAL-2026.09.4",
+      attackVersion: "19.2",
+      mappings: [],
+      procedures: [],
+    });
+    expect(emptyExecutor.calls.some((call) => call.name === "attack-procedures")).toBe(false);
+
+    const noExampleExecutor = new FixtureExecutor({
+      "attack-mapping-versions": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+        },
+      ],
+      "attack-mappings": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+          technique_id: "T9998",
+        },
+      ],
+      "attack-procedures": [],
+    });
+    const noExampleResult = await dispatchRule1Query(noExampleExecutor, "attackMappings", {
+      framework: "ism",
+      id: "ism-0002",
+    });
+    expect(noExampleResult).toMatchObject({
+      procedures: [{ techniqueId: "T9998", total: 0, returned: 0, examples: [] }],
+    });
+    expect(noExampleExecutor.calls.filter((call) => call.name === "attack-procedures")).toHaveLength(1);
 
     const callsBeforeGate = executor.calls.length;
     await expect(
       dispatchRule1Query(executor, "attackMappings", { framework: "nzism", id: "nzism-1" }),
-    ).resolves.toEqual({ ismCatalogVersion: null, attackVersion: null, mappings: [] });
+    ).resolves.toEqual({ ismCatalogVersion: null, attackVersion: null, mappings: [], procedures: [] });
     expect(executor.calls).toHaveLength(callsBeforeGate);
+  });
+
+  it("executes one bounded deterministic procedure query against SQLite", async () => {
+    const database = new DatabaseSync(":memory:");
+    database.exec(`
+      CREATE TABLE catalog_versions (framework TEXT, version TEXT, ordinal INTEGER);
+      CREATE TABLE attack_releases (version TEXT, domain TEXT, ordinal INTEGER);
+      CREATE TABLE attack_techniques (
+        attack_version TEXT, technique_id TEXT, name TEXT, description TEXT, url TEXT,
+        tactics TEXT, platforms TEXT, parent_technique_id TEXT
+      );
+      CREATE TABLE attack_mitigations (
+        attack_version TEXT, mitigation_id TEXT, name TEXT, description TEXT, url TEXT
+      );
+      CREATE TABLE control_attack_bridges (
+        bridge_id TEXT, framework TEXT, ism_catalog_version TEXT, control_id TEXT,
+        attack_version TEXT, mitigation_id TEXT, evidence TEXT
+      );
+      CREATE TABLE control_attack_mappings (
+        bridge_id TEXT, attack_version TEXT, mitigation_id TEXT, technique_id TEXT,
+        status TEXT, effect TEXT, confidence TEXT, rationale TEXT, evidence TEXT
+      );
+      CREATE TABLE attack_procedure_entities (
+        attack_version TEXT, entity_stix_id TEXT, entity_type TEXT, external_id TEXT,
+        url TEXT, name TEXT, description TEXT
+      );
+      CREATE TABLE attack_procedures (
+        attack_version TEXT, relationship_stix_id TEXT, entity_stix_id TEXT,
+        technique_id TEXT, description TEXT, external_references TEXT
+      );
+      INSERT INTO catalog_versions VALUES ('ism','ISM-OSCAL-2026.09.4',0);
+      INSERT INTO attack_releases VALUES ('19.2','enterprise-attack',0);
+      INSERT INTO attack_techniques VALUES (
+        '19.2','T1110','Brute Force','Attempt credentials.','https://attack.mitre.org/techniques/T1110/',
+        '["credential-access"]','["Windows"]',NULL
+      );
+      INSERT INTO attack_mitigations VALUES (
+        '19.2','M1032','Multi-factor Authentication','Use MFA.','https://attack.mitre.org/mitigations/M1032/'
+      );
+      INSERT INTO control_attack_bridges VALUES (
+        'bridge','ism','ISM-OSCAL-2026.09.4','ism-1173','19.2','M1032','[]'
+      );
+      INSERT INTO control_attack_mappings VALUES (
+        'bridge','19.2','M1032','T1110','reviewed','prevent','high','Specific rationale','[]'
+      );
+    `);
+    const entities = [
+      ["intrusion-set", "Zulu Group"],
+      ["campaign", "Alpha Campaign"],
+      ["malware", "Alpha Malware"],
+      ["malware", "Beta Malware"],
+      ["tool", "Alpha Tool"],
+      ["tool", "Zulu Tool"],
+    ];
+    const insertEntity = database.prepare("INSERT INTO attack_procedure_entities VALUES ('19.2',?,?,?,?,?,?)");
+    const insertProcedure = database.prepare("INSERT INTO attack_procedures VALUES ('19.2',?,?,?,?,?)");
+    entities.forEach(([entityType, name], index) => {
+      const number = index + 1;
+      const entityStixId = `${entityType}--${number}`;
+      insertEntity.run(
+        entityStixId,
+        entityType,
+        `E${number}`,
+        `https://attack.mitre.org/entity/${number}/`,
+        name,
+        `${name} description.`,
+      );
+      insertProcedure.run(
+        `relationship--${number}`,
+        entityStixId,
+        "T1110",
+        `${name} used Brute Force.`,
+        index === 0 ? '[{"source_name":"Report","url":"https://example.test/report"}]' : "[]",
+      );
+    });
+
+    const executor = new SqliteExecutor(database);
+    const result = (await dispatchRule1Query(executor, "attackMappings", {
+      framework: "ism",
+      id: "ism-1173",
+    })) as AttackMappingResult;
+    expect(result.procedures).toMatchObject([
+      {
+        techniqueId: "T1110",
+        total: 6,
+        returned: 5,
+        examples: [
+          { entityType: "intrusion-set", entityName: "Zulu Group" },
+          { entityType: "campaign", entityName: "Alpha Campaign" },
+          { entityType: "malware", entityName: "Alpha Malware" },
+          { entityType: "malware", entityName: "Beta Malware" },
+          { entityType: "tool", entityName: "Alpha Tool" },
+        ],
+      },
+    ]);
+    expect(executor.calls.filter((call) => call.name === "attack-procedures")).toHaveLength(1);
+    database.close();
   });
 
   it("validates compare versions and returns term history", async () => {

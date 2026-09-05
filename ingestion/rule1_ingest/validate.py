@@ -12,10 +12,11 @@ from typing import Any
 from .annotations import LEGACY_MANIFEST_SHA256
 
 TABLES = (
-    "annotations", "attack_mitigation_techniques", "attack_mitigations", "attack_releases",
-    "attack_source_files", "attack_techniques", "build_counts", "build_metadata", "catalog_versions",
-    "control_attack_bridges", "control_attack_mappings", "control_groups", "control_history",
-    "e8_mappings", "frameworks", "source_files", "term_history",
+    "annotations", "attack_mitigation_techniques", "attack_mitigations", "attack_procedure_entities",
+    "attack_procedures", "attack_releases", "attack_source_files", "attack_techniques",
+    "build_counts", "build_metadata", "catalog_versions", "control_attack_bridges",
+    "control_attack_mappings", "control_groups", "control_history", "e8_mappings", "frameworks",
+    "source_files", "term_history",
 )
 
 
@@ -137,7 +138,7 @@ def validate_database(
             raise ValueError(f"unexpected database tables: {tables}")
         if connection.execute("PRAGMA application_id").fetchone()[0] != 1381321777:
             raise ValueError("unexpected application_id")
-        if connection.execute("PRAGMA user_version").fetchone()[0] != 4:
+        if connection.execute("PRAGMA user_version").fetchone()[0] != 5:
             raise ValueError("unexpected user_version")
         if connection.execute("PRAGMA page_size").fetchone()[0] != 4096:
             raise ValueError("unexpected page_size")
@@ -163,7 +164,7 @@ def validate_database(
             "attack_candidates_sha256": _sha256(candidates_path),
             "attack_decisions_sha256": _sha256(decisions_path),
             "attack_source_sha256": attack_source["sha256"],
-            "schema_version": "4",
+            "schema_version": "5",
             "source_ledger_sha256": ledger_sha,
             "sqlite_version": sqlite3.sqlite_version,
         }
@@ -244,7 +245,15 @@ def validate_database(
             "OR json_valid(platforms)=0) + "
             "(SELECT COUNT(*) FROM attack_mitigations WHERE TRIM(mitigation_id)='' "
             "OR TRIM(stix_id)='' OR TRIM(name)='' OR TRIM(url)='') + "
-            "(SELECT COUNT(*) FROM attack_mitigation_techniques WHERE TRIM(relationship_stix_id)='')"
+            "(SELECT COUNT(*) FROM attack_mitigation_techniques WHERE TRIM(relationship_stix_id)='') + "
+            "(SELECT COUNT(*) FROM attack_procedure_entities WHERE TRIM(entity_stix_id)='' "
+            "OR entity_type NOT IN ('intrusion-set','campaign','malware','tool') "
+            "OR TRIM(name)='' OR TRIM(description)='' OR json_valid(external_references)=0 "
+            "OR json_type(external_references)!='array' OR (url IS NOT NULL "
+            "AND url NOT LIKE 'https://%' AND url NOT LIKE 'http://%')) + "
+            "(SELECT COUNT(*) FROM attack_procedures WHERE TRIM(relationship_stix_id)='' "
+            "OR TRIM(entity_stix_id)='' OR TRIM(technique_id)='' OR TRIM(description)='' "
+            "OR json_valid(external_references)=0 OR json_type(external_references)!='array')"
         ).fetchone()[0]
         if invalid_attack_rows:
             raise ValueError(f"invalid ATT&CK rows: {invalid_attack_rows}")
@@ -301,6 +310,9 @@ def validate_database(
                 raise ValueError(f"row count mismatch for {table}/{framework}/{version}: {actual_count} != {expected_count}")
         if connection.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
             raise ValueError("PRAGMA integrity_check failed")
+        foreign_key_errors = connection.execute("PRAGMA foreign_key_check").fetchall()
+        if foreign_key_errors:
+            raise ValueError(f"PRAGMA foreign_key_check failed: {foreign_key_errors}")
         if contract_path is not None:
             expected_contract = json.loads(contract_path.read_text(encoding="utf-8"))
             actual_contract = _database_contract(connection, ledger_sha)

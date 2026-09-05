@@ -335,7 +335,7 @@ class DatabaseTests(unittest.TestCase):
         validate_database(ROOT, database, ROOT / "ingestion/validation-contract.json")
         with sqlite3.connect(database) as connection:
             self.assertEqual(connection.execute("PRAGMA application_id").fetchone()[0], 1_381_321_777)
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 4)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 5)
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchall(), [("ok",)])
             self.assertEqual(
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
@@ -347,6 +347,55 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_techniques").fetchone()[0], 697)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigations").fetchone()[0], 44)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigation_techniques").fetchone()[0], 1_448)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_procedure_entities").fetchone()[0], 1_057)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_procedures").fetchone()[0], 17_136)
+            self.assertEqual(
+                dict(connection.execute(
+                    "SELECT entity_type, COUNT(*) FROM attack_procedure_entities GROUP BY entity_type"
+                )),
+                {"intrusion-set": 176, "campaign": 56, "malware": 730, "tool": 95},
+            )
+            self.assertEqual(
+                dict(connection.execute(
+                    "SELECT e.entity_type, COUNT(*) FROM attack_procedures p "
+                    "JOIN attack_procedure_entities e USING (attack_version, entity_stix_id) "
+                    "GROUP BY e.entity_type"
+                )),
+                {"intrusion-set": 4_628, "campaign": 1_146, "malware": 10_493, "tool": 869},
+            )
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(DISTINCT technique_id) FROM attack_procedures"
+            ).fetchone()[0], 611)
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM attack_procedures WHERE json_array_length(external_references)=0"
+            ).fetchone()[0], 15)
+            procedure = connection.execute(
+                "SELECT p.relationship_stix_id, e.entity_stix_id, e.external_id, e.url, "
+                "p.description, p.external_references FROM attack_procedures p "
+                "JOIN attack_procedure_entities e USING (attack_version, entity_stix_id) "
+                "WHERE json_array_length(p.external_references)>0 "
+                "ORDER BY p.technique_id, e.entity_type, e.name, p.relationship_stix_id LIMIT 1"
+            ).fetchone()
+            self.assertTrue(procedure[0].startswith("relationship--"))
+            self.assertIn("--", procedure[1])
+            self.assertRegex(procedure[2], r"^[CGS]\d{4}$")
+            self.assertRegex(procedure[3], r"^https://attack\.mitre\.org/")
+            self.assertTrue(procedure[4].strip())
+            self.assertTrue(json.loads(procedure[5])[0]["source_name"])
+            entity_references = json.loads(connection.execute(
+                "SELECT external_references FROM attack_procedure_entities "
+                "WHERE entity_type='intrusion-set' ORDER BY external_id LIMIT 1"
+            ).fetchone()[0])
+            self.assertTrue(any(
+                reference["source_name"] == "mitre-attack"
+                and reference["external_id"].startswith("G")
+                and reference["url"].startswith("https://attack.mitre.org/groups/")
+                for reference in entity_references
+            ))
+            self.assertGreater(connection.execute(
+                "SELECT MAX(example_count) FROM (SELECT COUNT(*) AS example_count "
+                "FROM attack_procedures GROUP BY technique_id)"
+            ).fetchone()[0], 5)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_bridges").fetchone()[0], 122)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_mappings").fetchone()[0], 16)
             m1025_bridges = connection.execute(
@@ -417,6 +466,8 @@ class DatabaseTests(unittest.TestCase):
             )}
             self.assertTrue({
                 "idx_attack_technique_parent", "idx_attack_relationship_technique",
+                "idx_attack_procedure_entity_name", "idx_attack_procedure_technique",
+                "idx_attack_procedure_entity",
                 "idx_attack_bridge_control", "idx_attack_mapping_technique",
                 "idx_attack_mapping_status",
             }.issubset(indexes))
@@ -427,6 +478,12 @@ class DatabaseTests(unittest.TestCase):
                     "('invalid-candidate','invalid-bridge','19.2','M1032','T1078',"
                     "'relationship--98167cc6-96de-4f02-83b1-78d7633c4106',"
                     "'prevent','high','candidate','Specific rationale','[{\"kind\":\"test\"}]',NULL,NULL)"
+                )
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute(
+                    "INSERT INTO attack_procedures VALUES "
+                    "('19.2','relationship--orphan','malware--absent','T1110',"
+                    "'Orphan procedure example','[]')"
                 )
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM term_history").fetchone()[0], 4_063)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM annotations").fetchone()[0], 1_146)

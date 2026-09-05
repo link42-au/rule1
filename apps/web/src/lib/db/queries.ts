@@ -17,6 +17,9 @@ import { compareSnapshots, type ComparisonRecord } from "./compare";
 import {
   canonicalFrameworkId,
   type AttackMapping,
+  type AttackProcedureExample,
+  type AttackProcedureReference,
+  type AttackTechniqueProcedures,
   type CompareParams,
   type ControlParams,
   type ControlsResult,
@@ -29,6 +32,8 @@ import {
 } from "./contracts";
 import { jsonArray, jsonObject, nullableText, numberValue, text } from "./decode";
 export type SqlValue = string | number | null | Uint8Array;
+// Five keeps future collapsed technique sections concise while the database retains every example.
+export const ATTACK_PROCEDURE_EXAMPLE_LIMIT = 5;
 export type Rule1QueryMethod =
   | "frameworks"
   | "stats"
@@ -349,7 +354,7 @@ async function e8Mappings(executor: QueryExecutor, params: E8MappingParams): Pro
 
 async function attackMappings(executor: QueryExecutor, params: ControlParams): Promise<AttackMappingResult> {
   const framework = canonicalFrameworkId(params.framework);
-  if (framework !== "ism") return { ismCatalogVersion: null, attackVersion: null, mappings: [] };
+  if (framework !== "ism") return { ismCatalogVersion: null, attackVersion: null, mappings: [], procedures: [] };
   const [versionRows, rows] = await Promise.all([
     executor.all<Row>(`/* rule1:attack-mapping-versions */
       SELECT
@@ -387,6 +392,83 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
     ),
   ]);
   const versions = versionRows[0];
+  const techniqueIds = [...new Set(rows.map((row) => text(row.technique_id)))].sort();
+  let procedureRows: Row[] = [];
+  if (techniqueIds.length > 0) {
+    procedureRows = await executor.all<Row>(
+      `/* rule1:attack-procedures */
+      WITH reviewed_techniques AS (
+        SELECT DISTINCT m.attack_version, m.technique_id
+        FROM control_attack_mappings m
+        JOIN control_attack_bridges b ON b.bridge_id = m.bridge_id
+          AND b.attack_version = m.attack_version AND b.mitigation_id = m.mitigation_id
+        WHERE b.framework = 'ism' AND b.control_id = ? AND m.status = 'reviewed'
+          AND b.ism_catalog_version = (
+            SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+          )
+          AND b.attack_version = (
+            SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
+          )
+      ), ranked AS (
+        SELECT p.attack_version, p.technique_id, p.relationship_stix_id,
+          p.description AS procedure_description, p.external_references AS procedure_references,
+          e.entity_stix_id, e.entity_type, e.external_id AS entity_external_id,
+          e.name AS entity_name, e.description AS entity_description, e.url AS entity_url,
+          COUNT(*) OVER (PARTITION BY p.attack_version, p.technique_id) AS total_count,
+          ROW_NUMBER() OVER (
+            PARTITION BY p.attack_version, p.technique_id
+            ORDER BY CASE e.entity_type
+              WHEN 'intrusion-set' THEN 0 WHEN 'campaign' THEN 1
+              WHEN 'malware' THEN 2 ELSE 3 END,
+              e.name COLLATE NOCASE, e.name, e.entity_stix_id, p.relationship_stix_id
+          ) AS example_rank
+        FROM reviewed_techniques r
+        JOIN attack_procedures p ON p.attack_version = r.attack_version
+          AND p.technique_id = r.technique_id
+        JOIN attack_procedure_entities e ON e.attack_version = p.attack_version
+          AND e.entity_stix_id = p.entity_stix_id
+      )
+      SELECT * FROM ranked WHERE example_rank <= ?
+      ORDER BY technique_id, example_rank`,
+      [params.id.toLowerCase(), ATTACK_PROCEDURE_EXAMPLE_LIMIT],
+    );
+  }
+  const proceduresByTechnique = new Map<string, AttackTechniqueProcedures>(
+    techniqueIds.map((techniqueId) => [
+      techniqueId,
+      {
+        techniqueId,
+        total: 0,
+        returned: 0,
+        examples: [],
+      },
+    ]),
+  );
+  for (const row of procedureRows) {
+    const techniqueId = text(row.technique_id);
+    const group = proceduresByTechnique.get(techniqueId);
+    if (!group) continue;
+    const references: AttackProcedureReference[] = jsonRecords(row.procedure_references).map((reference) => ({
+      sourceName: text(reference.source_name),
+      externalId: nullableText(reference.external_id),
+      url: nullableText(reference.url),
+      description: nullableText(reference.description),
+    }));
+    const example: AttackProcedureExample = {
+      relationshipStixId: text(row.relationship_stix_id),
+      entityStixId: text(row.entity_stix_id),
+      entityType: text(row.entity_type) as AttackProcedureExample["entityType"],
+      entityExternalId: nullableText(row.entity_external_id),
+      entityName: text(row.entity_name),
+      entityDescription: text(row.entity_description),
+      entityUrl: nullableText(row.entity_url),
+      description: text(row.procedure_description),
+      references,
+    };
+    group.total = numberValue(row.total_count);
+    group.examples.push(example);
+    group.returned = group.examples.length;
+  }
   return {
     ismCatalogVersion: nullableText(versions?.ism_catalog_version),
     attackVersion: nullableText(versions?.attack_version),
@@ -410,6 +492,7 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       rationale: text(row.rationale),
       evidence: [...jsonRecords(row.bridge_evidence), ...jsonRecords(row.direct_evidence)],
     })),
+    procedures: [...proceduresByTechnique.values()],
   };
 }
 

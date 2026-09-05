@@ -2,7 +2,7 @@ PRAGMA page_size = 4096;
 PRAGMA encoding = 'UTF-8';
 PRAGMA auto_vacuum = NONE;
 PRAGMA application_id = 1381321777;
-PRAGMA user_version = 4;
+PRAGMA user_version = 5;
 
 CREATE TABLE frameworks (
   id TEXT PRIMARY KEY,
@@ -169,6 +169,38 @@ CREATE TABLE attack_mitigation_techniques (
     REFERENCES attack_techniques(attack_version, technique_id)
 );
 
+CREATE TABLE attack_procedure_entities (
+  attack_version TEXT NOT NULL REFERENCES attack_releases(version),
+  entity_stix_id TEXT NOT NULL,
+  entity_type TEXT NOT NULL CHECK (entity_type IN ('intrusion-set', 'campaign', 'malware', 'tool')),
+  external_id TEXT CHECK (external_id IS NULL OR length(trim(external_id)) > 0),
+  url TEXT CHECK (
+    url IS NULL OR (length(trim(url)) > 0 AND (url LIKE 'https://%' OR url LIKE 'http://%'))
+  ),
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  description TEXT NOT NULL CHECK (length(trim(description)) > 0),
+  external_references TEXT NOT NULL DEFAULT '[]'
+    CHECK (json_valid(external_references) AND json_type(external_references) = 'array'),
+  PRIMARY KEY (attack_version, entity_stix_id),
+  UNIQUE (attack_version, external_id)
+);
+
+CREATE TABLE attack_procedures (
+  attack_version TEXT NOT NULL,
+  relationship_stix_id TEXT NOT NULL,
+  entity_stix_id TEXT NOT NULL,
+  technique_id TEXT NOT NULL,
+  description TEXT NOT NULL CHECK (length(trim(description)) > 0),
+  external_references TEXT NOT NULL DEFAULT '[]'
+    CHECK (json_valid(external_references) AND json_type(external_references) = 'array'),
+  PRIMARY KEY (attack_version, relationship_stix_id),
+  UNIQUE (attack_version, entity_stix_id, technique_id),
+  FOREIGN KEY (attack_version, entity_stix_id)
+    REFERENCES attack_procedure_entities(attack_version, entity_stix_id),
+  FOREIGN KEY (attack_version, technique_id)
+    REFERENCES attack_techniques(attack_version, technique_id)
+);
+
 CREATE TABLE control_attack_bridges (
   bridge_id TEXT PRIMARY KEY,
   framework TEXT NOT NULL DEFAULT 'ism' CHECK (framework = 'ism'),
@@ -237,6 +269,12 @@ CREATE INDEX idx_e8_control ON e8_mappings(framework, catalog_version, control_i
 CREATE INDEX idx_attack_technique_parent ON attack_techniques(attack_version, parent_technique_id);
 CREATE INDEX idx_attack_relationship_technique
   ON attack_mitigation_techniques(attack_version, technique_id, mitigation_id);
+CREATE INDEX idx_attack_procedure_entity_name
+  ON attack_procedure_entities(attack_version, entity_type, name, entity_stix_id);
+CREATE INDEX idx_attack_procedure_technique
+  ON attack_procedures(attack_version, technique_id, entity_stix_id, relationship_stix_id);
+CREATE INDEX idx_attack_procedure_entity
+  ON attack_procedures(attack_version, entity_stix_id, technique_id, relationship_stix_id);
 CREATE INDEX idx_attack_bridge_control
   ON control_attack_bridges(framework, ism_catalog_version, control_id, bridge_id);
 CREATE INDEX idx_attack_mapping_technique

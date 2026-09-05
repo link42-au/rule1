@@ -126,9 +126,9 @@ def _insert_snapshots(connection: sqlite3.Connection, snapshots: list[Snapshot])
 def _record_counts(connection: sqlite3.Connection) -> None:
     overall = (
         "annotations", "attack_mitigations", "attack_mitigation_techniques", "attack_releases",
-        "attack_source_files", "attack_techniques", "catalog_versions", "control_attack_bridges",
-        "control_attack_mappings", "control_groups", "control_history", "e8_mappings", "frameworks",
-        "source_files", "term_history",
+        "attack_procedure_entities", "attack_procedures", "attack_source_files", "attack_techniques",
+        "catalog_versions", "control_attack_bridges", "control_attack_mappings", "control_groups",
+        "control_history", "e8_mappings", "frameworks", "source_files", "term_history",
     )
     for table in overall:
         count = connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
@@ -281,6 +281,24 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
                     mitigation["name"], mitigation["description"], mitigation["url"],
                 ),
             )
+        for entity in attack_catalog["procedure_entities"]:
+            connection.execute(
+                "INSERT INTO attack_procedure_entities VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    attack_catalog["version"], entity["stix_id"], entity["entity_type"],
+                    entity["external_id"], entity["url"], entity["name"], entity["description"],
+                    canonical_json(entity["external_references"]),
+                ),
+            )
+        for procedure in attack_catalog["procedures"]:
+            connection.execute(
+                "INSERT INTO attack_procedures VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    attack_catalog["version"], procedure["relationship_stix_id"],
+                    procedure["entity_stix_id"], procedure["technique_id"],
+                    procedure["description"], canonical_json(procedure["external_references"]),
+                ),
+            )
         for bridge in bridges:
             connection.execute(
                 "INSERT INTO control_attack_bridges VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -341,7 +359,7 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
             ("attack_candidates_sha256", candidates_sha),
             ("attack_decisions_sha256", decisions_sha),
             ("attack_source_sha256", attack_source["sha256"]),
-            ("schema_version", "4"),
+            ("schema_version", "5"),
             ("sqlite_version", sqlite3.sqlite_version),
             ("source_ledger_sha256", ledger_sha),
         ))

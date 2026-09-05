@@ -166,5 +166,5 @@ export function attackTacticSummary(groups: readonly AttackTechniqueGroup[]): At
 }
 
 export function emptyAttackResult(): AttackMappingResult {
-  return { ismCatalogVersion: null, attackVersion: null, mappings: [] };
+  return { ismCatalogVersion: null, attackVersion: null, mappings: [], procedures: [] };
 }

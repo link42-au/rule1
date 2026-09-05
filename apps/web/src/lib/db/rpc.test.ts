@@ -45,8 +45,17 @@ describe("Rule1 worker RPC", () => {
       method: "attackMappings",
       params: { framework: "ism", id: "ism-1173" },
     });
-    worker.reply({ id: 1, ok: true, result: { ismCatalogVersion: null, attackVersion: null, mappings: [] } });
-    await expect(pending).resolves.toEqual({ ismCatalogVersion: null, attackVersion: null, mappings: [] });
+    worker.reply({
+      id: 1,
+      ok: true,
+      result: { ismCatalogVersion: null, attackVersion: null, mappings: [], procedures: [] },
+    });
+    await expect(pending).resolves.toEqual({
+      ismCatalogVersion: null,
+      attackVersion: null,
+      mappings: [],
+      procedures: [],
+    });
   });
 
   it("forwards database progress and clears it when initialization finishes", async () => {

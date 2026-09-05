@@ -31,7 +31,14 @@ def attack_object(
     deprecated: bool = False,
     subtechnique: bool = False,
 ) -> dict[str, object]:
-    prefix = "techniques" if object_type == "attack-pattern" else "mitigations"
+    prefix = {
+        "attack-pattern": "techniques",
+        "course-of-action": "mitigations",
+        "intrusion-set": "groups",
+        "campaign": "campaigns",
+        "malware": "software",
+        "tool": "software",
+    }[object_type]
     value: dict[str, object] = {
         "type": object_type,
         "id": stix_id,
@@ -64,6 +71,8 @@ def relationship(
     target_ref: str,
     *,
     revoked: bool = False,
+    deprecated: bool = False,
+    references: list[dict[str, str]] | None = None,
 ) -> dict[str, object]:
     return {
         "type": "relationship",
@@ -73,6 +82,8 @@ def relationship(
         "target_ref": target_ref,
         "description": f"Evidence for {stix_id}",
         "revoked": revoked,
+        "x_mitre_deprecated": deprecated,
+        "external_references": references or [],
     }
 
 
@@ -83,6 +94,12 @@ def bundle_fixture() -> dict[str, object]:
     mitigation_one = "course-of-action--one"
     mitigation_two = "course-of-action--two"
     mitigation_old = "course-of-action--old"
+    group = "intrusion-set--one"
+    campaign = "campaign--one"
+    malware = "malware--one"
+    tool = "tool--one"
+    old_malware = "malware--old"
+    old_tool = "tool--old"
     return {"type": "bundle", "objects": [
         attack_object("attack-pattern", child, "T1000.001", subtechnique=True),
         attack_object("course-of-action", mitigation_two, "M1002"),
@@ -90,6 +107,12 @@ def bundle_fixture() -> dict[str, object]:
         attack_object("attack-pattern", parent, "T1000"),
         attack_object("course-of-action", mitigation_one, "M1001"),
         attack_object("course-of-action", mitigation_old, "M1999", deprecated=True),
+        attack_object("intrusion-set", group, "G0001"),
+        attack_object("campaign", campaign, "C0001"),
+        attack_object("malware", malware, "S0001"),
+        attack_object("tool", tool, "S0002"),
+        attack_object("malware", old_malware, "S9999", revoked=True),
+        attack_object("tool", old_tool, "S9998", deprecated=True),
         relationship("relationship--parent", "subtechnique-of", child, parent),
         relationship("relationship--one-parent", "mitigates", mitigation_one, parent),
         relationship("relationship--one-child", "mitigates", mitigation_one, child),
@@ -99,7 +122,23 @@ def bundle_fixture() -> dict[str, object]:
         relationship(
             "relationship--revoked", "mitigates", mitigation_two, child, revoked=True
         ),
-        {"type": "malware", "id": "malware--ignored", "name": "Ignored"},
+        relationship(
+            "relationship--group-parent", "uses", group, parent,
+            references=[{
+                "source_name": "Group report",
+                "description": "Group report citation.",
+                "url": "https://example.test/group-report",
+            }],
+        ),
+        relationship("relationship--campaign-parent", "uses", campaign, parent),
+        relationship("relationship--malware-child", "uses", malware, child),
+        relationship("relationship--tool-parent", "uses", tool, parent),
+        relationship("relationship--old-source", "uses", old_malware, parent),
+        relationship("relationship--deprecated-source", "uses", old_tool, parent),
+        relationship("relationship--old-target", "uses", group, old),
+        relationship("relationship--entity-target", "uses", group, malware),
+        relationship("relationship--revoked-use", "uses", tool, child, revoked=True),
+        relationship("relationship--deprecated-use", "uses", tool, child, deprecated=True),
     ]}
 
 
@@ -210,6 +249,60 @@ class AttackParserTests(unittest.TestCase):
             "relationship--one-parent",
         )
 
+    def test_parser_preserves_all_procedure_entity_types_and_citations(self) -> None:
+        catalog = parse_attack_bundle(bundle_fixture())
+        self.assertEqual(
+            [(item["entity_type"], item["external_id"]) for item in catalog["procedure_entities"]],
+            [("campaign", "C0001"), ("intrusion-set", "G0001"),
+             ("malware", "S0001"), ("tool", "S0002")],
+        )
+        self.assertEqual(len(catalog["procedures"]), 4)
+        group_use = next(
+            item for item in catalog["procedures"]
+            if item["relationship_stix_id"] == "relationship--group-parent"
+        )
+        self.assertEqual(group_use["technique_id"], "T1000")
+        self.assertEqual(group_use["entity_stix_id"], "intrusion-set--one")
+        self.assertEqual(group_use["description"], "Evidence for relationship--group-parent")
+        self.assertEqual(group_use["external_references"], [{
+            "source_name": "Group report",
+            "description": "Group report citation.",
+            "url": "https://example.test/group-report",
+        }])
+
+    def test_parser_excludes_inactive_and_non_technique_procedures(self) -> None:
+        relationship_ids = {
+            item["relationship_stix_id"]
+            for item in parse_attack_bundle(bundle_fixture())["procedures"]
+        }
+        self.assertTrue({
+            "relationship--old-source", "relationship--old-target",
+            "relationship--deprecated-source", "relationship--entity-target",
+            "relationship--revoked-use", "relationship--deprecated-use",
+        }.isdisjoint(relationship_ids))
+
+    def test_parser_rejects_missing_or_orphan_procedure_references_and_unsafe_urls(self) -> None:
+        missing = bundle_fixture()
+        missing["objects"].append({
+            "type": "relationship", "id": "relationship--missing", "relationship_type": "uses",
+            "target_ref": "attack-pattern--parent", "description": "Missing source.",
+        })
+        with self.assertRaisesRegex(ValueError, "missing source_ref"):
+            parse_attack_bundle(missing)
+
+        orphan = bundle_fixture()
+        orphan["objects"].append(
+            relationship("relationship--orphan", "uses", "malware--absent", "attack-pattern--parent")
+        )
+        with self.assertRaisesRegex(ValueError, "orphan ATT&CK uses relationship"):
+            parse_attack_bundle(orphan)
+
+        unsafe = bundle_fixture()
+        group = next(item for item in unsafe["objects"] if item.get("id") == "intrusion-set--one")
+        group["external_references"].append({"source_name": "Unsafe", "url": "javascript:alert(1)"})
+        with self.assertRaisesRegex(ValueError, "unsafe URL"):
+            parse_attack_bundle(unsafe)
+
     def test_parser_output_is_deterministic_regardless_of_bundle_order(self) -> None:
         fixture = bundle_fixture()
         reversed_fixture = copy.deepcopy(fixture)
@@ -224,7 +317,7 @@ class AttackParserTests(unittest.TestCase):
 
         duplicate = bundle_fixture()
         duplicate["objects"].append(copy.deepcopy(duplicate["objects"][0]))
-        with self.assertRaisesRegex(ValueError, "duplicate ATT&CK technique STIX id"):
+        with self.assertRaisesRegex(ValueError, "duplicate ATT&CK STIX id"):
             parse_attack_bundle(duplicate)
 
 

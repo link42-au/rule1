@@ -59,6 +59,33 @@ export interface E8Mapping {
 
 export type AttackEffect = "prevent" | "constrain" | "detect" | "contain" | "recover";
 export type AttackOutcomeClass = "technique-disruption" | "consequence-treatment";
+export type AttackProcedureEntityType = "intrusion-set" | "campaign" | "malware" | "tool";
+
+export interface AttackProcedureReference {
+  sourceName: string;
+  externalId: string | null;
+  url: string | null;
+  description: string | null;
+}
+
+export interface AttackProcedureExample {
+  relationshipStixId: string;
+  entityStixId: string;
+  entityType: AttackProcedureEntityType;
+  entityExternalId: string | null;
+  entityName: string;
+  entityDescription: string;
+  entityUrl: string | null;
+  description: string;
+  references: AttackProcedureReference[];
+}
+
+export interface AttackTechniqueProcedures {
+  techniqueId: string;
+  total: number;
+  returned: number;
+  examples: AttackProcedureExample[];
+}
 
 export interface AttackMapping {
   attackVersion: string;
@@ -85,6 +112,7 @@ export interface AttackMappingResult {
   ismCatalogVersion: string | null;
   attackVersion: string | null;
   mappings: AttackMapping[];
+  procedures: AttackTechniqueProcedures[];
 }
 
 export interface Rule1DataClient {

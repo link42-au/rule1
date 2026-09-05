@@ -12,6 +12,8 @@ Enterprise ATT&CK 19.2 is pinned to MITRE CTI's signed immutable `ATT&CK-v19.2` 
 
 Rule1 keeps ATT&CK discovery separate from mapping authority. Curated control-to-mitigation bridges are expanded through official relationships only into `mappings/generated/attack-discovery-report.json`; those 6,592 discovery rows are neither candidates nor mappings and are not stored in the browser database. `mappings/ism-e8-attack-candidates.json` is the explicit direct control-to-technique review input. Each candidate carries the exact bridge and ATT&CK relationship, candidate-specific effect, confidence, rationale, and evidence from both the current ISM statement and ATT&CK. Only candidates with a separate named human review decision can be exposed by the reviewed-only browser query.
 
+The same pinned ATT&CK bundle supplies reported procedure examples from active intrusion sets, campaigns, malware, and tools. Rule1 retains every active `uses` relationship that targets an active Enterprise technique, including its STIX provenance and source references. These examples are contextual reports of technique use, not evidence that a mapped control covers an actor or software family. Browser queries run only after a reviewed ISM mapping reaches a technique and return at most five deterministically ordered examples per technique, together with the full stored count; all examples remain available in SQLite for later review.
+
 Known gaps kept outside this feature:
 
 - ASD's official OSCAL repository does not cover ISM editions before June 2022. Standalone ingestion therefore retains 45 PDFs through March 2022, then uses official OSCAL catalogs from June 2022 onward.

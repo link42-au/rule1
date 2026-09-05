@@ -6,6 +6,7 @@ import json
 from collections import Counter
 from pathlib import Path
 from typing import Any, Literal, TypedDict
+from urllib.parse import urlsplit
 
 Effect = Literal["prevent", "constrain", "detect", "contain", "recover"]
 OutcomeClass = Literal["technique-disruption", "consequence-treatment"]
@@ -54,12 +55,39 @@ class AttackRelationship(TypedDict):
     description: str
 
 
+class AttackExternalReference(TypedDict, total=False):
+    source_name: str
+    external_id: str
+    url: str
+    description: str
+
+
+class AttackProcedureEntity(TypedDict):
+    stix_id: str
+    entity_type: Literal["intrusion-set", "campaign", "malware", "tool"]
+    external_id: str | None
+    url: str | None
+    name: str
+    description: str
+    external_references: list[AttackExternalReference]
+
+
+class AttackProcedure(TypedDict):
+    relationship_stix_id: str
+    entity_stix_id: str
+    technique_id: str
+    description: str
+    external_references: list[AttackExternalReference]
+
+
 class AttackCatalog(TypedDict):
     version: str
     release_date: str
     techniques: list[AttackTechnique]
     mitigations: list[AttackMitigation]
     relationships: list[AttackRelationship]
+    procedure_entities: list[AttackProcedureEntity]
+    procedures: list[AttackProcedure]
 
 
 class MappingBridge(TypedDict):
@@ -215,8 +243,56 @@ def _external_reference(item: dict[str, Any], context: str) -> tuple[str, str]:
     raise ValueError(f"{context} has no MITRE ATT&CK external reference")
 
 
+def _safe_url(value: Any, context: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{context} has blank URL")
+    url = value.strip()
+    parsed = urlsplit(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError(f"{context} has unsafe URL")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError(f"{context} URL must not contain credentials")
+    return url
+
+
+def _external_references(
+    item: dict[str, Any], context: str
+) -> list[AttackExternalReference]:
+    values = item.get("external_references", [])
+    if not isinstance(values, list):
+        raise ValueError(f"{context} external_references must be a list")
+    references: dict[str, AttackExternalReference] = {}
+    for index, value in enumerate(values):
+        reference_context = f"{context} external reference {index}"
+        if not isinstance(value, dict):
+            raise ValueError(f"{reference_context} must be an object")
+        reference: AttackExternalReference = {
+            "source_name": _required_text(value, "source_name", reference_context)
+        }
+        for field in ("external_id", "description"):
+            text = _optional_text(value, field, reference_context)
+            if text is not None:
+                reference[field] = text
+        if "url" in value:
+            reference["url"] = _safe_url(value["url"], reference_context)
+        fingerprint = json.dumps(
+            reference, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
+        references[fingerprint] = reference
+    return [references[key] for key in sorted(references)]
+
+
+def _procedure_entity_reference(
+    references: list[AttackExternalReference],
+) -> tuple[str | None, str | None]:
+    for reference in references:
+        if reference["source_name"] == "mitre-attack":
+            return reference.get("external_id"), reference.get("url")
+    return None, None
+
+
 def parse_attack_bundle(source: Path | dict[str, Any]) -> AttackCatalog:
-    """Parse the active Enterprise ATT&CK techniques and mitigation graph."""
+    """Parse active Enterprise ATT&CK mappings and reported procedure evidence."""
     bundle = _read_json(source)
     if bundle.get("type") != "bundle" or not isinstance(bundle.get("objects"), list):
         raise ValueError("ATT&CK source must be a STIX bundle")
@@ -224,8 +300,20 @@ def parse_attack_bundle(source: Path | dict[str, Any]) -> AttackCatalog:
     objects = bundle["objects"]
     techniques_by_stix: dict[str, AttackTechnique] = {}
     mitigations_by_stix: dict[str, AttackMitigation] = {}
+    procedure_entities_by_stix: dict[str, AttackProcedureEntity] = {}
     raw_parent_relationships: list[dict[str, Any]] = []
     raw_mitigation_relationships: list[dict[str, Any]] = []
+    raw_procedure_relationships: list[dict[str, Any]] = []
+    objects_by_stix: dict[str, dict[str, Any]] = {}
+
+    for value in objects:
+        if not isinstance(value, dict):
+            continue
+        stix_id = value.get("id")
+        if isinstance(stix_id, str) and stix_id.strip():
+            if stix_id in objects_by_stix:
+                raise ValueError(f"duplicate ATT&CK STIX id: {stix_id}")
+            objects_by_stix[stix_id] = value
 
     for value in objects:
         if not isinstance(value, dict) or not _active(value):
@@ -272,11 +360,26 @@ def parse_attack_bundle(source: Path | dict[str, Any]) -> AttackCatalog:
                 "description": str(value.get("description") or ""),
                 "url": external_url,
             }
+        elif object_type in {"intrusion-set", "campaign", "malware", "tool"}:
+            stix_id = _required_text(value, "id", "ATT&CK procedure entity")
+            references = _external_references(value, stix_id)
+            external_id, external_url = _procedure_entity_reference(references)
+            procedure_entities_by_stix[stix_id] = {
+                "stix_id": stix_id,
+                "entity_type": object_type,
+                "external_id": external_id,
+                "url": external_url,
+                "name": _required_text(value, "name", stix_id),
+                "description": _required_text(value, "description", stix_id),
+                "external_references": references,
+            }
         elif object_type == "relationship":
             if value.get("relationship_type") == "subtechnique-of":
                 raw_parent_relationships.append(value)
             elif value.get("relationship_type") == "mitigates":
                 raw_mitigation_relationships.append(value)
+            elif value.get("relationship_type") == "uses":
+                raw_procedure_relationships.append(value)
 
     technique_ids = [item["technique_id"] for item in techniques_by_stix.values()]
     mitigation_ids = [item["mitigation_id"] for item in mitigations_by_stix.values()]
@@ -318,6 +421,39 @@ def parse_attack_bundle(source: Path | dict[str, Any]) -> AttackCatalog:
             "description": str(relationship.get("description") or ""),
         })
 
+    procedures: list[AttackProcedure] = []
+    procedure_relationship_ids: set[str] = set()
+    procedure_pairs: set[tuple[str, str]] = set()
+    for relationship in raw_procedure_relationships:
+        relationship_id = _required_text(
+            relationship, "id", "ATT&CK uses relationship"
+        )
+        source_stix = _required_text(relationship, "source_ref", relationship_id)
+        target_stix = _required_text(relationship, "target_ref", relationship_id)
+        source_object = objects_by_stix.get(source_stix)
+        target_object = objects_by_stix.get(target_stix)
+        if source_object is None or target_object is None:
+            raise ValueError(f"orphan ATT&CK uses relationship: {relationship_id}")
+        if (
+            not _active(source_object)
+            or source_stix not in procedure_entities_by_stix
+            or not _active(target_object)
+            or target_stix not in techniques_by_stix
+        ):
+            continue
+        pair = (source_stix, target_stix)
+        if relationship_id in procedure_relationship_ids or pair in procedure_pairs:
+            raise ValueError(f"duplicate ATT&CK uses relationship: {relationship_id}")
+        procedure_relationship_ids.add(relationship_id)
+        procedure_pairs.add(pair)
+        procedures.append({
+            "relationship_stix_id": relationship_id,
+            "entity_stix_id": source_stix,
+            "technique_id": techniques_by_stix[target_stix]["technique_id"],
+            "description": _required_text(relationship, "description", relationship_id),
+            "external_references": _external_references(relationship, relationship_id),
+        })
+
     return {
         "version": ATTACK_VERSION,
         "release_date": ATTACK_RELEASE_DATE,
@@ -327,6 +463,16 @@ def parse_attack_bundle(source: Path | dict[str, Any]) -> AttackCatalog:
             relationships,
             key=lambda item: (
                 item["mitigation_id"], item["technique_id"], item["relationship_stix_id"]
+            ),
+        ),
+        "procedure_entities": sorted(
+            procedure_entities_by_stix.values(),
+            key=lambda item: (item["entity_type"], item["name"].casefold(), item["stix_id"]),
+        ),
+        "procedures": sorted(
+            procedures,
+            key=lambda item: (
+                item["technique_id"], item["entity_stix_id"], item["relationship_stix_id"]
             ),
         ),
     }

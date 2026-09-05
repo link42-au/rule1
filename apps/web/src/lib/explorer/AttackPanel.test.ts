@@ -48,6 +48,7 @@ const reviewedResult: AttackMappingResult = {
       evidence: [],
     },
   ],
+  procedures: [],
 };
 
 describe("ATT&CK control panel", () => {
@@ -77,6 +78,7 @@ describe("ATT&CK control panel", () => {
       ismCatalogVersion: "ISM-OSCAL-2026.09.4",
       attackVersion: "19.2",
       mappings: [],
+      procedures: [],
     };
     expect(render(AttackPanel, { props: { result: empty, status: "loading" } }).body).toContain(
       "Loading reviewed mappings",

@@ -104,6 +104,8 @@
     "annotations": 1146,
     "attack_mitigation_techniques": 1448,
     "attack_mitigations": 44,
+    "attack_procedure_entities": 1057,
+    "attack_procedures": 17136,
     "attack_releases": 1,
     "attack_source_files": 1,
     "attack_techniques": 697,
@@ -117,12 +119,14 @@
     "source_files": 82,
     "term_history": 4063
   },
-  "schema_sha256": "dc438735fea80dcc95b11650efef8992dc048e94322d7c712adf10ebd2088a62",
+  "schema_sha256": "92cf9ab875634b0e1134d99e67e0998224b155ffeb9bce1dbd607bb7c24f561d",
   "source_ledger_sha256": "61ea7e9a3a4f6d20cc420b9f46f0ca70b58d6182c9cd8a4b92350306ff10f99e",
   "tables": [
     "annotations",
     "attack_mitigation_techniques",
     "attack_mitigations",
+    "attack_procedure_entities",
+    "attack_procedures",
     "attack_releases",
     "attack_source_files",
     "attack_techniques",
@@ -138,7 +142,7 @@
     "source_files",
     "term_history"
   ],
-  "user_version": 4,
+  "user_version": 5,
   "version_row_counts": {
     "cyber-essentials": {
       "CE-3.1": {
