@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import sqlite3
@@ -7,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from rule1_ingest.build import build_database
+from rule1_ingest.build import _insert_attack_assessments, build_database
 from rule1_ingest.parsers import (
     _changed,
     _canonical_nist_csf_id,
@@ -306,26 +307,71 @@ class DatabaseTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.snapshots = ParserTests.snapshots if hasattr(ParserTests, "snapshots") else build_all_histories(ROOT)
 
+    def test_attack_schema_authorizes_only_control_to_mitigation_candidates(self) -> None:
+        with sqlite3.connect(":memory:") as connection:
+            connection.executescript((ROOT / "ingestion/schema.sql").read_text(encoding="utf-8"))
+            tables = {row[0] for row in connection.execute(
+                "SELECT name FROM sqlite_schema WHERE type='table'"
+            )}
+            self.assertIn("control_attack_assessments", tables)
+            self.assertIn("control_attack_mitigation_mappings", tables)
+            self.assertNotIn("control_attack_bridges", tables)
+            self.assertNotIn("control_attack_mappings", tables)
+            mapping_columns = {row[1] for row in connection.execute(
+                "PRAGMA table_info(control_attack_mitigation_mappings)"
+            )}
+            self.assertIn("mitigation_id", mapping_columns)
+            self.assertIn("security_function", mapping_columns)
+            self.assertNotIn("technique_id", mapping_columns)
+            self.assertNotIn("effect", mapping_columns)
+
+            provenance = ("model", "prompt-v1", "a" * 64, "2026-09-05T00:00:00Z")
+            payload = {"assessments": [{
+                "control_id": "ism-0001", "disposition": "mapped", "unmapped_reason": None,
+                "provenance": dict(zip(
+                    ("model", "prompt_version", "input_sha256", "generated_at"), provenance,
+                    strict=True,
+                )),
+                "candidates": [{
+                    "candidate_id": "candidate-1", "mitigation_id": "M1001",
+                    "relationship": "enables", "security_function": "protect",
+                    "confidence": "high", "status": "candidate",
+                    "rationale": "Control-specific rationale",
+                    "evidence": [{"kind": "ism-control"}],
+                    "reviewed_by": None, "reviewed_at": None,
+                }],
+            }]}
+            _insert_attack_assessments(
+                connection, payload, "ISM-OSCAL-2026.09.4", "19.2"
+            )
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute(
+                    "INSERT INTO control_attack_mitigation_mappings VALUES "
+                    "('candidate-2','ism','ISM-OSCAL-2026.09.4','ism-0001','19.2','M1002',"
+                    "'mitigates','prevent','high','candidate','Invalid semantics',"
+                    "'[{\"kind\":\"ism-control\"}]',NULL,NULL)"
+                )
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute(
+                    "INSERT INTO control_attack_assessments VALUES "
+                    "('ism','ISM-OSCAL-2026.09.4','ism-0002','19.2','unmapped',NULL,?,?,?,?)",
+                    provenance,
+                )
+            invalid_partition = copy.deepcopy(payload)
+            invalid_partition["assessments"][0]["candidates"] = []
+            with self.assertRaisesRegex(ValueError, "disposition does not match"):
+                _insert_attack_assessments(
+                    connection, invalid_partition, "ISM-OSCAL-2026.09.4", "19.2"
+                )
+
     def test_two_clean_builds_are_byte_identical_and_valid(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             first = Path(directory) / "first.sqlite3"
             second = Path(directory) / "second.sqlite3"
             build_database(ROOT, first)
-            first_discovery = (ROOT / "mappings/generated/attack-discovery-report.json").read_bytes()
-            first_report = (ROOT / "mappings/generated/attack-mapping-review.json").read_bytes()
-            first_layer = (ROOT / "mappings/generated/attack-navigator-layer.json").read_bytes()
             build_database(ROOT, second)
             self.assertEqual(first.read_bytes(), second.read_bytes())
             self.assertEqual(hashlib.sha256(first.read_bytes()).hexdigest(), hashlib.sha256(second.read_bytes()).hexdigest())
-            self.assertEqual(first_discovery, (ROOT / "mappings/generated/attack-discovery-report.json").read_bytes())
-            self.assertEqual(first_report, (ROOT / "mappings/generated/attack-mapping-review.json").read_bytes())
-            self.assertEqual(first_layer, (ROOT / "mappings/generated/attack-navigator-layer.json").read_bytes())
-            self.assertNotIn(b'"status": "candidate"', first_layer)
-            self.assertNotIn(b'"status": "rejected"', first_layer)
-            self.assertNotIn(b"defeat", first_layer.lower())
-            discovery = json.loads(first_discovery)
-            self.assertEqual(discovery["counts"]["discovery_relationships"], 6_592)
-            self.assertIn("not candidates or mappings", discovery["purpose"])
             validate_database(ROOT, first, ROOT / "ingestion/validation-contract.json")
 
     def test_schema_versions_counts_and_integrity(self) -> None:
@@ -335,7 +381,7 @@ class DatabaseTests(unittest.TestCase):
         validate_database(ROOT, database, ROOT / "ingestion/validation-contract.json")
         with sqlite3.connect(database) as connection:
             self.assertEqual(connection.execute("PRAGMA application_id").fetchone()[0], 1_381_321_777)
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 5)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 6)
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchall(), [("ok",)])
             self.assertEqual(
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
@@ -396,71 +442,32 @@ class DatabaseTests(unittest.TestCase):
                 "SELECT MAX(example_count) FROM (SELECT COUNT(*) AS example_count "
                 "FROM attack_procedures GROUP BY technique_id)"
             ).fetchone()[0], 5)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_bridges").fetchone()[0], 122)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM control_attack_mappings").fetchone()[0], 16)
-            m1025_bridges = connection.execute(
-                "SELECT rationale, evidence FROM control_attack_bridges "
-                "WHERE mitigation_id='M1025' ORDER BY control_id"
-            ).fetchall()
-            self.assertEqual(len(m1025_bridges), 2)
-            self.assertTrue(all("Privileged Process Integrity" in row[0] for row in m1025_bridges))
-            self.assertTrue(all("Privileged Account Management" not in row[0] for row in m1025_bridges))
-            self.assertTrue(all("privileged-process integrity" in row[1].lower() for row in m1025_bridges))
-            representative_bridge_wording = (
-                ("ism-1582", "M1047", "ruleset assurance"),
-                ("ism-1859", "M1054", "hardened security settings"),
-                ("ism-1672", "M1049", "antivirus scanning of Microsoft Office macros"),
-                ("ism-1890", "M1045", "checked for malicious code before signing"),
-                ("ism-1487", "M1022", "write access to Trusted Locations"),
-                ("ism-1675", "M1045", "macro enablement"),
-                ("ism-1485", "M1021", "processing advertisements from the internet"),
-                ("ism-1688", "M1036", "operating environments"),
-                ("ism-1387", "M1035", "jump servers"),
-                ("ism-1685", "M1027", "long, unique, unpredictable, and managed"),
-            )
-            for control_id, mitigation_id, wording in representative_bridge_wording:
-                rationale = connection.execute(
-                    "SELECT rationale FROM control_attack_bridges "
-                    "WHERE control_id=? AND mitigation_id=?",
-                    (control_id, mitigation_id),
-                ).fetchone()
-                self.assertIsNotNone(rationale)
-                self.assertIn(wording, rationale[0])
-            self.assertEqual(
-                dict(connection.execute(
-                    "SELECT status, COUNT(*) FROM control_attack_mappings GROUP BY status"
-                )),
-                {"candidate": 16},
-            )
             self.assertEqual(connection.execute(
-                "SELECT COUNT(DISTINCT b.control_id) FROM control_attack_mappings m "
-                "JOIN control_attack_bridges b USING (bridge_id)"
-            ).fetchone()[0], 15)
-            self.assertEqual(connection.execute(
-                "SELECT COUNT(*) FROM control_attack_mappings m "
-                "JOIN control_attack_bridges b USING (bridge_id) "
-                "WHERE b.control_id IN ('ism-1698','ism-1701','ism-1702')"
+                "SELECT COUNT(*) FROM control_attack_assessments"
+            ).fetchone()[0], 1_143)
+            self.assertGreater(connection.execute(
+                "SELECT COUNT(*) FROM control_attack_mitigation_mappings"
             ).fetchone()[0], 0)
-            direct = connection.execute(
-                "SELECT effect, confidence, rationale, evidence FROM control_attack_mappings "
-                "WHERE candidate_id='ism-e8-1622-m1038-prevent-t1059-001'"
-            ).fetchone()
-            self.assertEqual(direct[:2], ("constrain", "high"))
-            self.assertIn("PowerShell (T1059.001)", direct[2])
-            self.assertIn('"kind":"ism-control"', direct[3])
-            self.assertIn('"kind":"attack-relationship"', direct[3])
-            self.assertEqual(
-                connection.execute(
-                    "SELECT CASE WHEN effect IN ('prevent','constrain','detect') "
-                    "THEN 'technique-disruption' ELSE 'consequence-treatment' END, COUNT(*) "
-                    "FROM control_attack_mappings GROUP BY 1 ORDER BY 1"
-                ).fetchall(),
-                [("consequence-treatment", 2), ("technique-disruption", 14)],
-            )
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM control_attack_mitigation_mappings "
+                "WHERE relationship!='enables' OR security_function NOT IN ('protect','detect','recover')"
+            ).fetchone()[0], 0)
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM control_attack_mitigation_mappings WHERE status!='candidate'"
+            ).fetchone()[0], 0)
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM control_attack_assessments a WHERE "
+                "(a.disposition='mapped') != EXISTS (SELECT 1 "
+                "FROM control_attack_mitigation_mappings m WHERE m.framework=a.framework "
+                "AND m.ism_catalog_version=a.ism_catalog_version AND m.control_id=a.control_id "
+                "AND m.attack_version=a.attack_version)"
+            ).fetchone()[0], 0)
             mapping_schema = connection.execute(
-                "SELECT sql FROM sqlite_schema WHERE type='table' AND name='control_attack_mappings'"
+                "SELECT sql FROM sqlite_schema WHERE type='table' "
+                "AND name='control_attack_mitigation_mappings'"
             ).fetchone()[0]
-            self.assertIn("'contain'", mapping_schema)
+            self.assertIn("relationship = 'enables'", mapping_schema)
+            self.assertNotIn("technique_id", mapping_schema)
             indexes = {row[0] for row in connection.execute(
                 "SELECT name FROM sqlite_schema WHERE type='index'"
             )}
@@ -468,16 +475,16 @@ class DatabaseTests(unittest.TestCase):
                 "idx_attack_technique_parent", "idx_attack_relationship_technique",
                 "idx_attack_procedure_entity_name", "idx_attack_procedure_technique",
                 "idx_attack_procedure_entity",
-                "idx_attack_bridge_control", "idx_attack_mapping_technique",
+                "idx_attack_assessment_disposition", "idx_attack_mapping_mitigation",
                 "idx_attack_mapping_status",
             }.issubset(indexes))
             connection.execute("PRAGMA foreign_keys=ON")
             with self.assertRaises(sqlite3.IntegrityError):
                 connection.execute(
-                    "INSERT INTO control_attack_mappings VALUES "
-                    "('invalid-candidate','invalid-bridge','19.2','M1032','T1078',"
-                    "'relationship--98167cc6-96de-4f02-83b1-78d7633c4106',"
-                    "'prevent','high','candidate','Specific rationale','[{\"kind\":\"test\"}]',NULL,NULL)"
+                    "INSERT INTO control_attack_mitigation_mappings VALUES "
+                    "('invalid-candidate','ism','ISM-OSCAL-2026.09.4','ism-0001','19.2',"
+                    "'M9999','enables','protect','high','candidate','Specific rationale',"
+                    "'[{\"kind\":\"test\"}]',NULL,NULL)"
                 )
             with self.assertRaises(sqlite3.IntegrityError):
                 connection.execute(

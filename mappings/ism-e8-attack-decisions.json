@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "ism_catalog_version": "ISM-OSCAL-2026.09.4",
-  "attack_version": "19.2",
-  "method": "Exact human review decisions for explicitly curated direct candidates. Discovery-only expansions can never be reviewed or published.",
-  "decisions": []
-}

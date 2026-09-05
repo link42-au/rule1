@@ -10,13 +10,14 @@ from pathlib import Path
 from typing import Any
 
 from .annotations import LEGACY_MANIFEST_SHA256
+from .mitigation_mappings import load_assessments, load_inputs
 
 TABLES = (
     "annotations", "attack_mitigation_techniques", "attack_mitigations", "attack_procedure_entities",
     "attack_procedures", "attack_releases", "attack_source_files", "attack_techniques",
-    "build_counts", "build_metadata", "catalog_versions", "control_attack_bridges",
-    "control_attack_mappings", "control_groups", "control_history", "e8_mappings", "frameworks",
-    "source_files", "term_history",
+    "build_counts", "build_metadata", "catalog_versions", "control_attack_assessments",
+    "control_attack_mitigation_mappings", "control_groups", "control_history", "e8_mappings",
+    "frameworks", "source_files", "term_history",
 )
 
 
@@ -66,7 +67,14 @@ def _database_contract(connection: sqlite3.Connection, ledger_sha: str) -> dict[
         )],
         "attack_mapping_status_counts": {
             status: count for status, count in connection.execute(
-                "SELECT status, COUNT(*) FROM control_attack_mappings GROUP BY status ORDER BY status"
+                "SELECT status, COUNT(*) FROM control_attack_mitigation_mappings "
+                "GROUP BY status ORDER BY status"
+            )
+        },
+        "attack_assessment_disposition_counts": {
+            disposition: count for disposition, count in connection.execute(
+                "SELECT disposition, COUNT(*) FROM control_attack_assessments "
+                "GROUP BY disposition ORDER BY disposition"
             )
         },
         "framework_versions": versions,
@@ -138,7 +146,7 @@ def validate_database(
             raise ValueError(f"unexpected database tables: {tables}")
         if connection.execute("PRAGMA application_id").fetchone()[0] != 1381321777:
             raise ValueError("unexpected application_id")
-        if connection.execute("PRAGMA user_version").fetchone()[0] != 5:
+        if connection.execute("PRAGMA user_version").fetchone()[0] != 6:
             raise ValueError("unexpected user_version")
         if connection.execute("PRAGMA page_size").fetchone()[0] != 4096:
             raise ValueError("unexpected page_size")
@@ -147,9 +155,7 @@ def validate_database(
         annotation_manifest_path = root / "annotations/legacy-preservation.json"
         annotation_sha = _sha256(annotation_path)
         annotation_manifest_sha = _sha256(annotation_manifest_path)
-        bridges_path = root / "mappings/ism-e8-attack-bridges.json"
-        candidates_path = root / "mappings/ism-e8-attack-candidates.json"
-        decisions_path = root / "mappings/ism-e8-attack-decisions.json"
+        assessments_path = root / "mappings/ism-attack-mitigation-assessments.json"
         attack_source = next(
             item for item in ledger if item["framework"] == "mitre-attack-enterprise"
         )
@@ -160,11 +166,9 @@ def validate_database(
             "annotation_legacy_manifest_sha256": annotation_manifest_sha,
             "annotation_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
             "annotation_prompt_version": "legacy-rule1-v1",
-            "attack_bridge_sha256": _sha256(bridges_path),
-            "attack_candidates_sha256": _sha256(candidates_path),
-            "attack_decisions_sha256": _sha256(decisions_path),
+            "attack_mitigation_assessments_sha256": _sha256(assessments_path),
             "attack_source_sha256": attack_source["sha256"],
-            "schema_version": "5",
+            "schema_version": "6",
             "source_ledger_sha256": ledger_sha,
             "sqlite_version": sqlite3.sqlite_version,
         }
@@ -257,40 +261,83 @@ def validate_database(
         ).fetchone()[0]
         if invalid_attack_rows:
             raise ValueError(f"invalid ATT&CK rows: {invalid_attack_rows}")
-        invalid_bridges = connection.execute(
-            "SELECT COUNT(*) FROM control_attack_bridges WHERE framework!='ism' "
+        invalid_assessments = connection.execute(
+            "SELECT COUNT(*) FROM control_attack_assessments WHERE framework!='ism' "
             "OR ism_catalog_version!='ISM-OSCAL-2026.09.4' OR attack_version!='19.2' "
-            "OR effect NOT IN ('prevent','constrain','detect','contain','recover') "
-            "OR json_valid(evidence)=0 OR json_array_length(evidence)=0 OR TRIM(rationale)=''"
+            "OR disposition NOT IN ('mapped','unmapped') OR TRIM(model)='' "
+            "OR TRIM(prompt_version)='' OR length(input_sha256)!=64 OR TRIM(generated_at)='' "
+            "OR (disposition='mapped' AND unmapped_reason IS NOT NULL) "
+            "OR (disposition='unmapped' AND TRIM(COALESCE(unmapped_reason,''))='')"
         ).fetchone()[0]
-        if invalid_bridges:
-            raise ValueError(f"invalid control-to-ATT&CK bridges: {invalid_bridges}")
+        if invalid_assessments:
+            raise ValueError(f"invalid control-to-ATT&CK assessments: {invalid_assessments}")
         invalid_mappings = connection.execute(
-            "SELECT COUNT(*) FROM control_attack_mappings WHERE attack_version!='19.2' "
-            "OR TRIM(candidate_id)='' OR TRIM(relationship_stix_id)='' "
-            "OR effect NOT IN ('prevent','constrain','detect','contain','recover') "
+            "SELECT COUNT(*) FROM control_attack_mitigation_mappings WHERE framework!='ism' "
+            "OR ism_catalog_version!='ISM-OSCAL-2026.09.4' OR attack_version!='19.2' "
+            "OR TRIM(candidate_id)='' OR relationship!='enables' "
+            "OR security_function NOT IN ('protect','detect','recover') "
             "OR TRIM(rationale)='' OR json_valid(evidence)=0 OR json_array_length(evidence)=0 "
             "OR (status='candidate' AND (reviewed_by IS NOT NULL OR reviewed_at IS NOT NULL)) "
             "OR (status IN ('reviewed','rejected') AND (reviewed_by IS NULL OR reviewed_at IS NULL))"
         ).fetchone()[0]
         if invalid_mappings:
             raise ValueError(f"invalid control-to-ATT&CK mappings: {invalid_mappings}")
-        candidate_payload = json.loads(candidates_path.read_text(encoding="utf-8"))
-        expected_candidate_ids = sorted(
-            item["candidate_id"] for item in candidate_payload["candidates"]
+        control_contexts, mitigations = load_inputs(root)
+        mapping_payload = load_assessments(
+            assessments_path, control_contexts, mitigations
         )
-        actual_candidate_ids = [row[0] for row in connection.execute(
-            "SELECT candidate_id FROM control_attack_mappings ORDER BY candidate_id"
-        )]
-        if actual_candidate_ids != expected_candidate_ids:
-            raise ValueError("database mappings do not exactly match direct candidate input")
-        non_e8_mappings = connection.execute(
-            "SELECT COUNT(*) FROM control_attack_bridges b WHERE NOT EXISTS ("
-            "SELECT 1 FROM e8_mappings e WHERE e.framework=b.framework "
-            "AND e.catalog_version=b.ism_catalog_version AND e.control_id=b.control_id)"
+        expected_assessments = []
+        expected_mappings = []
+        for assessment in mapping_payload["assessments"]:
+            provenance = assessment["provenance"]
+            expected_assessments.append((
+                "ism", "ISM-OSCAL-2026.09.4", assessment["control_id"], "19.2",
+                assessment["disposition"], assessment["unmapped_reason"], provenance["model"],
+                provenance["prompt_version"], provenance["input_sha256"],
+                provenance["generated_at"],
+            ))
+            for mapping in assessment["candidates"]:
+                expected_mappings.append((
+                    mapping["candidate_id"], "ism", "ISM-OSCAL-2026.09.4",
+                    assessment["control_id"], "19.2", mapping["mitigation_id"],
+                    mapping["relationship"], mapping["security_function"], mapping["confidence"],
+                    mapping["status"], mapping["rationale"],
+                    json.dumps(mapping["evidence"], ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+                    mapping["reviewed_by"], mapping["reviewed_at"],
+                ))
+        actual_assessments = connection.execute(
+            "SELECT framework, ism_catalog_version, control_id, attack_version, disposition, "
+            "unmapped_reason, model, prompt_version, input_sha256, generated_at "
+            "FROM control_attack_assessments ORDER BY control_id"
+        ).fetchall()
+        if actual_assessments != sorted(expected_assessments, key=lambda row: row[2]):
+            raise ValueError("database assessments do not exactly match authored input")
+        actual_mappings = connection.execute(
+            "SELECT candidate_id, framework, ism_catalog_version, control_id, attack_version, "
+            "mitigation_id, relationship, security_function, confidence, status, rationale, "
+            "evidence, reviewed_by, reviewed_at FROM control_attack_mitigation_mappings "
+            "ORDER BY candidate_id"
+        ).fetchall()
+        if actual_mappings != sorted(expected_mappings, key=lambda row: row[0]):
+            raise ValueError("database mappings do not exactly match authored mitigation candidates")
+        active_controls = connection.execute(
+            "SELECT control_id FROM control_history WHERE framework='ism' "
+            "AND catalog_version='ISM-OSCAL-2026.09.4' AND control_class='ISM-control' "
+            "AND change_type!='withdrawn' ORDER BY control_id"
+        ).fetchall()
+        assessed_controls = connection.execute(
+            "SELECT control_id FROM control_attack_assessments ORDER BY control_id"
+        ).fetchall()
+        if assessed_controls != active_controls:
+            raise ValueError("ATT&CK assessments do not partition every active ISM control exactly once")
+        disposition_mismatches = connection.execute(
+            "SELECT COUNT(*) FROM control_attack_assessments a WHERE "
+            "(a.disposition='mapped') != EXISTS (SELECT 1 FROM control_attack_mitigation_mappings m "
+            "WHERE m.framework=a.framework AND m.ism_catalog_version=a.ism_catalog_version "
+            "AND m.control_id=a.control_id AND m.attack_version=a.attack_version)"
         ).fetchone()[0]
-        if non_e8_mappings:
-            raise ValueError(f"non-Essential Eight ATT&CK mappings: {non_e8_mappings}")
+        if disposition_mismatches:
+            raise ValueError(f"assessment disposition mismatches: {disposition_mismatches}")
         actual_versions = connection.execute(
             "SELECT framework, version, commit_date FROM catalog_versions ORDER BY framework, version, commit_date"
         ).fetchall()
