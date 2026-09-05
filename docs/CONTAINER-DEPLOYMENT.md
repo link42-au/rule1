@@ -4,13 +4,17 @@ Rule1 is published in two forms from the same verified build: the canonical GitH
 
 ## Published image
 
-The image is published to:
+The public [Rule1 container package](https://github.com/link42-au/rule1/pkgs/container/rule1) is published to:
 
 ```text
 ghcr.io/link42-au/rule1
 ```
 
 GitHub Container Registry publishes the package publicly. Deployment hosts can pull it anonymously; no GitHub account, token, or `docker login` is required. GitHub Actions still authenticates when publishing new releases.
+
+```sh
+docker pull ghcr.io/link42-au/rule1:latest
+```
 
 Two tag forms are published after each successful `main` build:
 

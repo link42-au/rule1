@@ -34,6 +34,7 @@ test("repository guidance documents hosting, technology, and durable feedback ro
 
 test("container deployment guidance covers publication, operation, updates, and rollback", () => {
   const deployment = read("docs/CONTAINER-DEPLOYMENT.md");
+  const releaseCandidate = read("docs/RELEASE-CANDIDATE.md");
 
   assert.match(deployment, /ghcr\.io\/link42-au\/rule1/);
   assert.match(deployment, /package publicly/);
@@ -55,6 +56,10 @@ test("container deployment guidance covers publication, operation, updates, and 
   assert.match(deployment, /workflow_dispatch/);
   assert.match(deployment, /bd12c133b3f49b3ff3362dfef94e77ca105ecbec601b5a65e2b99a38928ce396/);
   assert.doesNotMatch(deployment, /\/app\/www\/public:\s*$/m);
+  assert.match(releaseCandidate, /public LinuxServer\.io Nginx image in GHCR/);
+  assert.match(releaseCandidate, /33938976627/);
+  assert.match(releaseCandidate, /Documentation-only commit `a64f710/);
+  assert.doesNotMatch(releaseCandidate, /GHCR package was private/);
 });
 
 test("issue forms route bugs and suggestions without enabling public security reports", () => {
