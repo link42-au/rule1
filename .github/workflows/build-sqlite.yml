@@ -62,6 +62,31 @@ jobs:
           cmp --silent build/rule1.sqlite3 apps/web/build/data/rule1.sqlite3
           cmp --silent apps/web/static/data/rule1-artifact-manifest.json apps/web/build/data/rule1-artifact-manifest.json
 
+      - name: Build and smoke-test container image
+        run: |
+          set -euo pipefail
+          docker build \
+            --build-arg "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --build-arg "VERSION=${GITHUB_SHA}" \
+            --build-arg "VCS_REF=${GITHUB_SHA}" \
+            --tag rule1:ci \
+            .
+          container_id="$(docker run --detach --publish 127.0.0.1:18080:80 rule1:ci)"
+          trap 'docker rm --force "$container_id" >/dev/null 2>&1 || true' EXIT
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            if wget --quiet --spider http://127.0.0.1:18080/; then
+              break
+            fi
+            if [ "$attempt" -eq 15 ]; then
+              docker logs "$container_id"
+              exit 1
+            fi
+            sleep 1
+          done
+          node scripts/post-deploy-canary.mjs \
+            http://127.0.0.1:18080/ \
+            apps/web/build/data/rule1-artifact-manifest.json
+
       - name: Require complete current annotations for release
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
@@ -85,6 +110,15 @@ jobs:
             scripts/post-deploy-canary.mjs
           if-no-files-found: error
           retention-days: 14
+
+      - name: Upload verified container site
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rule1-container-site
+          path: apps/web/build
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Configure GitHub Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -128,3 +162,57 @@ jobs:
           node .canary/scripts/post-deploy-canary.mjs
           "${{ steps.deployment.outputs.page_url }}"
           .canary/apps/web/build/data/rule1-artifact-manifest.json
+
+  publish-container:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build-sqlite
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download verified static site
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: rule1-container-site
+          path: apps/web/build
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Define container metadata
+        id: metadata
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long,prefix=sha-
+
+      - name: Build and publish multi-platform image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          sbom: false
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VERSION=${{ github.sha }}
+            VCS_REF=${{ github.sha }}

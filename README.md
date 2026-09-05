@@ -10,6 +10,12 @@ Rule1 is a static SvelteKit application hosted on GitHub Pages. It downloads a c
 
 The [source repository](https://github.com/link42-au/rule1) is hosted by the [`link42-au`](https://github.com/link42-au) GitHub organisation. It contains the SvelteKit and TypeScript browser application, the Python ingestion pipeline, and the retained framework history used to generate the SQLite snapshot. GitHub Actions performs the same deterministic build and validation used locally, then publishes the verified static site to GitHub Pages at [rule1.link42.app](https://rule1.link42.app/).
 
+The same verified `main` build is also published as a LinuxServer.io-based, multi-platform container at `ghcr.io/link42-au/rule1`. The image contains the complete static application and the exact SQLite catalogue produced by that workflow. Immutable `sha-<commit>` tags identify a release; `latest` follows the newest successful `main` build. It supports LinuxServer.io's standard `PUID`, `PGID`, and `TZ` settings.
+
+```bash
+docker run --rm -e PUID=1000 -e PGID=1000 -e TZ=Etc/UTC -p 8080:80 ghcr.io/link42-au/rule1:latest
+```
+
 ## Feedback and support
 
 - [Report a Rule1 bug](https://github.com/link42-au/rule1/issues/new?template=bug_report.yml) when the catalogue, interface, data, or documentation is not behaving as expected.

@@ -10,7 +10,8 @@ test("SQLite workflow publishes its verified build to Pages", () => {
 
   const workflow = readFileSync(new URL("build-sqlite.yml", WORKFLOWS), "utf8");
   const buildJob = workflow.slice(workflow.indexOf("  build-sqlite:"), workflow.indexOf("  deploy-pages:"));
-  const deployJob = workflow.slice(workflow.indexOf("  deploy-pages:"));
+  const deployJob = workflow.slice(workflow.indexOf("  deploy-pages:"), workflow.indexOf("  publish-container:"));
+  const containerJob = workflow.slice(workflow.indexOf("  publish-container:"));
   const verifyPosition = buildJob.indexOf("run: pnpm verify");
   const repeatBuildPosition = buildJob.indexOf("--output build/rule1-repeat.sqlite3");
   const artifactPosition = buildJob.indexOf("actions/upload-artifact@v4");
@@ -33,13 +34,19 @@ test("SQLite workflow publishes its verified build to Pages", () => {
   assert.match(workflow, /apps\/web\/build\/data\/rule1-artifact-manifest\.json/);
   assert.match(workflow, / {12}ingestion\/validation-contract\.json/);
   assert.match(workflow, / {12}scripts\/post-deploy-canary\.mjs/);
+  assert.match(buildJob, /--build-arg "BUILD_DATE=\$\(date -u/);
+  assert.match(buildJob, /--build-arg "VERSION=\$\{GITHUB_SHA\}"/);
+  assert.match(buildJob, /--build-arg "VCS_REF=\$\{GITHUB_SHA\}"/);
+  assert.match(buildJob, /docker run --detach --publish 127\.0\.0\.1:18080:80 rule1:ci/);
+  assert.match(buildJob, /node scripts\/post-deploy-canary\.mjs[\s\S]*http:\/\/127\.0\.0\.1:18080\//);
+  assert.match(buildJob, /name: rule1-container-site[\s\S]*path: apps\/web\/build/);
   assert.match(buildJob, /actions\/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5/);
   assert.match(buildJob, /actions\/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5/);
   assert.match(buildJob, /path: apps\/web\/build/);
   assert.doesNotMatch(buildJob, /pages:\s*write|id-token:\s*write/);
 
   const publicationCondition = /if: github\.ref == 'refs\/heads\/main' && github\.event_name != 'pull_request'/g;
-  assert.equal([...workflow.matchAll(publicationCondition)].length, 4);
+  assert.equal([...workflow.matchAll(publicationCondition)].length, 6);
   assert.match(buildJob, /python -m rule1_ingest\.annotations check[\s\S]*--require-complete/);
   assert.match(buildJob, /--require-complete-annotations/);
   assert.match(deployJob, /needs: build-sqlite/);
@@ -62,6 +69,21 @@ test("SQLite workflow publishes its verified build to Pages", () => {
     deployJob.indexOf("post-deploy-canary.mjs") > deployJob.indexOf("actions/deploy-pages@v5"),
     "the deployed-origin canary must run after Pages deployment",
   );
+
+  assert.match(containerJob, /needs: build-sqlite/);
+  assert.match(containerJob, /packages:\s*write/);
+  assert.doesNotMatch(containerJob, /contents:\s*write/);
+  assert.match(containerJob, /name: rule1-container-site\n\s+path: apps\/web\/build/);
+  assert.match(containerJob, /images: ghcr\.io\/\$\{\{ github\.repository \}\}/);
+  assert.match(containerJob, /type=raw,value=latest/);
+  assert.match(containerJob, /type=sha,format=long,prefix=sha-/);
+  assert.match(containerJob, /platforms: linux\/amd64,linux\/arm64/);
+  assert.match(containerJob, /push: true/);
+  assert.match(containerJob, /provenance: false/);
+  assert.match(containerJob, /sbom: false/);
+  assert.match(containerJob, /BUILD_DATE=\$\{\{ github\.event\.repository\.updated_at \}\}/);
+  assert.match(containerJob, /VERSION=\$\{\{ github\.sha \}\}/);
+  assert.match(containerJob, /VCS_REF=\$\{\{ github\.sha \}\}/);
 });
 
 test("annotation generation is manual, secret-scoped, checkpointed, and review-gated", () => {
