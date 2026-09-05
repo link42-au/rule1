@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type { AttackMapping } from "$lib/db/contracts";
+import type { AttackMapping, AttackTechniqueProcedures } from "$lib/db/contracts";
 import {
   attackOutcomeSections,
   attackTacticSummary,
+  attackTechniqueOutcomeSections,
   effectInfinitive,
   effectRelationshipPhrase,
   formatAttackLabel,
   groupAttackMappings,
+  procedureReferenceLabel,
   safeMitreUrl,
+  safeSourceUrl,
 } from "./attack-model";
 
 const row = (overrides: Partial<AttackMapping> = {}): AttackMapping => ({
@@ -67,6 +70,40 @@ describe("ATT&CK mapping presentation", () => {
     expect(effectInfinitive("recover")).toBe("recover from");
   });
 
+  it("attaches procedure examples once to a unique technique while retaining every outcome edge", () => {
+    const procedures: AttackTechniqueProcedures[] = [
+      {
+        techniqueId: "T1110",
+        total: 8,
+        returned: 1,
+        examples: [
+          {
+            relationshipStixId: "relationship--1",
+            entityStixId: "intrusion-set--1",
+            entityType: "intrusion-set",
+            entityExternalId: "G0001",
+            entityName: "Example group",
+            entityDescription: "An example group.",
+            entityUrl: "https://attack.mitre.org/groups/G0001/",
+            description: "The group attempted password guessing.",
+            references: [],
+          },
+        ],
+      },
+    ];
+    const groups = groupAttackMappings(
+      [
+        row({ effect: "detect", outcomeClass: "technique-disruption" }),
+        row({ mitigationId: "M1053", effect: "recover", outcomeClass: "consequence-treatment" }),
+      ],
+      procedures,
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].procedures).toBe(procedures[0]);
+    expect(attackTechniqueOutcomeSections(groups[0]).map((section) => section.mappings.length)).toEqual([1, 1]);
+  });
+
   it("summarises tactics by unique technique and retains zero-count Enterprise tactics", () => {
     const summary = attackTacticSummary(
       groupAttackMappings([
@@ -85,5 +122,12 @@ describe("ATT&CK mapping presentation", () => {
     );
     expect(safeMitreUrl("javascript:alert(1)")).toBeNull();
     expect(safeMitreUrl("https://example.com/techniques/T1110/")).toBeNull();
+    expect(safeSourceUrl("https://example.com/report?q=1")).toBe("https://example.com/report?q=1");
+    expect(safeSourceUrl("http://example.com/report")).toBeNull();
+    expect(safeSourceUrl("javascript:alert(1)")).toBeNull();
+    expect(safeSourceUrl("https://user:secret@example.com/report")).toBeNull();
+    expect(procedureReferenceLabel({ sourceName: "Report", externalId: "R-1", url: null, description: null })).toBe(
+      "Report (R-1)",
+    );
   });
 });

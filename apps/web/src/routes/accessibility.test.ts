@@ -111,8 +111,13 @@ describe("WCAG interaction and presentation repairs", () => {
     expect(explorer).toContain(
       'const availableTabs = DETAIL_TABS.filter((item) => !item.ismOnly || framework === "ism")',
     );
-    expect(attack).toContain("aria-labelledby={`attack-outcome-");
+    expect(attack).toContain('<section class="outcome-section" aria-labelledby={`attack-');
     expect(attack).toContain("aria-label={`This control supports ");
+    expect(attack).toContain('<details class="procedure-disclosure">');
+    expect(attack).toContain("aria-label={`Reported procedure examples (");
+    expect(attack).not.toContain('<details class="procedure-disclosure" open');
+    expect(attack).toContain('role="region" aria-label="Mapped ATT&CK tactics" tabindex="0"');
+    expect(attack).toContain("scrollable labelled region needs keyboard access");
   });
 
   it("activates graph controls with Enter or Space and restores useful detail focus", () => {

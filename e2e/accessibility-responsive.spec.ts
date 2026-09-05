@@ -1,5 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import { createHash } from "node:crypto";
+import { copyFile, readFile, stat } from "node:fs/promises";
+import { DatabaseSync } from "node:sqlite";
 
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -242,4 +245,89 @@ test("ATT&CK control mappings are ISM-only, local, and honestly empty at desktop
   await expect(page.getByRole("tab", { name: "ATT&CK" })).toHaveCount(0);
   await expect(page).not.toHaveURL(/tab=attack/);
   expect(backendRequests).toEqual([]);
+});
+
+test("ATT&CK procedure examples disclose once per technique with keyboard-safe desktop and phone layouts", async ({
+  page,
+}, testInfo) => {
+  const fixturePath = testInfo.outputPath("attack-procedure-fixture.sqlite3");
+  await copyFile("apps/web/static/data/rule1.sqlite3", fixturePath);
+  const fixtureDatabase = new DatabaseSync(fixturePath);
+  fixtureDatabase
+    .prepare(
+      `UPDATE control_attack_mappings
+       SET status = 'reviewed', reviewed_by = 'playwright-fixture', reviewed_at = '2026-09-05T00:00:00Z'
+       WHERE candidate_id = 'ism-e8-1504-m1032-prevent-t1110'`,
+    )
+    .run();
+  fixtureDatabase.exec(
+    `PRAGMA foreign_keys = OFF;
+     DELETE FROM control_history
+       WHERE framework <> 'ism' OR catalog_version <> (
+         SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+       );
+     DELETE FROM control_groups
+       WHERE framework <> 'ism' OR catalog_version <> (
+         SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+       );
+     DELETE FROM attack_procedures WHERE technique_id <> 'T1110';
+     VACUUM;`,
+  );
+  fixtureDatabase.close();
+
+  const databaseBytes = await readFile(fixturePath);
+  const fixtureStat = await stat(fixturePath);
+  const sourceManifest = JSON.parse(
+    await readFile("apps/web/static/data/rule1-artifact-manifest.json", "utf8"),
+  ) as Record<string, unknown> & { database: Record<string, unknown> };
+  const fixtureManifest = {
+    ...sourceManifest,
+    database: {
+      ...sourceManifest.database,
+      sha256: createHash("sha256").update(databaseBytes).digest("hex"),
+      size_bytes: fixtureStat.size,
+    },
+  };
+
+  await page.route("**/data/rule1-artifact-manifest.json**", async (route) => {
+    await route.fulfill({
+      body: JSON.stringify(fixtureManifest),
+      contentType: "application/json",
+      headers: { "cache-control": "no-store" },
+    });
+  });
+  await page.route("**/data/rule1.sqlite3**", async (route) => {
+    await route.fulfill({
+      path: fixturePath,
+      contentType: "application/octet-stream",
+      headers: { "cache-control": "no-store" },
+    });
+  });
+
+  for (const viewport of [
+    { width: 1280, height: 900, label: "desktop", key: "Enter" },
+    { width: 390, height: 844, label: "phone", key: " " },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(`/explorer/?framework=ism&id=ism-1504&tab=attack&fixture=${viewport.label}`);
+    await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
+    const disclosure = page.locator(
+      'details.procedure-disclosure:has(summary[aria-label^="Reported procedure examples ("])',
+    );
+    const summary = disclosure.locator("summary");
+    await expect(disclosure).toHaveCount(1);
+    await expect(summary).toHaveAttribute("aria-label", /^Reported procedure examples \(5 of 25\)$/);
+    await expect(disclosure).not.toHaveAttribute("open", "");
+    await expect(disclosure.locator(".procedure-content")).toBeHidden();
+
+    await summary.focus();
+    await page.keyboard.press(viewport.key);
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(disclosure.getByText(/ATT&CK-reported use of this technique/)).toBeVisible();
+    await expect(disclosure.getByText(/do not mean this mapped ISM control defeats or covers/)).toBeVisible();
+    await expect(disclosure.locator(".procedure-example")).toHaveCount(5);
+    await expect(disclosure.locator(".entity-type").first()).toHaveText("Intrusion Set");
+    await assertDocumentDoesNotOverflow(page);
+    await assertNoSeriousAxeViolations(page, testInfo, `attack-procedures-${viewport.label}`);
+  }
 });

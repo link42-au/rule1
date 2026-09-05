@@ -88,7 +88,7 @@ describe("reviewed Rule1 explorer", () => {
   });
 
   it("presents mapping limits, pinned versions, grouped techniques, and safe MITRE links", () => {
-    expect(attackSource).toContain("groupAttackMappings(result.mappings)");
+    expect(attackSource).toContain("groupAttackMappings(result.mappings, result.procedures)");
     expect(attackSource).toContain("ISM {result.ismCatalogVersion}");
     expect(attackSource).toContain("ATT&amp;CK {result.attackVersion}");
     expect(attackSource).toContain("may prevent, constrain, detect, contain, or support recovery");
@@ -97,7 +97,10 @@ describe("reviewed Rule1 explorer", () => {
     expect(attackModelSource).toContain('title: "Technique disruption"');
     expect(attackModelSource).toContain('title: "Consequence treatment"');
     expect(attackSource).toContain('target="_blank" rel="noopener noreferrer"');
-    expect(attackSource).not.toContain("defeat");
+    expect(attackSource).toContain("do not mean this mapped ISM control defeats or covers");
+    expect(attackSource).toContain("Reported procedure examples");
+    expect(attackSource).toContain("safeMitreUrl(example.entityUrl)");
+    expect(attackSource).toContain("safeSourceUrl(reference.url)");
   });
 
   it("keeps ATT&CK loading, failure, and no-reviewed-mapping states truthful", () => {

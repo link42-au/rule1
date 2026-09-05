@@ -1,4 +1,11 @@
-import type { AttackEffect, AttackMapping, AttackMappingResult, AttackOutcomeClass } from "$lib/db/contracts";
+import type {
+  AttackEffect,
+  AttackMapping,
+  AttackMappingResult,
+  AttackOutcomeClass,
+  AttackProcedureReference,
+  AttackTechniqueProcedures,
+} from "$lib/db/contracts";
 
 export const ATTACK_TACTICS = [
   "reconnaissance",
@@ -38,6 +45,7 @@ export interface AttackTechniqueGroup {
   platforms: string[];
   effects: AttackMapping["effect"][];
   mappings: AttackTechniqueMapping[];
+  procedures: AttackTechniqueProcedures;
 }
 
 export interface AttackTacticSummary {
@@ -51,6 +59,10 @@ export interface AttackOutcomeSection {
   title: string;
   description: string;
   techniques: AttackTechniqueGroup[];
+}
+
+export interface AttackTechniqueOutcomeSection extends Omit<AttackOutcomeSection, "techniques"> {
+  mappings: AttackTechniqueMapping[];
 }
 
 const EFFECT_ORDER: AttackMapping["effect"][] = ["prevent", "constrain", "detect", "contain", "recover"];
@@ -98,6 +110,20 @@ export function safeMitreUrl(value: string): string | null {
   }
 }
 
+export function safeSourceUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+export function procedureReferenceLabel(reference: AttackProcedureReference): string {
+  return reference.externalId ? `${reference.sourceName} (${reference.externalId})` : reference.sourceName;
+}
+
 function evidenceNotes(evidence: readonly Record<string, unknown>[]): string[] {
   return [
     ...new Set(
@@ -108,8 +134,12 @@ function evidenceNotes(evidence: readonly Record<string, unknown>[]): string[] {
   ];
 }
 
-export function groupAttackMappings(rows: readonly AttackMapping[]): AttackTechniqueGroup[] {
+export function groupAttackMappings(
+  rows: readonly AttackMapping[],
+  procedures: readonly AttackTechniqueProcedures[] = [],
+): AttackTechniqueGroup[] {
   const grouped = new Map<string, AttackTechniqueGroup>();
+  const proceduresByTechnique = new Map(procedures.map((item) => [item.techniqueId, item]));
   for (const row of rows) {
     let technique = grouped.get(row.techniqueId);
     if (!technique) {
@@ -123,6 +153,12 @@ export function groupAttackMappings(rows: readonly AttackMapping[]): AttackTechn
         platforms: [],
         effects: [],
         mappings: [],
+        procedures: proceduresByTechnique.get(row.techniqueId) ?? {
+          techniqueId: row.techniqueId,
+          total: 0,
+          returned: 0,
+          examples: [],
+        },
       };
       grouped.set(row.techniqueId, technique);
     }
@@ -143,6 +179,13 @@ export function groupAttackMappings(rows: readonly AttackMapping[]): AttackTechn
     });
   }
   return [...grouped.values()].sort((left, right) => left.techniqueId.localeCompare(right.techniqueId));
+}
+
+export function attackTechniqueOutcomeSections(technique: AttackTechniqueGroup): AttackTechniqueOutcomeSection[] {
+  return OUTCOME_SECTIONS.map((section) => ({
+    ...section,
+    mappings: technique.mappings.filter((mapping) => mapping.outcomeClass === section.outcomeClass),
+  })).filter((section) => section.mappings.length > 0);
 }
 
 export function attackOutcomeSections(rows: readonly AttackMapping[]): AttackOutcomeSection[] {
