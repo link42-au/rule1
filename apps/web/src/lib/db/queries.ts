@@ -16,9 +16,18 @@ import type {
 import { compareSnapshots, type ComparisonRecord } from "./compare";
 import {
   canonicalFrameworkId,
+  type AttackMapping,
+  type AttackProcedureExample,
+  type AttackProcedureReference,
+  type AttackTechniqueProcedures,
   type CompareParams,
   type ControlParams,
   type ControlsResult,
+  type AttackMappingResult,
+  type AttackCatalogueControl,
+  type AttackCatalogueMitigation,
+  type AttackCatalogueResult,
+  type AttackCatalogueTechnique,
   type E8Mapping,
   type E8MappingParams,
   type FrameworkParams,
@@ -27,6 +36,8 @@ import {
 } from "./contracts";
 import { jsonArray, jsonObject, nullableText, numberValue, text } from "./decode";
 export type SqlValue = string | number | null | Uint8Array;
+// Five keeps future collapsed technique sections concise while the database retains every example.
+export const ATTACK_PROCEDURE_EXAMPLE_LIMIT = 5;
 export type Rule1QueryMethod =
   | "frameworks"
   | "stats"
@@ -39,6 +50,8 @@ export type Rule1QueryMethod =
   | "control"
   | "controlHistory"
   | "e8Mappings"
+  | "attackMappings"
+  | "attackCatalogue"
   | "graph"
   | "compare"
   | "terms"
@@ -344,6 +357,254 @@ async function e8Mappings(executor: QueryExecutor, params: E8MappingParams): Pro
   return rows.map((row) => ({ level: text(row.level), strategy: text(row.strategy) }));
 }
 
+async function attackMappings(executor: QueryExecutor, params: ControlParams): Promise<AttackMappingResult> {
+  const framework = canonicalFrameworkId(params.framework);
+  if (framework !== "ism") return { ismCatalogVersion: null, attackVersion: null, mappings: [], procedures: [] };
+  const versionRows = await executor.all<Row>(`/* rule1:attack-mapping-versions */
+      SELECT
+        (SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1)
+          AS ism_catalog_version,
+        (SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1)
+          AS attack_version`);
+  const rows = await executor.all<Row>(
+    `/* rule1:attack-mappings */
+    SELECT m.ism_catalog_version, m.attack_version, m.candidate_id,
+      m.mitigation_id, g.name AS mitigation_name, g.description AS mitigation_description,
+      g.url AS mitigation_url, m.relationship, m.security_function, m.confidence,
+      m.rationale, m.evidence,
+      r.technique_id, t.name AS technique_name,
+      t.description AS technique_description, t.url AS technique_url, t.tactics, t.platforms,
+      t.parent_technique_id, r.relationship_stix_id, r.description AS relationship_description
+    FROM control_attack_mitigation_mappings m
+    JOIN attack_mitigations g ON g.attack_version = m.attack_version
+      AND g.mitigation_id = m.mitigation_id
+    JOIN attack_mitigation_techniques r ON r.attack_version = m.attack_version
+      AND r.mitigation_id = m.mitigation_id
+    JOIN attack_techniques t ON t.attack_version = r.attack_version
+      AND t.technique_id = r.technique_id
+    WHERE m.framework = 'ism' AND m.control_id = ? AND m.status = 'reviewed'
+      AND m.ism_catalog_version = (
+        SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+      )
+      AND m.attack_version = (
+        SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
+      )
+    ORDER BY m.mitigation_id, r.technique_id, m.candidate_id`,
+    [params.id.toLowerCase()],
+  );
+  const versions = versionRows[0];
+  const techniqueIds = [...new Set(rows.map((row) => text(row.technique_id)))].sort();
+  let procedureRows: Row[] = [];
+  if (techniqueIds.length > 0) {
+    procedureRows = await executor.all<Row>(
+      `/* rule1:attack-procedures */
+      WITH reviewed_techniques AS (
+        SELECT DISTINCT m.attack_version, r.technique_id
+        FROM control_attack_mitigation_mappings m
+        JOIN attack_mitigation_techniques r ON r.attack_version = m.attack_version
+          AND r.mitigation_id = m.mitigation_id
+        WHERE m.framework = 'ism' AND m.control_id = ? AND m.status = 'reviewed'
+          AND m.ism_catalog_version = (
+            SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+          )
+          AND m.attack_version = (
+            SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
+          )
+      ), ranked AS (
+        SELECT p.attack_version, p.technique_id, p.relationship_stix_id,
+          p.description AS procedure_description, p.external_references AS procedure_references,
+          e.entity_stix_id, e.entity_type, e.external_id AS entity_external_id,
+          e.name AS entity_name, e.description AS entity_description, e.url AS entity_url,
+          COUNT(*) OVER (PARTITION BY p.attack_version, p.technique_id) AS total_count,
+          ROW_NUMBER() OVER (
+            PARTITION BY p.attack_version, p.technique_id
+            ORDER BY CASE e.entity_type
+              WHEN 'intrusion-set' THEN 0 WHEN 'campaign' THEN 1
+              WHEN 'malware' THEN 2 ELSE 3 END,
+              e.name COLLATE NOCASE, e.name, e.entity_stix_id, p.relationship_stix_id
+          ) AS example_rank
+        FROM reviewed_techniques r
+        JOIN attack_procedures p ON p.attack_version = r.attack_version
+          AND p.technique_id = r.technique_id
+        JOIN attack_procedure_entities e ON e.attack_version = p.attack_version
+          AND e.entity_stix_id = p.entity_stix_id
+      )
+      SELECT * FROM ranked WHERE example_rank <= ?
+      ORDER BY technique_id, example_rank`,
+      [params.id.toLowerCase(), ATTACK_PROCEDURE_EXAMPLE_LIMIT],
+    );
+  }
+  const proceduresByTechnique = new Map<string, AttackTechniqueProcedures>(
+    techniqueIds.map((techniqueId) => [
+      techniqueId,
+      {
+        techniqueId,
+        total: 0,
+        returned: 0,
+        examples: [],
+      },
+    ]),
+  );
+  for (const row of procedureRows) {
+    const techniqueId = text(row.technique_id);
+    const group = proceduresByTechnique.get(techniqueId);
+    if (!group) continue;
+    const references: AttackProcedureReference[] = jsonRecords(row.procedure_references).map((reference) => ({
+      sourceName: text(reference.source_name),
+      externalId: nullableText(reference.external_id),
+      url: nullableText(reference.url),
+      description: nullableText(reference.description),
+    }));
+    const example: AttackProcedureExample = {
+      relationshipStixId: text(row.relationship_stix_id),
+      entityStixId: text(row.entity_stix_id),
+      entityType: text(row.entity_type) as AttackProcedureExample["entityType"],
+      entityExternalId: nullableText(row.entity_external_id),
+      entityName: text(row.entity_name),
+      entityDescription: text(row.entity_description),
+      entityUrl: nullableText(row.entity_url),
+      description: text(row.procedure_description),
+      references,
+    };
+    group.total = numberValue(row.total_count);
+    group.examples.push(example);
+    group.returned = group.examples.length;
+  }
+  return {
+    ismCatalogVersion: nullableText(versions?.ism_catalog_version),
+    attackVersion: nullableText(versions?.attack_version),
+    mappings: rows.map((row) => ({
+      attackVersion: text(row.attack_version),
+      ismCatalogVersion: text(row.ism_catalog_version),
+      candidateId: text(row.candidate_id),
+      mitigationId: text(row.mitigation_id),
+      mitigationName: text(row.mitigation_name),
+      mitigationDescription: nullableText(row.mitigation_description),
+      mitigationUrl: text(row.mitigation_url),
+      relationship: text(row.relationship) as "enables",
+      securityFunction: text(row.security_function) as AttackMapping["securityFunction"],
+      confidence: text(row.confidence) as "low" | "medium" | "high",
+      rationale: text(row.rationale),
+      evidence: jsonRecords(row.evidence),
+      techniqueId: text(row.technique_id),
+      techniqueName: text(row.technique_name),
+      techniqueDescription: nullableText(row.technique_description),
+      techniqueUrl: text(row.technique_url),
+      tactics: jsonArray(row.tactics),
+      platforms: jsonArray(row.platforms),
+      parentTechniqueId: nullableText(row.parent_technique_id),
+      relationshipStixId: text(row.relationship_stix_id),
+      relationshipDescription: nullableText(row.relationship_description),
+    })),
+    procedures: [...proceduresByTechnique.values()],
+  };
+}
+
+async function attackCatalogue(executor: QueryExecutor): Promise<AttackCatalogueResult> {
+  const versionRows = await executor.all<Row>(`/* rule1:attack-catalogue-versions */
+    SELECT
+      (SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1)
+        AS attack_version,
+      (SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1)
+        AS ism_catalog_version`);
+  const rows = await executor.all<Row>(`/* rule1:attack-catalogue */
+    SELECT t.technique_id, t.name AS technique_name, t.description AS technique_description,
+      t.url AS technique_url, t.tactics, t.platforms, t.parent_technique_id,
+      r.mitigation_id, r.relationship_stix_id, r.description AS relationship_description,
+      g.name AS mitigation_name, g.description AS mitigation_description, g.url AS mitigation_url,
+      m.candidate_id, m.control_id, m.security_function, m.confidence, m.rationale,
+      h.display_id, h.title AS control_title, h.statement AS control_statement
+    FROM attack_techniques t
+    LEFT JOIN attack_mitigation_techniques r ON r.attack_version = t.attack_version
+      AND r.technique_id = t.technique_id
+    LEFT JOIN attack_mitigations g ON g.attack_version = r.attack_version
+      AND g.mitigation_id = r.mitigation_id
+    LEFT JOIN control_attack_mitigation_mappings m ON m.attack_version = r.attack_version
+      AND m.mitigation_id = r.mitigation_id AND m.framework = 'ism' AND m.status = 'reviewed'
+      AND m.ism_catalog_version = (
+        SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+      )
+      AND EXISTS (
+        SELECT 1 FROM control_history visible_control
+        WHERE visible_control.framework = m.framework
+          AND visible_control.control_id = m.control_id
+          AND visible_control.catalog_version = m.ism_catalog_version
+          AND visible_control.control_class = 'ISM-control'
+          AND visible_control.change_type != 'withdrawn'
+      )
+    LEFT JOIN control_history h ON h.framework = m.framework AND h.control_id = m.control_id
+      AND h.catalog_version = m.ism_catalog_version AND h.control_class = 'ISM-control'
+      AND h.change_type != 'withdrawn'
+    WHERE t.attack_version = (
+      SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
+    )
+    ORDER BY t.name COLLATE NOCASE, t.technique_id, r.mitigation_id, m.control_id, m.candidate_id`);
+
+  const techniques = new Map<string, AttackCatalogueTechnique>();
+  const mitigationsByTechnique = new Map<string, Map<string, AttackCatalogueMitigation>>();
+  const controlIdsByMitigation = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const techniqueId = text(row.technique_id);
+    let technique = techniques.get(techniqueId);
+    if (!technique) {
+      technique = {
+        techniqueId,
+        name: text(row.technique_name),
+        description: nullableText(row.technique_description),
+        url: text(row.technique_url),
+        tactics: jsonArray(row.tactics),
+        platforms: jsonArray(row.platforms),
+        parentTechniqueId: nullableText(row.parent_technique_id),
+        mitigations: [],
+      };
+      techniques.set(techniqueId, technique);
+      mitigationsByTechnique.set(techniqueId, new Map());
+    }
+    const mitigationId = nullableText(row.mitigation_id);
+    if (!mitigationId) continue;
+    const mitigationKey = `${techniqueId}:${mitigationId}`;
+    const mitigationMap = mitigationsByTechnique.get(techniqueId)!;
+    let mitigation = mitigationMap.get(mitigationId);
+    if (!mitigation) {
+      mitigation = {
+        mitigationId,
+        name: text(row.mitigation_name),
+        description: nullableText(row.mitigation_description),
+        url: text(row.mitigation_url),
+        relationshipStixId: text(row.relationship_stix_id),
+        relationshipDescription: nullableText(row.relationship_description),
+        controls: [],
+      };
+      mitigationMap.set(mitigationId, mitigation);
+      technique.mitigations.push(mitigation);
+      controlIdsByMitigation.set(mitigationKey, new Set());
+    }
+    const candidateId = nullableText(row.candidate_id);
+    if (!candidateId) continue;
+    const seenControls = controlIdsByMitigation.get(mitigationKey)!;
+    const controlId = text(row.control_id);
+    if (seenControls.has(controlId)) continue;
+    seenControls.add(controlId);
+    const control: AttackCatalogueControl = {
+      candidateId,
+      controlId,
+      displayId: text(row.display_id, controlId),
+      title: nullableText(row.control_title),
+      statement: nullableText(row.control_statement),
+      securityFunction: text(row.security_function) as AttackCatalogueControl["securityFunction"],
+      confidence: text(row.confidence) as AttackCatalogueControl["confidence"],
+      rationale: text(row.rationale),
+    };
+    mitigation.controls.push(control);
+  }
+  const versions = versionRows[0];
+  return {
+    attackVersion: nullableText(versions?.attack_version),
+    ismCatalogVersion: nullableText(versions?.ism_catalog_version),
+    techniques: [...techniques.values()],
+  };
+}
+
 async function control(executor: QueryExecutor, params: ControlParams): Promise<ControlDetail | null> {
   const framework = canonicalFrameworkId(params.framework);
   const id = params.id.toLowerCase();
@@ -550,6 +811,10 @@ export async function dispatchRule1Query(
       return controlHistory(executor, controlParams(params));
     case "e8Mappings":
       return e8Mappings(executor, e8Params(params));
+    case "attackMappings":
+      return attackMappings(executor, controlParams(params));
+    case "attackCatalogue":
+      return attackCatalogue(executor);
     case "graph":
       return graph(executor, controlParams(params));
     case "compare":

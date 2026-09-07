@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { DatabaseSync } from "node:sqlite";
 import { compareSnapshots, type ComparisonRecord } from "./compare";
-import { canonicalFrameworkId } from "./contracts";
+import { canonicalFrameworkId, type AttackCatalogueResult, type AttackMappingResult } from "./contracts";
 import { filterControls } from "./filters";
 import { dispatchRule1Query, type QueryExecutor, type SqlValue } from "./queries";
 
@@ -19,6 +20,18 @@ class FixtureExecutor implements QueryExecutor {
     const fixture = this.fixtures[name];
     if (!fixture) return [];
     return (typeof fixture === "function" ? fixture(bind) : fixture) as T[];
+  }
+}
+
+class SqliteExecutor implements QueryExecutor {
+  readonly calls: { name: string; sql: string; bind: readonly SqlValue[] }[] = [];
+
+  constructor(private readonly database: DatabaseSync) {}
+
+  async all<T extends Row>(sql: string, bind: readonly SqlValue[] = []): Promise<T[]> {
+    const name = /\/\* rule1:([\w-]+) \*\//.exec(sql)?.[1] ?? "unknown";
+    this.calls.push({ name, sql, bind });
+    return this.database.prepare(sql).all(...bind) as T[];
   }
 }
 
@@ -331,6 +344,477 @@ describe("Rule1 query dispatcher", () => {
       },
     );
     expect(executor.calls.some((call) => call.name === "e8-mappings")).toBe(false);
+  });
+
+  it("exposes only reviewed ATT&CK mappings and gates non-ISM requests before SQL", async () => {
+    const executor = new FixtureExecutor({
+      "attack-mapping-versions": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+        },
+      ],
+      "attack-mappings": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+          candidate_id: "candidate-mfa",
+          mitigation_id: "M1032",
+          mitigation_name: "Multi-factor Authentication",
+          mitigation_description: "Use MFA.",
+          mitigation_url: "https://attack.mitre.org/mitigations/M1032/",
+          relationship: "enables",
+          security_function: "protect",
+          confidence: "high",
+          rationale: "The control requires MFA.",
+          evidence: '[{"kind":"control-basis"}]',
+          technique_id: "T1110",
+          technique_name: "Brute Force",
+          technique_description: "Attempt credentials.",
+          technique_url: "https://attack.mitre.org/techniques/T1110/",
+          tactics: '["credential-access"]',
+          platforms: '["Windows"]',
+          parent_technique_id: null,
+          relationship_stix_id: "relationship--mfa-brute-force",
+          relationship_description: "Use multi-factor authentication to reduce the risk of credential guessing.",
+        },
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+          candidate_id: "candidate-backup",
+          mitigation_id: "M1053",
+          mitigation_name: "Data Backup",
+          mitigation_description: "Retain recoverable data.",
+          mitigation_url: "https://attack.mitre.org/mitigations/M1053/",
+          relationship: "enables",
+          security_function: "recover",
+          confidence: "high",
+          rationale: "The control requires recoverable backups.",
+          evidence: '[{"kind":"control-basis"}]',
+          technique_id: "T1110",
+          technique_name: "Brute Force",
+          technique_description: "Attempt credentials.",
+          technique_url: "https://attack.mitre.org/techniques/T1110/",
+          tactics: '["credential-access"]',
+          platforms: '["Windows"]',
+          parent_technique_id: null,
+          relationship_stix_id: "relationship--backup-brute-force",
+          relationship_description: "MITRE records this official mitigation relationship.",
+        },
+      ],
+      "attack-procedures": [
+        {
+          attack_version: "19.2",
+          technique_id: "T1110",
+          relationship_stix_id: "relationship--uses-group",
+          procedure_description: "The group attempted password guessing.",
+          procedure_references:
+            '[{"source_name":"Example report","url":"https://example.test/report","description":"Report citation."}]',
+          entity_stix_id: "intrusion-set--one",
+          entity_type: "intrusion-set",
+          entity_external_id: "G0001",
+          entity_name: "Example Group",
+          entity_description: "A reported intrusion set.",
+          entity_url: "https://attack.mitre.org/groups/G0001/",
+          total_count: 8,
+          example_rank: 1,
+        },
+        {
+          attack_version: "19.2",
+          technique_id: "T1110",
+          relationship_stix_id: "relationship--uses-malware",
+          procedure_description: "The malware attempted password guessing.",
+          procedure_references: "[]",
+          entity_stix_id: "malware--one",
+          entity_type: "malware",
+          entity_external_id: "S0001",
+          entity_name: "Example Malware",
+          entity_description: "Reported malware.",
+          entity_url: "https://attack.mitre.org/software/S0001/",
+          total_count: 8,
+          example_rank: 2,
+        },
+      ],
+    });
+
+    await expect(
+      dispatchRule1Query(executor, "attackMappings", { framework: "ism", id: "ISM-1173" }),
+    ).resolves.toMatchObject({
+      ismCatalogVersion: "ISM-OSCAL-2026.09.4",
+      attackVersion: "19.2",
+      mappings: [
+        {
+          techniqueId: "T1110",
+          mitigationId: "M1032",
+          relationship: "enables",
+          securityFunction: "protect",
+          relationshipDescription: "Use multi-factor authentication to reduce the risk of credential guessing.",
+          tactics: ["credential-access"],
+          evidence: [{ kind: "control-basis" }],
+        },
+        {
+          techniqueId: "T1110",
+          mitigationId: "M1053",
+          securityFunction: "recover",
+          evidence: [{ kind: "control-basis" }],
+        },
+      ],
+      procedures: [
+        {
+          techniqueId: "T1110",
+          total: 8,
+          returned: 2,
+          examples: [
+            {
+              entityType: "intrusion-set",
+              entityName: "Example Group",
+              description: "The group attempted password guessing.",
+              references: [
+                {
+                  sourceName: "Example report",
+                  url: "https://example.test/report",
+                  description: "Report citation.",
+                },
+              ],
+            },
+            {
+              entityType: "malware",
+              entityName: "Example Malware",
+              references: [],
+            },
+          ],
+        },
+      ],
+    });
+    const attackCall = executor.calls.find((call) => call.name === "attack-mappings");
+    expect(attackCall?.bind).toEqual(["ism-1173"]);
+    expect(attackCall?.sql).toContain("m.status = 'reviewed'");
+    expect(attackCall?.sql).toContain("JOIN attack_mitigation_techniques r");
+    expect(attackCall?.sql).toContain("r.description AS relationship_description");
+    expect(attackCall?.sql).toContain("ORDER BY m.mitigation_id, r.technique_id, m.candidate_id");
+    expect(attackCall?.sql).toContain("m.rationale");
+    expect(attackCall?.sql).not.toContain("control_attack_mappings");
+    expect(attackCall?.sql).not.toContain("control_attack_bridges");
+    expect(attackCall?.sql).not.toContain("status = 'candidate'");
+    const procedureCall = executor.calls.find((call) => call.name === "attack-procedures");
+    expect(procedureCall?.bind).toEqual(["ism-1173", 5]);
+    expect(procedureCall?.sql).toContain("m.status = 'reviewed'");
+    expect(procedureCall?.sql).toContain("JOIN attack_mitigation_techniques r");
+    expect(procedureCall?.sql).toContain("ROW_NUMBER() OVER");
+    expect(procedureCall?.sql).toContain("example_rank <= ?");
+    expect(procedureCall?.sql).toContain("ORDER BY technique_id, example_rank");
+
+    const emptyExecutor = new FixtureExecutor({
+      "attack-mapping-versions": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+        },
+      ],
+      "attack-mappings": [],
+    });
+    await expect(
+      dispatchRule1Query(emptyExecutor, "attackMappings", { framework: "ism", id: "ism-0001" }),
+    ).resolves.toEqual({
+      ismCatalogVersion: "ISM-OSCAL-2026.09.4",
+      attackVersion: "19.2",
+      mappings: [],
+      procedures: [],
+    });
+    expect(emptyExecutor.calls.some((call) => call.name === "attack-procedures")).toBe(false);
+
+    const noExampleExecutor = new FixtureExecutor({
+      "attack-mapping-versions": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+        },
+      ],
+      "attack-mappings": [
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+          technique_id: "T9998",
+        },
+      ],
+      "attack-procedures": [],
+    });
+    const noExampleResult = await dispatchRule1Query(noExampleExecutor, "attackMappings", {
+      framework: "ism",
+      id: "ism-0002",
+    });
+    expect(noExampleResult).toMatchObject({
+      procedures: [{ techniqueId: "T9998", total: 0, returned: 0, examples: [] }],
+    });
+    expect(noExampleExecutor.calls.filter((call) => call.name === "attack-procedures")).toHaveLength(1);
+
+    const callsBeforeGate = executor.calls.length;
+    await expect(
+      dispatchRule1Query(executor, "attackMappings", { framework: "nzism", id: "nzism-1" }),
+    ).resolves.toEqual({ ismCatalogVersion: null, attackVersion: null, mappings: [], procedures: [] });
+    expect(executor.calls).toHaveLength(callsBeforeGate);
+  });
+
+  it("executes one bounded deterministic procedure query against SQLite", async () => {
+    const database = new DatabaseSync(":memory:");
+    database.exec(`
+      CREATE TABLE catalog_versions (framework TEXT, version TEXT, ordinal INTEGER);
+      CREATE TABLE attack_releases (version TEXT, domain TEXT, ordinal INTEGER);
+      CREATE TABLE attack_techniques (
+        attack_version TEXT, technique_id TEXT, name TEXT, description TEXT, url TEXT,
+        tactics TEXT, platforms TEXT, parent_technique_id TEXT
+      );
+      CREATE TABLE attack_mitigations (
+        attack_version TEXT, mitigation_id TEXT, name TEXT, description TEXT, url TEXT
+      );
+      CREATE TABLE attack_mitigation_techniques (
+        attack_version TEXT, mitigation_id TEXT, technique_id TEXT,
+        relationship_stix_id TEXT, description TEXT
+      );
+      CREATE TABLE control_attack_mitigation_mappings (
+        candidate_id TEXT, framework TEXT, ism_catalog_version TEXT, control_id TEXT,
+        attack_version TEXT, mitigation_id TEXT, relationship TEXT, security_function TEXT,
+        confidence TEXT, status TEXT, rationale TEXT, evidence TEXT
+      );
+      CREATE TABLE attack_procedure_entities (
+        attack_version TEXT, entity_stix_id TEXT, entity_type TEXT, external_id TEXT,
+        url TEXT, name TEXT, description TEXT
+      );
+      CREATE TABLE attack_procedures (
+        attack_version TEXT, relationship_stix_id TEXT, entity_stix_id TEXT,
+        technique_id TEXT, description TEXT, external_references TEXT
+      );
+      INSERT INTO catalog_versions VALUES ('ism','ISM-OSCAL-2026.09.4',0);
+      INSERT INTO attack_releases VALUES ('19.2','enterprise-attack',0);
+      INSERT INTO attack_techniques VALUES (
+        '19.2','T1110','Brute Force','Attempt credentials.','https://attack.mitre.org/techniques/T1110/',
+        '["credential-access"]','["Windows"]',NULL
+      );
+      INSERT INTO attack_mitigations VALUES (
+        '19.2','M1032','Multi-factor Authentication','Use MFA.','https://attack.mitre.org/mitigations/M1032/'
+      );
+      INSERT INTO attack_mitigation_techniques VALUES (
+        '19.2','M1032','T1110','relationship--mfa-brute-force','MITRE relationship description.'
+      );
+      INSERT INTO control_attack_mitigation_mappings VALUES (
+        'candidate-reviewed','ism','ISM-OSCAL-2026.09.4','ism-1173','19.2','M1032',
+        'enables','protect','high','reviewed','Specific rationale','[{"kind":"control-basis"}]'
+      );
+      INSERT INTO control_attack_mitigation_mappings VALUES (
+        'candidate-other-control','ism','ISM-OSCAL-2026.09.4','ism-9999','19.2','M1032',
+        'enables','protect','high','reviewed','Other control rationale','[{"kind":"control-basis"}]'
+      );
+      INSERT INTO control_attack_mitigation_mappings VALUES (
+        'candidate-hidden','ism','ISM-OSCAL-2026.09.4','ism-1173','19.2','M1032',
+        'enables','protect','high','candidate','Unreviewed rationale','[{"kind":"control-basis"}]'
+      );
+    `);
+    const entities = [
+      ["intrusion-set", "Zulu Group"],
+      ["campaign", "Alpha Campaign"],
+      ["malware", "Alpha Malware"],
+      ["malware", "Beta Malware"],
+      ["tool", "Alpha Tool"],
+      ["tool", "Zulu Tool"],
+    ];
+    const insertEntity = database.prepare("INSERT INTO attack_procedure_entities VALUES ('19.2',?,?,?,?,?,?)");
+    const insertProcedure = database.prepare("INSERT INTO attack_procedures VALUES ('19.2',?,?,?,?,?)");
+    entities.forEach(([entityType, name], index) => {
+      const number = index + 1;
+      const entityStixId = `${entityType}--${number}`;
+      insertEntity.run(
+        entityStixId,
+        entityType,
+        `E${number}`,
+        `https://attack.mitre.org/entity/${number}/`,
+        name,
+        `${name} description.`,
+      );
+      insertProcedure.run(
+        `relationship--${number}`,
+        entityStixId,
+        "T1110",
+        `${name} used Brute Force.`,
+        index === 0 ? '[{"source_name":"Report","url":"https://example.test/report"}]' : "[]",
+      );
+    });
+
+    const executor = new SqliteExecutor(database);
+    const result = (await dispatchRule1Query(executor, "attackMappings", {
+      framework: "ism",
+      id: "ism-1173",
+    })) as AttackMappingResult;
+    expect(result.mappings).toHaveLength(1);
+    expect(result.mappings[0]).toMatchObject({
+      candidateId: "candidate-reviewed",
+      mitigationId: "M1032",
+      relationship: "enables",
+      securityFunction: "protect",
+      techniqueId: "T1110",
+      relationshipStixId: "relationship--mfa-brute-force",
+      relationshipDescription: "MITRE relationship description.",
+    });
+    expect(result.procedures).toMatchObject([
+      {
+        techniqueId: "T1110",
+        total: 6,
+        returned: 5,
+        examples: [
+          { entityType: "intrusion-set", entityName: "Zulu Group" },
+          { entityType: "campaign", entityName: "Alpha Campaign" },
+          { entityType: "malware", entityName: "Alpha Malware" },
+          { entityType: "malware", entityName: "Beta Malware" },
+          { entityType: "tool", entityName: "Alpha Tool" },
+        ],
+      },
+    ]);
+    expect(executor.calls.filter((call) => call.name === "attack-procedures")).toHaveLength(1);
+    database.close();
+  });
+
+  it("returns an honest empty ATT&CK result when the production corpus has only candidates", async () => {
+    const database = new DatabaseSync(":memory:");
+    database.exec(`
+      CREATE TABLE catalog_versions (framework TEXT, version TEXT, ordinal INTEGER);
+      CREATE TABLE attack_releases (version TEXT, domain TEXT, ordinal INTEGER);
+      CREATE TABLE attack_mitigations (
+        attack_version TEXT, mitigation_id TEXT, name TEXT, description TEXT, url TEXT
+      );
+      CREATE TABLE attack_mitigation_techniques (
+        attack_version TEXT, mitigation_id TEXT, technique_id TEXT,
+        relationship_stix_id TEXT, description TEXT
+      );
+      CREATE TABLE attack_techniques (
+        attack_version TEXT, technique_id TEXT, name TEXT, description TEXT, url TEXT,
+        tactics TEXT, platforms TEXT, parent_technique_id TEXT
+      );
+      CREATE TABLE control_attack_mitigation_mappings (
+        candidate_id TEXT, framework TEXT, ism_catalog_version TEXT, control_id TEXT,
+        attack_version TEXT, mitigation_id TEXT, relationship TEXT, security_function TEXT,
+        confidence TEXT, status TEXT, rationale TEXT, evidence TEXT
+      );
+      INSERT INTO catalog_versions VALUES ('ism','ISM-OSCAL-2026.09.4',0);
+      INSERT INTO attack_releases VALUES ('19.2','enterprise-attack',0);
+      INSERT INTO control_attack_mitigation_mappings VALUES (
+        'candidate-only','ism','ISM-OSCAL-2026.09.4','ism-1173','19.2','M1032',
+        'enables','protect','high','candidate','Awaiting review','[{"kind":"control-basis"}]'
+      );
+    `);
+    const executor = new SqliteExecutor(database);
+    await expect(dispatchRule1Query(executor, "attackMappings", { framework: "ism", id: "ism-1173" })).resolves.toEqual(
+      {
+        ismCatalogVersion: "ISM-OSCAL-2026.09.4",
+        attackVersion: "19.2",
+        mappings: [],
+        procedures: [],
+      },
+    );
+
+    expect(executor.calls.some((call) => call.name === "attack-procedures")).toBe(false);
+    database.close();
+  });
+
+  it("returns the complete current ATT&CK catalogue with official mitigations and reviewed current ISM controls", async () => {
+    const database = new DatabaseSync(":memory:");
+    database.exec(`
+      CREATE TABLE catalog_versions (framework TEXT, version TEXT, ordinal INTEGER);
+      CREATE TABLE attack_releases (version TEXT, domain TEXT, ordinal INTEGER);
+      CREATE TABLE attack_techniques (
+        attack_version TEXT, technique_id TEXT, name TEXT, description TEXT, url TEXT,
+        tactics TEXT, platforms TEXT, parent_technique_id TEXT
+      );
+      CREATE TABLE attack_mitigations (
+        attack_version TEXT, mitigation_id TEXT, name TEXT, description TEXT, url TEXT
+      );
+      CREATE TABLE attack_mitigation_techniques (
+        attack_version TEXT, mitigation_id TEXT, technique_id TEXT,
+        relationship_stix_id TEXT, description TEXT
+      );
+      CREATE TABLE control_attack_mitigation_mappings (
+        candidate_id TEXT, framework TEXT, ism_catalog_version TEXT, control_id TEXT,
+        attack_version TEXT, mitigation_id TEXT, relationship TEXT, security_function TEXT,
+        confidence TEXT, status TEXT, rationale TEXT, evidence TEXT
+      );
+      CREATE TABLE control_history (
+        framework TEXT, control_id TEXT, catalog_version TEXT, control_class TEXT,
+        change_type TEXT, display_id TEXT, title TEXT, statement TEXT
+      );
+      INSERT INTO catalog_versions VALUES ('ism','ISM-old',0), ('ism','ISM-current',1);
+      INSERT INTO attack_releases VALUES ('18.0','enterprise-attack',0), ('19.2','enterprise-attack',1);
+      INSERT INTO attack_techniques VALUES
+        ('18.0','T0000','Old Technique','Old.','https://attack.test/T0000','[]','[]',NULL),
+        ('19.2','T1000','Unmapped Technique','No official mitigation.','https://attack.test/T1000',
+          '["discovery","collection"]','["Linux","Windows"]',NULL),
+        ('19.2','T2000','Parent Technique','Parent.','https://attack.test/T2000',
+          '["stealth","defense-impairment"]','["Windows"]',NULL),
+        ('19.2','T2000.001','Sub-technique','Child.','https://attack.test/T2000/001',
+          '["stealth"]','["Windows"]','T2000');
+      INSERT INTO attack_mitigations VALUES
+        ('19.2','M1000','Official Mitigation','Mitigation detail.','https://attack.test/M1000'),
+        ('19.2','M2000','Uncovered Mitigation','Still official.','https://attack.test/M2000');
+      INSERT INTO attack_mitigation_techniques VALUES
+        ('19.2','M1000','T2000.001','relationship--one','Official relationship detail.'),
+        ('19.2','M2000','T2000.001','relationship--two','No reviewed ISM control.');
+      INSERT INTO control_history VALUES
+        ('ism','ism-1','ISM-current','ISM-control','unchanged','ISM-1','Reviewed control','Do the thing.'),
+        ('ism','ism-2','ISM-current','ISM-control','unchanged','ISM-2','Candidate control','Candidate.'),
+        ('ism','ism-3','ISM-old','ISM-control','unchanged','ISM-3','Old control','Old.'),
+        ('ism','ism-4','ISM-current','ISM-control','withdrawn','ISM-4','Withdrawn control','Gone.');
+      INSERT INTO control_attack_mitigation_mappings VALUES
+        ('reviewed-current-copy','ism','ISM-current','ism-1','19.2','M1000','enables','detect','high','reviewed',
+          'Reviewed rationale','[]'),
+        ('reviewed-current','ism','ISM-current','ism-1','19.2','M1000','enables','detect','high','reviewed',
+          'Reviewed rationale','[]'),
+        ('candidate-current','ism','ISM-current','ism-2','19.2','M1000','enables','protect','medium','candidate',
+          'Candidate rationale','[]'),
+        ('rejected-current','ism','ISM-current','ism-2','19.2','M1000','enables','protect','medium','rejected',
+          'Rejected rationale','[]'),
+        ('reviewed-old','ism','ISM-old','ism-3','19.2','M1000','enables','recover','high','reviewed',
+          'Old rationale','[]'),
+        ('reviewed-withdrawn','ism','ISM-current','ism-4','19.2','M1000','enables','protect','high','reviewed',
+          'Withdrawn rationale','[]');
+    `);
+
+    const executor = new SqliteExecutor(database);
+    const result = (await dispatchRule1Query(executor, "attackCatalogue", {})) as AttackCatalogueResult;
+    expect(result).toMatchObject({ attackVersion: "19.2", ismCatalogVersion: "ISM-current" });
+    expect(result.techniques.map((technique) => technique.techniqueId)).toEqual(["T2000", "T2000.001", "T1000"]);
+    expect(result.techniques.find((technique) => technique.techniqueId === "T1000")).toMatchObject({
+      tactics: ["discovery", "collection"],
+      platforms: ["Linux", "Windows"],
+      mitigations: [],
+    });
+    expect(result.techniques.find((technique) => technique.techniqueId === "T2000.001")).toMatchObject({
+      parentTechniqueId: "T2000",
+      mitigations: [
+        {
+          mitigationId: "M1000",
+          relationshipStixId: "relationship--one",
+          relationshipDescription: "Official relationship detail.",
+          controls: [
+            {
+              candidateId: "reviewed-current",
+              controlId: "ism-1",
+              displayId: "ISM-1",
+              securityFunction: "detect",
+              rationale: "Reviewed rationale",
+            },
+          ],
+        },
+        {
+          mitigationId: "M2000",
+          relationshipStixId: "relationship--two",
+          relationshipDescription: "No reviewed ISM control.",
+          controls: [],
+        },
+      ],
+    });
+    expect(JSON.stringify(result)).not.toContain("Candidate rationale");
+    expect(JSON.stringify(result)).not.toContain("Rejected rationale");
+    expect(JSON.stringify(result)).not.toContain("Old rationale");
+    expect(JSON.stringify(result)).not.toContain("Withdrawn rationale");
+    expect(executor.calls.map((call) => call.name)).toEqual(["attack-catalogue-versions", "attack-catalogue"]);
+    database.close();
   });
 
   it("validates compare versions and returns term history", async () => {

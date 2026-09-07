@@ -12,8 +12,10 @@ const landing = await source("./+page.svelte");
 const explorer = await source("./explorer/+page.svelte");
 const compare = await source("./compare/+page.svelte");
 const glossary = await source("./glossary/+page.svelte");
+const attackCatalogue = await source("./attack/+page.svelte");
 const tree = await source("../lib/explorer/ControlTree.svelte");
 const context = await source("../lib/explorer/ContextPanel.svelte");
+const attack = await source("../lib/explorer/AttackPanel.svelte");
 const splash = await source("../lib/DatabaseLoadingSplash.svelte");
 
 const luminance = (hex: string): number => {
@@ -84,7 +86,16 @@ describe("WCAG interaction and presentation repairs", () => {
   it("identifies current navigation and pressed filter state", () => {
     expect(header).toContain('aria-label="Primary navigation"');
     expect(header).toContain('aria-current={activePath === item.href ? "page" : undefined}');
-    for (const route of [landing, explorer, compare, glossary]) expect(route).toContain("aria-pressed=");
+    for (const route of [landing, explorer, compare, glossary, attackCatalogue])
+      expect(route).toContain("aria-pressed=");
+  });
+
+  it("labels ATT&CK catalogue filters and restores focus to selected technique details", () => {
+    expect(attackCatalogue).toContain('aria-labelledby="filter-heading"');
+    expect(attackCatalogue).toContain('aria-label="Enterprise ATT&CK techniques"');
+    expect(attackCatalogue).toContain('aria-label="Selected technique details"');
+    expect(attackCatalogue).toContain('data-technique-detail tabindex="-1"');
+    expect(attackCatalogue).toContain('document.querySelector<HTMLElement>("[data-technique-detail]")?.focus()');
   });
 
   it("uses sibling native controls for tree selection and favourites", () => {
@@ -107,6 +118,18 @@ describe("WCAG interaction and presentation repairs", () => {
     expect(explorer).toContain("tabindex={activeTab === tab.value ? 0 : -1}");
     expect(explorer).toMatch(/aria-labelledby=\{`control-tab-\$\{activeTab\}`\}/);
     expect(explorer).toContain("function handleTabKey(event: KeyboardEvent, tab: DetailTab)");
+    expect(explorer).toContain(
+      'const availableTabs = DETAIL_TABS.filter((item) => !item.ismOnly || framework === "ism")',
+    );
+    expect(attack).toContain('<div class="mapping-meta" aria-label="Reviewed mapping classification">');
+    expect(attack).toContain('<details class="technique-disclosure" data-mitigation-id={mitigation.mitigationId}>');
+    expect(attack).toContain("aria-label={`Official ATT&CK techniques (showing ");
+    expect(attack).toContain("aria-expanded={expandedMitigations[");
+    expect(attack).toContain('<details class="procedure-disclosure" data-technique-id={technique.techniqueId}>');
+    expect(attack).toContain("aria-label={`Reported procedure examples (");
+    expect(attack).not.toContain('<details class="procedure-disclosure" open');
+    expect(attack).toContain('role="region" aria-label="Mapped ATT&CK tactics" tabindex="0"');
+    expect(attack).toContain("scrollable labelled region needs keyboard access");
   });
 
   it("activates graph controls with Enter or Space and restores useful detail focus", () => {

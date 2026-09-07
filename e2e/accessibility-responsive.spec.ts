@@ -1,5 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import { createHash } from "node:crypto";
+import { copyFile, readFile, stat } from "node:fs/promises";
+import { DatabaseSync } from "node:sqlite";
 
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -186,7 +189,7 @@ test("AI Summary switches between factual and Professional descriptions and reme
   await page.goto("/guide/");
   await page.evaluate(() => localStorage.removeItem("ai-flavour"));
   await page.goto("/explorer/?framework=ism&id=ism-0009");
-  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
 
   const flavour = page.getByRole("group", { name: "AI summary flavour" });
   const summary = page.locator(".ai-summary-block");
@@ -203,9 +206,137 @@ test("AI Summary switches between factual and Professional descriptions and reme
   await expect.poll(() => page.evaluate(() => localStorage.getItem("ai-flavour"))).toBe("snarky");
 
   await page.reload();
-  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
   await expect(
     page.getByRole("group", { name: "AI summary flavour" }).getByRole("button", { name: "Professional" }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".ai-summary-block")).toHaveText(professional);
+});
+
+test("ATT&CK control mappings are ISM-only, local, and honestly empty at desktop and phone widths", async ({
+  page,
+}, testInfo) => {
+  const backendRequests: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/api/") || url.hostname !== "127.0.0.1") backendRequests.push(request.url());
+  });
+
+  for (const viewport of [
+    { width: 1280, height: 900, label: "desktop" },
+    { width: 390, height: 844, label: "phone" },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/explorer/?framework=ism&id=ism-1173&tab=attack");
+    await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
+    const attackTab = page.getByRole("tab", { name: "ATT&CK" });
+    await expect(attackTab).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("heading", { name: "MITRE ATT&CK mappings" })).toBeVisible();
+    await expect(page.getByText(/this control enables an ATT&CK mitigation/)).toBeVisible();
+    await expect(page.getByText("No reviewed ATT&CK mappings to mitigations", { exact: true })).toBeVisible();
+    await expect(page.getByText("ATT&CK 19.2", { exact: true })).toBeVisible();
+    await expect(page.getByText("ISM ISM-OSCAL-2026.09.4", { exact: true })).toBeVisible();
+    await assertDocumentDoesNotOverflow(page);
+    await assertNoSeriousAxeViolations(page, testInfo, `attack-empty-${viewport.label}`);
+  }
+
+  await page.goto("/explorer/?framework=nzism&id=nzism-127&tab=attack");
+  await expect(page.locator("[data-control-heading]")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "ATT&CK" })).toHaveCount(0);
+  await expect(page).not.toHaveURL(/tab=attack/);
+  expect(backendRequests).toEqual([]);
+});
+
+test("ATT&CK procedure examples disclose once per technique with keyboard-safe desktop and phone layouts", async ({
+  page,
+}, testInfo) => {
+  const fixturePath = testInfo.outputPath("attack-procedure-fixture.sqlite3");
+  await copyFile("apps/web/static/data/rule1.sqlite3", fixturePath);
+  const fixtureDatabase = new DatabaseSync(fixturePath);
+  fixtureDatabase.exec(
+    `UPDATE control_attack_mitigation_mappings
+       SET status = 'reviewed', reviewed_by = 'playwright-fixture',
+           reviewed_at = '2026-09-07T00:00:00Z'
+       WHERE control_id = 'ism-1504' AND mitigation_id = 'M1032';
+     PRAGMA foreign_keys = OFF;
+     DELETE FROM control_history
+       WHERE framework <> 'ism' OR catalog_version <> (
+         SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+       );
+     DELETE FROM control_groups
+       WHERE framework <> 'ism' OR catalog_version <> (
+         SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+       );
+     DELETE FROM attack_procedures WHERE technique_id <> 'T1021';
+     VACUUM;`,
+  );
+  fixtureDatabase.close();
+
+  const databaseBytes = await readFile(fixturePath);
+  const fixtureStat = await stat(fixturePath);
+  const sourceManifest = JSON.parse(
+    await readFile("apps/web/static/data/rule1-artifact-manifest.json", "utf8"),
+  ) as Record<string, unknown> & { database: Record<string, unknown> };
+  const fixtureManifest = {
+    ...sourceManifest,
+    database: {
+      ...sourceManifest.database,
+      sha256: createHash("sha256").update(databaseBytes).digest("hex"),
+      size_bytes: fixtureStat.size,
+    },
+  };
+
+  await page.route("**/data/rule1-artifact-manifest.json**", async (route) => {
+    await route.fulfill({
+      body: JSON.stringify(fixtureManifest),
+      contentType: "application/json",
+      headers: { "cache-control": "no-store" },
+    });
+  });
+  await page.route("**/data/rule1.sqlite3**", async (route) => {
+    await route.fulfill({
+      path: fixturePath,
+      contentType: "application/octet-stream",
+      headers: { "cache-control": "no-store" },
+    });
+  });
+
+  for (const viewport of [
+    { width: 1280, height: 900, label: "desktop", key: "Enter" },
+    { width: 390, height: 844, label: "phone", key: " " },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(`/explorer/?framework=ism&id=ism-1504&tab=attack&fixture=${viewport.label}`);
+    await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
+    const mitigation = page.locator('article.mitigation-card[data-mitigation-id="M1032"]');
+    await expect(mitigation).toContainText("This control enables");
+    await expect(mitigation).toContainText("Multi-factor Authentication (M1032)");
+    await expect(mitigation.locator('[data-function="protect"]')).toBeVisible();
+
+    const techniqueDisclosure = mitigation.locator('details.technique-disclosure[data-mitigation-id="M1032"]');
+    const techniqueSummary = techniqueDisclosure.locator(":scope > summary");
+    await expect(techniqueSummary).toHaveAttribute("aria-label", /^Official ATT&CK techniques \(showing 12 of 48\)$/);
+    await techniqueSummary.focus();
+    await page.keyboard.press(viewport.key);
+    await expect(techniqueDisclosure.locator("article.technique-card")).toHaveCount(12);
+
+    const technique = techniqueDisclosure.locator('article.technique-card[data-technique-id="T1021"]');
+    await expect(technique.getByText("MITRE mitigation guidance", { exact: true })).toBeVisible();
+    const disclosure = technique.locator('details.procedure-disclosure[data-technique-id="T1021"]');
+    const summary = disclosure.locator("summary");
+    await expect(disclosure).toHaveCount(1);
+    await expect(summary).toHaveAttribute("aria-label", /^Reported procedure examples \(5 of 7\)$/);
+    await expect(disclosure).not.toHaveAttribute("open", "");
+    await expect(disclosure.locator(".procedure-content")).toBeHidden();
+
+    await summary.focus();
+    await page.keyboard.press(viewport.key);
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(disclosure.getByText(/ATT&CK-reported use of this technique/)).toBeVisible();
+    await expect(disclosure.getByText(/do not mean this mapped ISM control defeats or covers/)).toBeVisible();
+    await expect(disclosure.locator(".procedure-example")).toHaveCount(5);
+    await expect(disclosure.locator(".entity-type").first()).toHaveText("Intrusion Set");
+    await assertDocumentDoesNotOverflow(page);
+    await assertNoSeriousAxeViolations(page, testInfo, `attack-procedures-${viewport.label}`);
+  }
 });

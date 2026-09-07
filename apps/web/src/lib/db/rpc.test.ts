@@ -35,6 +35,43 @@ describe("Rule1 worker RPC", () => {
     await expect(pending).resolves.toMatchObject({ framework: "cyber-essentials", controls: 33 });
   });
 
+  it("maps ATT&CK requests to the fixed reviewed-mapping worker method", async () => {
+    const worker = new FakeWorker();
+    const client = createRule1DataClient(new Rule1WorkerRpc(worker as unknown as Worker));
+    const pending = client.attackMappings({ framework: "ism", id: "ism-1173" });
+    const request = worker.postMessage.mock.calls[0]?.[0] as WorkerRequest;
+    expect(request).toMatchObject({
+      type: "query",
+      method: "attackMappings",
+      params: { framework: "ism", id: "ism-1173" },
+    });
+    worker.reply({
+      id: 1,
+      ok: true,
+      result: { ismCatalogVersion: null, attackVersion: null, mappings: [], procedures: [] },
+    });
+    await expect(pending).resolves.toEqual({
+      ismCatalogVersion: null,
+      attackVersion: null,
+      mappings: [],
+      procedures: [],
+    });
+  });
+
+  it("maps the ATT&CK catalogue to a fixed parameter-free worker method", async () => {
+    const worker = new FakeWorker();
+    const client = createRule1DataClient(new Rule1WorkerRpc(worker as unknown as Worker));
+    const pending = client.attackCatalogue();
+    const request = worker.postMessage.mock.calls[0]?.[0] as WorkerRequest;
+    expect(request).toMatchObject({ type: "query", method: "attackCatalogue", params: {} });
+    worker.reply({
+      id: 1,
+      ok: true,
+      result: { attackVersion: "19.2", ismCatalogVersion: "ISM-current", techniques: [] },
+    });
+    await expect(pending).resolves.toEqual({ attackVersion: "19.2", ismCatalogVersion: "ISM-current", techniques: [] });
+  });
+
   it("forwards database progress and clears it when initialization finishes", async () => {
     const worker = new FakeWorker();
     const rpc = new Rule1WorkerRpc(worker as unknown as Worker);

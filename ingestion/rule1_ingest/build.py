@@ -14,6 +14,8 @@ from .parsers import Snapshot, build_all_histories
 from .annotations import MODEL as ANNOTATION_MODEL
 from .annotations import PROMPT_VERSION as ANNOTATION_PROMPT_VERSION
 from .annotations import load_cache as load_annotation_cache
+from .attack import parse_attack_bundle
+from .mitigation_mappings import load_assessments, load_inputs
 
 FRAMEWORKS = (
     ("cyber-essentials", "Cyber Essentials", "CE", "UK National Cyber Security Centre", "https://www.ncsc.gov.uk/cyberessentials/overview", "United Kingdom", "#2563eb"),
@@ -117,7 +119,13 @@ def _insert_snapshots(connection: sqlite3.Connection, snapshots: list[Snapshot])
 
 
 def _record_counts(connection: sqlite3.Connection) -> None:
-    overall = ("annotations", "frameworks", "catalog_versions", "source_files", "control_groups", "control_history", "term_history", "e8_mappings")
+    overall = (
+        "annotations", "attack_mitigations", "attack_mitigation_techniques", "attack_releases",
+        "attack_procedure_entities", "attack_procedures", "attack_source_files", "attack_techniques",
+        "catalog_versions", "control_attack_assessments", "control_attack_mitigation_mappings",
+        "control_groups", "control_history", "e8_mappings", "frameworks", "source_files",
+        "term_history",
+    )
     for table in overall:
         count = connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         connection.execute("INSERT INTO build_counts VALUES (?, '', '', ?)", (table, count))
@@ -128,6 +136,42 @@ def _record_counts(connection: sqlite3.Connection) -> None:
                 f"SELECT COUNT(*) FROM {table} WHERE framework=? AND {column}=?", (framework, version)
             ).fetchone()[0]
             connection.execute("INSERT INTO build_counts VALUES (?, ?, ?, ?)", (table, framework, version, count))
+
+
+def _insert_attack_assessments(
+    connection: sqlite3.Connection,
+    payload: dict[str, Any],
+    ism_catalog_version: str,
+    attack_version: str,
+) -> None:
+    for assessment in payload["assessments"]:
+        mappings = assessment["candidates"]
+        if (assessment["disposition"] == "mapped") != bool(mappings):
+            raise ValueError(
+                f"assessment disposition does not match candidates: {assessment['control_id']}"
+            )
+        provenance = assessment["provenance"]
+        connection.execute(
+            "INSERT INTO control_attack_assessments VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "ism", ism_catalog_version, assessment["control_id"], attack_version,
+                assessment["disposition"], assessment["unmapped_reason"], provenance["model"],
+                provenance["prompt_version"], provenance["input_sha256"],
+                provenance["generated_at"],
+            ),
+        )
+        for mapping in mappings:
+            connection.execute(
+                "INSERT INTO control_attack_mitigation_mappings VALUES "
+                "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    mapping["candidate_id"], "ism", ism_catalog_version,
+                    assessment["control_id"], attack_version, mapping["mitigation_id"],
+                    mapping["relationship"], mapping["security_function"], mapping["confidence"],
+                    mapping["status"], mapping["rationale"], canonical_json(mapping["evidence"]),
+                    mapping["reviewed_by"], mapping["reviewed_at"],
+                ),
+            )
 
 
 def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = None) -> Path:
@@ -141,6 +185,16 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
     annotation_payload = load_annotation_cache(annotation_path)
     annotation_sha = hashlib.sha256(annotation_path.read_bytes()).hexdigest()
     annotation_manifest_sha = hashlib.sha256(annotation_manifest_path.read_bytes()).hexdigest()
+    attack_source = next(
+        source for source in sources if source["framework"] == "mitre-attack-enterprise"
+    )
+    attack_catalog = parse_attack_bundle(root / attack_source["path"])
+    assessments_path = root / "mappings/ism-attack-mitigation-assessments.json"
+    mapping_control_contexts, mapping_mitigations = load_inputs(root)
+    mapping_payload = load_assessments(
+        assessments_path, mapping_control_contexts, mapping_mitigations
+    )
+    assessments_sha = hashlib.sha256(assessments_path.read_bytes()).hexdigest()
     with sqlite3.connect(output) as connection:
         connection.execute("PRAGMA journal_mode=OFF")
         connection.execute("PRAGMA synchronous=OFF")
@@ -150,6 +204,68 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
         connection.execute("BEGIN")
         connection.executemany("INSERT INTO frameworks VALUES (?, ?, ?, ?, ?, ?, ?)", FRAMEWORKS)
         _insert_snapshots(connection, snapshots)
+        current_ism_version = connection.execute(
+            "SELECT version FROM catalog_versions WHERE framework='ism' ORDER BY ordinal DESC LIMIT 1"
+        ).fetchone()[0]
+        connection.execute(
+            "INSERT INTO attack_releases VALUES (?, ?, 'enterprise-attack', 0)",
+            (attack_catalog["version"], attack_catalog["release_date"]),
+        )
+        connection.execute(
+            "INSERT INTO attack_source_files VALUES (?, ?, ?, ?, ?)",
+            (
+                attack_source["path"], attack_source["version"], attack_source["date"],
+                attack_source["origin"], attack_source["sha256"],
+            ),
+        )
+        for technique in attack_catalog["techniques"]:
+            connection.execute(
+                "INSERT INTO attack_techniques VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    attack_catalog["version"], technique["technique_id"], technique["stix_id"],
+                    technique["name"], technique["description"], technique["url"],
+                    canonical_json(technique["tactics"]), canonical_json(technique["platforms"]),
+                    technique["parent_technique_id"],
+                ),
+            )
+        for mitigation in attack_catalog["mitigations"]:
+            connection.execute(
+                "INSERT INTO attack_mitigations VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    attack_catalog["version"], mitigation["mitigation_id"], mitigation["stix_id"],
+                    mitigation["name"], mitigation["description"], mitigation["url"],
+                ),
+            )
+        for entity in attack_catalog["procedure_entities"]:
+            connection.execute(
+                "INSERT INTO attack_procedure_entities VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    attack_catalog["version"], entity["stix_id"], entity["entity_type"],
+                    entity["external_id"], entity["url"], entity["name"], entity["description"],
+                    canonical_json(entity["external_references"]),
+                ),
+            )
+        for procedure in attack_catalog["procedures"]:
+            connection.execute(
+                "INSERT INTO attack_procedures VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    attack_catalog["version"], procedure["relationship_stix_id"],
+                    procedure["entity_stix_id"], procedure["technique_id"],
+                    procedure["description"], canonical_json(procedure["external_references"]),
+                ),
+            )
+        for relationship in attack_catalog["relationships"]:
+            connection.execute(
+                "INSERT INTO attack_mitigation_techniques VALUES (?, ?, ?, ?, ?)",
+                (
+                    attack_catalog["version"], relationship["mitigation_id"],
+                    relationship["technique_id"], relationship["relationship_stix_id"],
+                    relationship["description"],
+                ),
+            )
+        _insert_attack_assessments(
+            connection, mapping_payload, current_ism_version, attack_catalog["version"]
+        )
         for annotation in annotation_payload["annotations"]:
             connection.execute(
                 "INSERT INTO annotations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -161,7 +277,10 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
                     annotation["updated_at"],
                 ),
             )
-        for source in sorted(sources, key=lambda item: item["path"]):
+        for source in sorted(
+            (item for item in sources if item["framework"] != "mitre-attack-enterprise"),
+            key=lambda item: item["path"],
+        ):
             connection.execute(
                 "INSERT INTO source_files VALUES (?, ?, ?, ?, ?, ?)",
                 (source["path"], source["framework"], source["version"], source["date"], source["origin"], source["sha256"]),
@@ -171,7 +290,9 @@ def build_database(root: Path, output: Path, snapshots: list[Snapshot] | None = 
             ("annotation_legacy_manifest_sha256", annotation_manifest_sha),
             ("annotation_model", ANNOTATION_MODEL),
             ("annotation_prompt_version", ANNOTATION_PROMPT_VERSION),
-            ("schema_version", "2"),
+            ("attack_mitigation_assessments_sha256", assessments_sha),
+            ("attack_source_sha256", attack_source["sha256"]),
+            ("schema_version", "6"),
             ("sqlite_version", sqlite3.sqlite_version),
             ("source_ledger_sha256", ledger_sha),
         ))

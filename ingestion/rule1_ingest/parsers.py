@@ -534,6 +534,8 @@ def build_all_histories(root: Path) -> list[Snapshot]:
     ledger = json.loads((root / "data/source-ledger.json").read_text(encoding="utf-8"))["sources"]
     chosen: dict[tuple[str, str], dict[str, str]] = {}
     for source in ledger:
+        if source["framework"] == "mitre-attack-enterprise":
+            continue
         key = (source["framework"], source["version"])
         if source["framework"] == "cyber-essentials" and not source["path"].endswith(".json"):
             continue

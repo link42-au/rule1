@@ -5,6 +5,7 @@ const source = async (path: string): Promise<string> => readFile(new URL(path, i
 const compare = await source("./compare/+page.svelte");
 const explorer = await source("./explorer/+page.svelte");
 const glossary = await source("./glossary/+page.svelte");
+const attack = await source("./attack/+page.svelte");
 const guide = await source("./guide/+page.svelte");
 const privacy = await source("./privacy/+page.svelte");
 const redirect = await source("../lib/LegacyRedirect.svelte");
@@ -107,6 +108,7 @@ describe("standalone information and compatibility routes", () => {
     for (const [page, route] of [
       [compare, "compare"],
       [glossary, "glossary"],
+      [attack, "attack"],
       [guide, "guide"],
       [privacy, "privacy"],
     ]) {
