@@ -391,6 +391,12 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 82)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_source_files").fetchone()[0], 1)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_techniques").fetchone()[0], 697)
+            self.assertEqual(
+                connection.execute(
+                    "SELECT COUNT(*) FROM attack_techniques WHERE parent_technique_id IS NOT NULL"
+                ).fetchone()[0],
+                475,
+            )
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigations").fetchone()[0], 44)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_mitigation_techniques").fetchone()[0], 1_448)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_procedure_entities").fetchone()[0], 1_057)

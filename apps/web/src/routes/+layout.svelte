@@ -17,11 +17,12 @@
   const appPath = (path: string): string => `${base}${path}`;
   const navItems = [
     { href: appPath("/explorer/"), label: "Explorer" },
+    { href: appPath("/attack/"), label: "ATT&CK" },
     { href: appPath("/compare/"), label: "Compare" },
     { href: appPath("/glossary/"), label: "Glossary" },
     { href: appPath("/guide/"), label: "Guide" },
   ];
-  const catalogueRouteIds = new Set(["/", "/explorer", "/compare", "/glossary"]);
+  const catalogueRouteIds = new Set(["/", "/explorer", "/attack", "/compare", "/glossary"]);
   let catalogueBlocked = $state(page.route.id !== null && catalogueRouteIds.has(page.route.id));
   const catalogueBackedRoute = $derived(page.route.id !== null && catalogueRouteIds.has(page.route.id));
 

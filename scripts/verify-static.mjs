@@ -9,6 +9,7 @@ const routes = [
   "bypass-eligibility",
   "changelog",
   "compare",
+  "attack",
   "explorer",
   "glossary",
   "guide",

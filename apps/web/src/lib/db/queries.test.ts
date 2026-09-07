@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DatabaseSync } from "node:sqlite";
 import { compareSnapshots, type ComparisonRecord } from "./compare";
-import { canonicalFrameworkId, type AttackMappingResult } from "./contracts";
+import { canonicalFrameworkId, type AttackCatalogueResult, type AttackMappingResult } from "./contracts";
 import { filterControls } from "./filters";
 import { dispatchRule1Query, type QueryExecutor, type SqlValue } from "./queries";
 
@@ -711,6 +711,109 @@ describe("Rule1 query dispatcher", () => {
     );
 
     expect(executor.calls.some((call) => call.name === "attack-procedures")).toBe(false);
+    database.close();
+  });
+
+  it("returns the complete current ATT&CK catalogue with official mitigations and reviewed current ISM controls", async () => {
+    const database = new DatabaseSync(":memory:");
+    database.exec(`
+      CREATE TABLE catalog_versions (framework TEXT, version TEXT, ordinal INTEGER);
+      CREATE TABLE attack_releases (version TEXT, domain TEXT, ordinal INTEGER);
+      CREATE TABLE attack_techniques (
+        attack_version TEXT, technique_id TEXT, name TEXT, description TEXT, url TEXT,
+        tactics TEXT, platforms TEXT, parent_technique_id TEXT
+      );
+      CREATE TABLE attack_mitigations (
+        attack_version TEXT, mitigation_id TEXT, name TEXT, description TEXT, url TEXT
+      );
+      CREATE TABLE attack_mitigation_techniques (
+        attack_version TEXT, mitigation_id TEXT, technique_id TEXT,
+        relationship_stix_id TEXT, description TEXT
+      );
+      CREATE TABLE control_attack_mitigation_mappings (
+        candidate_id TEXT, framework TEXT, ism_catalog_version TEXT, control_id TEXT,
+        attack_version TEXT, mitigation_id TEXT, relationship TEXT, security_function TEXT,
+        confidence TEXT, status TEXT, rationale TEXT, evidence TEXT
+      );
+      CREATE TABLE control_history (
+        framework TEXT, control_id TEXT, catalog_version TEXT, control_class TEXT,
+        change_type TEXT, display_id TEXT, title TEXT, statement TEXT
+      );
+      INSERT INTO catalog_versions VALUES ('ism','ISM-old',0), ('ism','ISM-current',1);
+      INSERT INTO attack_releases VALUES ('18.0','enterprise-attack',0), ('19.2','enterprise-attack',1);
+      INSERT INTO attack_techniques VALUES
+        ('18.0','T0000','Old Technique','Old.','https://attack.test/T0000','[]','[]',NULL),
+        ('19.2','T1000','Unmapped Technique','No official mitigation.','https://attack.test/T1000',
+          '["discovery","collection"]','["Linux","Windows"]',NULL),
+        ('19.2','T2000','Parent Technique','Parent.','https://attack.test/T2000',
+          '["stealth","defense-impairment"]','["Windows"]',NULL),
+        ('19.2','T2000.001','Sub-technique','Child.','https://attack.test/T2000/001',
+          '["stealth"]','["Windows"]','T2000');
+      INSERT INTO attack_mitigations VALUES
+        ('19.2','M1000','Official Mitigation','Mitigation detail.','https://attack.test/M1000'),
+        ('19.2','M2000','Uncovered Mitigation','Still official.','https://attack.test/M2000');
+      INSERT INTO attack_mitigation_techniques VALUES
+        ('19.2','M1000','T2000.001','relationship--one','Official relationship detail.'),
+        ('19.2','M2000','T2000.001','relationship--two','No reviewed ISM control.');
+      INSERT INTO control_history VALUES
+        ('ism','ism-1','ISM-current','ISM-control','unchanged','ISM-1','Reviewed control','Do the thing.'),
+        ('ism','ism-2','ISM-current','ISM-control','unchanged','ISM-2','Candidate control','Candidate.'),
+        ('ism','ism-3','ISM-old','ISM-control','unchanged','ISM-3','Old control','Old.'),
+        ('ism','ism-4','ISM-current','ISM-control','withdrawn','ISM-4','Withdrawn control','Gone.');
+      INSERT INTO control_attack_mitigation_mappings VALUES
+        ('reviewed-current-copy','ism','ISM-current','ism-1','19.2','M1000','enables','detect','high','reviewed',
+          'Reviewed rationale','[]'),
+        ('reviewed-current','ism','ISM-current','ism-1','19.2','M1000','enables','detect','high','reviewed',
+          'Reviewed rationale','[]'),
+        ('candidate-current','ism','ISM-current','ism-2','19.2','M1000','enables','protect','medium','candidate',
+          'Candidate rationale','[]'),
+        ('rejected-current','ism','ISM-current','ism-2','19.2','M1000','enables','protect','medium','rejected',
+          'Rejected rationale','[]'),
+        ('reviewed-old','ism','ISM-old','ism-3','19.2','M1000','enables','recover','high','reviewed',
+          'Old rationale','[]'),
+        ('reviewed-withdrawn','ism','ISM-current','ism-4','19.2','M1000','enables','protect','high','reviewed',
+          'Withdrawn rationale','[]');
+    `);
+
+    const executor = new SqliteExecutor(database);
+    const result = (await dispatchRule1Query(executor, "attackCatalogue", {})) as AttackCatalogueResult;
+    expect(result).toMatchObject({ attackVersion: "19.2", ismCatalogVersion: "ISM-current" });
+    expect(result.techniques.map((technique) => technique.techniqueId)).toEqual(["T2000", "T2000.001", "T1000"]);
+    expect(result.techniques.find((technique) => technique.techniqueId === "T1000")).toMatchObject({
+      tactics: ["discovery", "collection"],
+      platforms: ["Linux", "Windows"],
+      mitigations: [],
+    });
+    expect(result.techniques.find((technique) => technique.techniqueId === "T2000.001")).toMatchObject({
+      parentTechniqueId: "T2000",
+      mitigations: [
+        {
+          mitigationId: "M1000",
+          relationshipStixId: "relationship--one",
+          relationshipDescription: "Official relationship detail.",
+          controls: [
+            {
+              candidateId: "reviewed-current",
+              controlId: "ism-1",
+              displayId: "ISM-1",
+              securityFunction: "detect",
+              rationale: "Reviewed rationale",
+            },
+          ],
+        },
+        {
+          mitigationId: "M2000",
+          relationshipStixId: "relationship--two",
+          relationshipDescription: "No reviewed ISM control.",
+          controls: [],
+        },
+      ],
+    });
+    expect(JSON.stringify(result)).not.toContain("Candidate rationale");
+    expect(JSON.stringify(result)).not.toContain("Rejected rationale");
+    expect(JSON.stringify(result)).not.toContain("Old rationale");
+    expect(JSON.stringify(result)).not.toContain("Withdrawn rationale");
+    expect(executor.calls.map((call) => call.name)).toEqual(["attack-catalogue-versions", "attack-catalogue"]);
     database.close();
   });
 

@@ -117,6 +117,44 @@ export interface AttackMappingResult {
   procedures: AttackTechniqueProcedures[];
 }
 
+export interface AttackCatalogueControl {
+  candidateId: string;
+  controlId: string;
+  displayId: string;
+  title: string | null;
+  statement: string | null;
+  securityFunction: AttackSecurityFunction;
+  confidence: "low" | "medium" | "high";
+  rationale: string;
+}
+
+export interface AttackCatalogueMitigation {
+  mitigationId: string;
+  name: string;
+  description: string | null;
+  url: string;
+  relationshipStixId: string;
+  relationshipDescription: string | null;
+  controls: AttackCatalogueControl[];
+}
+
+export interface AttackCatalogueTechnique {
+  techniqueId: string;
+  name: string;
+  description: string | null;
+  url: string;
+  tactics: string[];
+  platforms: string[];
+  parentTechniqueId: string | null;
+  mitigations: AttackCatalogueMitigation[];
+}
+
+export interface AttackCatalogueResult {
+  attackVersion: string | null;
+  ismCatalogVersion: string | null;
+  techniques: AttackCatalogueTechnique[];
+}
+
 export interface Rule1DataClient {
   frameworks(): Promise<Framework[]>;
   stats(params: FrameworkParams): Promise<Stats>;
@@ -130,6 +168,7 @@ export interface Rule1DataClient {
   controlHistory(params: ControlParams): Promise<Revision[]>;
   e8Mappings(params: E8MappingParams): Promise<E8Mapping[]>;
   attackMappings(params: ControlParams): Promise<AttackMappingResult>;
+  attackCatalogue(): Promise<AttackCatalogueResult>;
   graph(params: ControlParams): Promise<GraphData>;
   compare(params: CompareParams): Promise<CompareResponse>;
   terms(params: FrameworkParams): Promise<TermsResult>;

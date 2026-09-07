@@ -12,6 +12,7 @@ const landing = await source("./+page.svelte");
 const explorer = await source("./explorer/+page.svelte");
 const compare = await source("./compare/+page.svelte");
 const glossary = await source("./glossary/+page.svelte");
+const attackCatalogue = await source("./attack/+page.svelte");
 const tree = await source("../lib/explorer/ControlTree.svelte");
 const context = await source("../lib/explorer/ContextPanel.svelte");
 const attack = await source("../lib/explorer/AttackPanel.svelte");
@@ -85,7 +86,16 @@ describe("WCAG interaction and presentation repairs", () => {
   it("identifies current navigation and pressed filter state", () => {
     expect(header).toContain('aria-label="Primary navigation"');
     expect(header).toContain('aria-current={activePath === item.href ? "page" : undefined}');
-    for (const route of [landing, explorer, compare, glossary]) expect(route).toContain("aria-pressed=");
+    for (const route of [landing, explorer, compare, glossary, attackCatalogue])
+      expect(route).toContain("aria-pressed=");
+  });
+
+  it("labels ATT&CK catalogue filters and restores focus to selected technique details", () => {
+    expect(attackCatalogue).toContain('aria-labelledby="filter-heading"');
+    expect(attackCatalogue).toContain('aria-label="Enterprise ATT&CK techniques"');
+    expect(attackCatalogue).toContain('aria-label="Selected technique details"');
+    expect(attackCatalogue).toContain('data-technique-detail tabindex="-1"');
+    expect(attackCatalogue).toContain('document.querySelector<HTMLElement>("[data-technique-detail]")?.focus()');
   });
 
   it("uses sibling native controls for tree selection and favourites", () => {

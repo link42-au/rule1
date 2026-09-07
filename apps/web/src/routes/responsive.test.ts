@@ -8,6 +8,7 @@ const layout = await source("./+layout.svelte");
 const landing = await source("./+page.svelte");
 const compare = await source("./compare/+page.svelte");
 const glossary = await source("./glossary/+page.svelte");
+const attack = await source("./attack/+page.svelte");
 const guide = await source("./guide/+page.svelte");
 const privacy = await source("./privacy/+page.svelte");
 const splash = await source("../lib/DatabaseLoadingSplash.svelte");
@@ -62,6 +63,14 @@ describe("responsive shell and retained routes", () => {
       expect(page).toContain("@media (max-width: 640px)");
       expect(page).toContain("padding: 32px 16px 48px");
     }
+  });
+
+  it("stacks the ATT&CK catalogue and contains long relationship content", () => {
+    expect(attack).toMatch(
+      /@media \(max-width: 900px\)[\s\S]*\.catalogue-layout\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(attack).toMatch(/\.technique-detail\s*\{[^}]*min-width:\s*0[^}]*overflow-y:\s*auto/s);
+    expect(attack).toMatch(/@media \(max-width: 640px\)[\s\S]*\.attack-page\s*\{\s*padding:\s*28px 14px 48px/);
   });
 
   it("keeps the loading card within a phone viewport", () => {

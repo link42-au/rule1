@@ -24,6 +24,10 @@ import {
   type ControlParams,
   type ControlsResult,
   type AttackMappingResult,
+  type AttackCatalogueControl,
+  type AttackCatalogueMitigation,
+  type AttackCatalogueResult,
+  type AttackCatalogueTechnique,
   type E8Mapping,
   type E8MappingParams,
   type FrameworkParams,
@@ -47,6 +51,7 @@ export type Rule1QueryMethod =
   | "controlHistory"
   | "e8Mappings"
   | "attackMappings"
+  | "attackCatalogue"
   | "graph"
   | "compare"
   | "terms"
@@ -495,6 +500,111 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
   };
 }
 
+async function attackCatalogue(executor: QueryExecutor): Promise<AttackCatalogueResult> {
+  const versionRows = await executor.all<Row>(`/* rule1:attack-catalogue-versions */
+    SELECT
+      (SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1)
+        AS attack_version,
+      (SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1)
+        AS ism_catalog_version`);
+  const rows = await executor.all<Row>(`/* rule1:attack-catalogue */
+    SELECT t.technique_id, t.name AS technique_name, t.description AS technique_description,
+      t.url AS technique_url, t.tactics, t.platforms, t.parent_technique_id,
+      r.mitigation_id, r.relationship_stix_id, r.description AS relationship_description,
+      g.name AS mitigation_name, g.description AS mitigation_description, g.url AS mitigation_url,
+      m.candidate_id, m.control_id, m.security_function, m.confidence, m.rationale,
+      h.display_id, h.title AS control_title, h.statement AS control_statement
+    FROM attack_techniques t
+    LEFT JOIN attack_mitigation_techniques r ON r.attack_version = t.attack_version
+      AND r.technique_id = t.technique_id
+    LEFT JOIN attack_mitigations g ON g.attack_version = r.attack_version
+      AND g.mitigation_id = r.mitigation_id
+    LEFT JOIN control_attack_mitigation_mappings m ON m.attack_version = r.attack_version
+      AND m.mitigation_id = r.mitigation_id AND m.framework = 'ism' AND m.status = 'reviewed'
+      AND m.ism_catalog_version = (
+        SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
+      )
+      AND EXISTS (
+        SELECT 1 FROM control_history visible_control
+        WHERE visible_control.framework = m.framework
+          AND visible_control.control_id = m.control_id
+          AND visible_control.catalog_version = m.ism_catalog_version
+          AND visible_control.control_class = 'ISM-control'
+          AND visible_control.change_type != 'withdrawn'
+      )
+    LEFT JOIN control_history h ON h.framework = m.framework AND h.control_id = m.control_id
+      AND h.catalog_version = m.ism_catalog_version AND h.control_class = 'ISM-control'
+      AND h.change_type != 'withdrawn'
+    WHERE t.attack_version = (
+      SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
+    )
+    ORDER BY t.name COLLATE NOCASE, t.technique_id, r.mitigation_id, m.control_id, m.candidate_id`);
+
+  const techniques = new Map<string, AttackCatalogueTechnique>();
+  const mitigationsByTechnique = new Map<string, Map<string, AttackCatalogueMitigation>>();
+  const controlIdsByMitigation = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const techniqueId = text(row.technique_id);
+    let technique = techniques.get(techniqueId);
+    if (!technique) {
+      technique = {
+        techniqueId,
+        name: text(row.technique_name),
+        description: nullableText(row.technique_description),
+        url: text(row.technique_url),
+        tactics: jsonArray(row.tactics),
+        platforms: jsonArray(row.platforms),
+        parentTechniqueId: nullableText(row.parent_technique_id),
+        mitigations: [],
+      };
+      techniques.set(techniqueId, technique);
+      mitigationsByTechnique.set(techniqueId, new Map());
+    }
+    const mitigationId = nullableText(row.mitigation_id);
+    if (!mitigationId) continue;
+    const mitigationKey = `${techniqueId}:${mitigationId}`;
+    const mitigationMap = mitigationsByTechnique.get(techniqueId)!;
+    let mitigation = mitigationMap.get(mitigationId);
+    if (!mitigation) {
+      mitigation = {
+        mitigationId,
+        name: text(row.mitigation_name),
+        description: nullableText(row.mitigation_description),
+        url: text(row.mitigation_url),
+        relationshipStixId: text(row.relationship_stix_id),
+        relationshipDescription: nullableText(row.relationship_description),
+        controls: [],
+      };
+      mitigationMap.set(mitigationId, mitigation);
+      technique.mitigations.push(mitigation);
+      controlIdsByMitigation.set(mitigationKey, new Set());
+    }
+    const candidateId = nullableText(row.candidate_id);
+    if (!candidateId) continue;
+    const seenControls = controlIdsByMitigation.get(mitigationKey)!;
+    const controlId = text(row.control_id);
+    if (seenControls.has(controlId)) continue;
+    seenControls.add(controlId);
+    const control: AttackCatalogueControl = {
+      candidateId,
+      controlId,
+      displayId: text(row.display_id, controlId),
+      title: nullableText(row.control_title),
+      statement: nullableText(row.control_statement),
+      securityFunction: text(row.security_function) as AttackCatalogueControl["securityFunction"],
+      confidence: text(row.confidence) as AttackCatalogueControl["confidence"],
+      rationale: text(row.rationale),
+    };
+    mitigation.controls.push(control);
+  }
+  const versions = versionRows[0];
+  return {
+    attackVersion: nullableText(versions?.attack_version),
+    ismCatalogVersion: nullableText(versions?.ism_catalog_version),
+    techniques: [...techniques.values()],
+  };
+}
+
 async function control(executor: QueryExecutor, params: ControlParams): Promise<ControlDetail | null> {
   const framework = canonicalFrameworkId(params.framework);
   const id = params.id.toLowerCase();
@@ -703,6 +813,8 @@ export async function dispatchRule1Query(
       return e8Mappings(executor, e8Params(params));
     case "attackMappings":
       return attackMappings(executor, controlParams(params));
+    case "attackCatalogue":
+      return attackCatalogue(executor);
     case "graph":
       return graph(executor, controlParams(params));
     case "compare":

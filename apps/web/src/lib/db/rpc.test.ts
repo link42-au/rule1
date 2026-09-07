@@ -58,6 +58,20 @@ describe("Rule1 worker RPC", () => {
     });
   });
 
+  it("maps the ATT&CK catalogue to a fixed parameter-free worker method", async () => {
+    const worker = new FakeWorker();
+    const client = createRule1DataClient(new Rule1WorkerRpc(worker as unknown as Worker));
+    const pending = client.attackCatalogue();
+    const request = worker.postMessage.mock.calls[0]?.[0] as WorkerRequest;
+    expect(request).toMatchObject({ type: "query", method: "attackCatalogue", params: {} });
+    worker.reply({
+      id: 1,
+      ok: true,
+      result: { attackVersion: "19.2", ismCatalogVersion: "ISM-current", techniques: [] },
+    });
+    await expect(pending).resolves.toEqual({ attackVersion: "19.2", ismCatalogVersion: "ISM-current", techniques: [] });
+  });
+
   it("forwards database progress and clears it when initialization finishes", async () => {
     const worker = new FakeWorker();
     const rpc = new Rule1WorkerRpc(worker as unknown as Worker);
