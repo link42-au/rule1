@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import http.client
 import tempfile
@@ -130,6 +131,29 @@ class MitigationInputTests(unittest.TestCase):
         self.assertTrue(set(CANARY_CONTROL_IDS).issubset({row["control_id"] for row in self.controls}))
         self.assertTrue(
             {"M1022", "M1047", "M1053"}.issubset({row["mitigation_id"] for row in self.mitigations})
+        )
+
+    def test_authored_corpus_has_exact_review_lifecycle_without_content_drift(self) -> None:
+        payload = json.loads(
+            (ROOT / "mappings/ism-attack-mitigation-assessments.json").read_text(encoding="utf-8")
+        )
+        candidates = [
+            candidate
+            for assessment in payload["assessments"]
+            for candidate in assessment["candidates"]
+        ]
+        self.assertEqual(len(candidates), 599)
+        self.assertTrue(all(candidate["status"] == "reviewed" for candidate in candidates))
+        self.assertTrue(all(candidate["reviewed_by"] == "Iain Dickson" for candidate in candidates))
+        self.assertTrue(all(candidate["reviewed_at"] == "2026-09-07" for candidate in candidates))
+
+        for candidate in candidates:
+            for field in ("status", "reviewed_by", "reviewed_at"):
+                candidate.pop(field)
+        canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        self.assertEqual(
+            hashlib.sha256(canonical.encode()).hexdigest(),
+            "4a3f0102eae4852f6251f092fe1532510fe8ede4ac5d3607a358162ea3d8255f",
         )
 
     def test_eight_shards_are_deterministic_disjoint_and_complete(self) -> None:

@@ -5,7 +5,7 @@
     "unmapped": 551
   },
   "attack_mapping_status_counts": {
-    "candidate": 599
+    "reviewed": 599
   },
   "attack_versions": [
     "19.2"

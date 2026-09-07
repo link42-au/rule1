@@ -459,7 +459,14 @@ class DatabaseTests(unittest.TestCase):
                 "WHERE relationship!='enables' OR security_function NOT IN ('protect','detect','recover')"
             ).fetchone()[0], 0)
             self.assertEqual(connection.execute(
-                "SELECT COUNT(*) FROM control_attack_mitigation_mappings WHERE status!='candidate'"
+                "SELECT COUNT(*) FROM control_attack_mitigation_mappings WHERE status='reviewed'"
+            ).fetchone()[0], 599)
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM control_attack_mitigation_mappings WHERE status!='reviewed'"
+            ).fetchone()[0], 0)
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM control_attack_mitigation_mappings "
+                "WHERE reviewed_by!='Iain Dickson' OR reviewed_at!='2026-09-07'"
             ).fetchone()[0], 0)
             self.assertEqual(connection.execute(
                 "SELECT COUNT(*) FROM control_attack_assessments a WHERE "

@@ -213,7 +213,7 @@ test("AI Summary switches between factual and Professional descriptions and reme
   await expect(page.locator(".ai-summary-block")).toHaveText(professional);
 });
 
-test("ATT&CK control mappings are ISM-only, local, and honestly empty at desktop and phone widths", async ({
+test("reviewed ATT&CK control mappings are ISM-only and local at desktop and phone widths", async ({
   page,
 }, testInfo) => {
   const backendRequests: string[] = [];
@@ -233,11 +233,14 @@ test("ATT&CK control mappings are ISM-only, local, and honestly empty at desktop
     await expect(attackTab).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("heading", { name: "MITRE ATT&CK mappings" })).toBeVisible();
     await expect(page.getByText(/this control enables an ATT&CK mitigation/)).toBeVisible();
-    await expect(page.getByText("No reviewed ATT&CK mappings to mitigations", { exact: true })).toBeVisible();
+    const mitigation = page.locator('article.mitigation-card[data-mitigation-id="M1032"]');
+    await expect(mitigation).toContainText("This control enables");
+    await expect(mitigation).toContainText("Multi-factor Authentication (M1032)");
+    await expect(mitigation.locator('[data-function="protect"]')).toBeVisible();
     await expect(page.getByText("ATT&CK 19.2", { exact: true })).toBeVisible();
     await expect(page.getByText("ISM ISM-OSCAL-2026.09.4", { exact: true })).toBeVisible();
     await assertDocumentDoesNotOverflow(page);
-    await assertNoSeriousAxeViolations(page, testInfo, `attack-empty-${viewport.label}`);
+    await assertNoSeriousAxeViolations(page, testInfo, `attack-reviewed-${viewport.label}`);
   }
 
   await page.goto("/explorer/?framework=nzism&id=nzism-127&tab=attack");

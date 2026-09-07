@@ -22,6 +22,8 @@ async function routeReviewedFixture(page: Page, testInfo: TestInfo): Promise<voi
   await copyFile("apps/web/static/data/rule1.sqlite3", fixturePath);
   const database = new DatabaseSync(fixturePath);
   database.exec(`UPDATE control_attack_mitigation_mappings
+    SET status = 'candidate', reviewed_by = NULL, reviewed_at = NULL;
+    UPDATE control_attack_mitigation_mappings
     SET status = 'reviewed', reviewed_by = 'playwright-fixture', reviewed_at = '2026-09-07T00:00:00Z'
     WHERE control_id = 'ism-1504' AND mitigation_id = 'M1032';
     PRAGMA foreign_keys = OFF;
