@@ -1,0 +1,9 @@
+**
+!apps/
+!apps/web/
+!apps/web/build/
+!apps/web/build/**
+!deploy/
+!deploy/container/
+!deploy/container/root/
+!deploy/container/root/**

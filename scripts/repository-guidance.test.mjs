@@ -29,6 +29,37 @@ test("repository guidance documents hosting, technology, and durable feedback ro
   assert.match(readme, /Python ingestion pipeline/);
   assert.match(readme, /deterministic build/);
   assert.match(readme, /GitHub Pages/);
+  assert.match(readme, /docs\/CONTAINER-DEPLOYMENT\.md/);
+});
+
+test("container deployment guidance covers publication, operation, updates, and rollback", () => {
+  const deployment = read("docs/CONTAINER-DEPLOYMENT.md");
+  const releaseCandidate = read("docs/RELEASE-CANDIDATE.md");
+
+  assert.match(deployment, /ghcr\.io\/link42-au\/rule1/);
+  assert.match(deployment, /package publicly/);
+  assert.match(deployment, /pull it anonymously/);
+  assert.doesNotMatch(deployment, /docker login ghcr\.io/);
+  assert.match(deployment, /linux\/amd64/);
+  assert.match(deployment, /linux\/arm64/);
+  assert.match(deployment, /PUID/);
+  assert.match(deployment, /PGID/);
+  assert.match(deployment, /\/app\/www\/public/);
+  assert.match(deployment, /docker compose pull rule1/);
+  assert.match(deployment, /docker compose up -d --no-deps rule1/);
+  assert.match(deployment, /Rollback is image-based/);
+  assert.match(deployment, /not registry-enforced immutable/);
+  assert.match(deployment, /ghcr\.io\/link42-au\/rule1@sha256:<index-digest>/);
+  assert.match(deployment, /post-deploy-canary\.mjs/);
+  assert.match(deployment, /33938976627/);
+  assert.match(deployment, /Documentation-only and test-only pushes do not rebuild SQLite/);
+  assert.match(deployment, /workflow_dispatch/);
+  assert.match(deployment, /bd12c133b3f49b3ff3362dfef94e77ca105ecbec601b5a65e2b99a38928ce396/);
+  assert.doesNotMatch(deployment, /\/app\/www\/public:\s*$/m);
+  assert.match(releaseCandidate, /public LinuxServer\.io Nginx image in GHCR/);
+  assert.match(releaseCandidate, /33938976627/);
+  assert.match(releaseCandidate, /Documentation-only commit `a64f710/);
+  assert.doesNotMatch(releaseCandidate, /GHCR package was private/);
 });
 
 test("issue forms route bugs and suggestions without enabling public security reports", () => {
