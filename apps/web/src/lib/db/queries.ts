@@ -34,7 +34,6 @@ import { jsonArray, jsonObject, nullableText, numberValue, text } from "./decode
 export type SqlValue = string | number | null | Uint8Array;
 // Five keeps future collapsed technique sections concise while the database retains every example.
 export const ATTACK_PROCEDURE_EXAMPLE_LIMIT = 5;
-const LEGACY_ATTACK_MAPPING_TABLE_MISSING = /no such table:\s*(?:main\.)?control_attack_mappings\b/i;
 export type Rule1QueryMethod =
   | "frameworks"
   | "stats"
@@ -362,46 +361,32 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
           AS ism_catalog_version,
         (SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1)
           AS attack_version`);
-  let rows: Row[];
-  try {
-    rows = await executor.all<Row>(
-      `/* rule1:attack-mappings */
-    SELECT b.ism_catalog_version, b.attack_version, m.technique_id, t.name AS technique_name,
+  const rows = await executor.all<Row>(
+    `/* rule1:attack-mappings */
+    SELECT m.ism_catalog_version, m.attack_version, m.candidate_id,
+      m.mitigation_id, g.name AS mitigation_name, g.description AS mitigation_description,
+      g.url AS mitigation_url, m.relationship, m.security_function, m.confidence,
+      m.rationale, m.evidence,
+      r.technique_id, t.name AS technique_name,
       t.description AS technique_description, t.url AS technique_url, t.tactics, t.platforms,
-      t.parent_technique_id, b.mitigation_id, g.name AS mitigation_name,
-      g.description AS mitigation_description, g.url AS mitigation_url,
-      m.effect,
-      CASE WHEN m.effect IN ('prevent', 'constrain', 'detect')
-        THEN 'technique-disruption' ELSE 'consequence-treatment' END AS outcome_class,
-      m.confidence, m.rationale,
-      b.evidence AS bridge_evidence, m.evidence AS direct_evidence
-    FROM control_attack_mappings m
-    JOIN control_attack_bridges b ON b.bridge_id = m.bridge_id
-      AND b.attack_version = m.attack_version AND b.mitigation_id = m.mitigation_id
-    JOIN attack_techniques t ON t.attack_version = m.attack_version
-      AND t.technique_id = m.technique_id
+      t.parent_technique_id, r.relationship_stix_id, r.description AS relationship_description
+    FROM control_attack_mitigation_mappings m
     JOIN attack_mitigations g ON g.attack_version = m.attack_version
       AND g.mitigation_id = m.mitigation_id
-    WHERE b.framework = 'ism' AND b.control_id = ? AND m.status = 'reviewed'
-      AND b.ism_catalog_version = (
+    JOIN attack_mitigation_techniques r ON r.attack_version = m.attack_version
+      AND r.mitigation_id = m.mitigation_id
+    JOIN attack_techniques t ON t.attack_version = r.attack_version
+      AND t.technique_id = r.technique_id
+    WHERE m.framework = 'ism' AND m.control_id = ? AND m.status = 'reviewed'
+      AND m.ism_catalog_version = (
         SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
       )
-      AND b.attack_version = (
+      AND m.attack_version = (
         SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
       )
-    ORDER BY m.technique_id, m.mitigation_id, m.effect, m.bridge_id`,
-      [params.id.toLowerCase()],
-    );
-  } catch (error) {
-    if (!(error instanceof Error) || !LEGACY_ATTACK_MAPPING_TABLE_MISSING.test(error.message)) throw error;
-    const versions = versionRows[0];
-    return {
-      ismCatalogVersion: nullableText(versions?.ism_catalog_version),
-      attackVersion: nullableText(versions?.attack_version),
-      mappings: [],
-      procedures: [],
-    };
-  }
+    ORDER BY m.mitigation_id, r.technique_id, m.candidate_id`,
+    [params.id.toLowerCase()],
+  );
   const versions = versionRows[0];
   const techniqueIds = [...new Set(rows.map((row) => text(row.technique_id)))].sort();
   let procedureRows: Row[] = [];
@@ -409,15 +394,15 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
     procedureRows = await executor.all<Row>(
       `/* rule1:attack-procedures */
       WITH reviewed_techniques AS (
-        SELECT DISTINCT m.attack_version, m.technique_id
-        FROM control_attack_mappings m
-        JOIN control_attack_bridges b ON b.bridge_id = m.bridge_id
-          AND b.attack_version = m.attack_version AND b.mitigation_id = m.mitigation_id
-        WHERE b.framework = 'ism' AND b.control_id = ? AND m.status = 'reviewed'
-          AND b.ism_catalog_version = (
+        SELECT DISTINCT m.attack_version, r.technique_id
+        FROM control_attack_mitigation_mappings m
+        JOIN attack_mitigation_techniques r ON r.attack_version = m.attack_version
+          AND r.mitigation_id = m.mitigation_id
+        WHERE m.framework = 'ism' AND m.control_id = ? AND m.status = 'reviewed'
+          AND m.ism_catalog_version = (
             SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
           )
-          AND b.attack_version = (
+          AND m.attack_version = (
             SELECT version FROM attack_releases WHERE domain = 'enterprise-attack' ORDER BY ordinal DESC LIMIT 1
           )
       ), ranked AS (
@@ -486,6 +471,16 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
     mappings: rows.map((row) => ({
       attackVersion: text(row.attack_version),
       ismCatalogVersion: text(row.ism_catalog_version),
+      candidateId: text(row.candidate_id),
+      mitigationId: text(row.mitigation_id),
+      mitigationName: text(row.mitigation_name),
+      mitigationDescription: nullableText(row.mitigation_description),
+      mitigationUrl: text(row.mitigation_url),
+      relationship: text(row.relationship) as "enables",
+      securityFunction: text(row.security_function) as AttackMapping["securityFunction"],
+      confidence: text(row.confidence) as "low" | "medium" | "high",
+      rationale: text(row.rationale),
+      evidence: jsonRecords(row.evidence),
       techniqueId: text(row.technique_id),
       techniqueName: text(row.technique_name),
       techniqueDescription: nullableText(row.technique_description),
@@ -493,15 +488,8 @@ async function attackMappings(executor: QueryExecutor, params: ControlParams): P
       tactics: jsonArray(row.tactics),
       platforms: jsonArray(row.platforms),
       parentTechniqueId: nullableText(row.parent_technique_id),
-      mitigationId: text(row.mitigation_id),
-      mitigationName: text(row.mitigation_name),
-      mitigationDescription: nullableText(row.mitigation_description),
-      mitigationUrl: text(row.mitigation_url),
-      effect: text(row.effect) as AttackMapping["effect"],
-      outcomeClass: text(row.outcome_class) as AttackMapping["outcomeClass"],
-      confidence: text(row.confidence) as "low" | "medium" | "high",
-      rationale: text(row.rationale),
-      evidence: [...jsonRecords(row.bridge_evidence), ...jsonRecords(row.direct_evidence)],
+      relationshipStixId: text(row.relationship_stix_id),
+      relationshipDescription: nullableText(row.relationship_description),
     })),
     procedures: [...proceduresByTechnique.values()],
   };

@@ -358,27 +358,16 @@ describe("Rule1 query dispatcher", () => {
         {
           ism_catalog_version: "ISM-OSCAL-2026.09.4",
           attack_version: "19.2",
-          technique_id: "T1110",
-          technique_name: "Brute Force",
-          technique_description: "Attempt credentials.",
-          technique_url: "https://attack.mitre.org/techniques/T1110/",
-          tactics: '["credential-access"]',
-          platforms: '["Windows"]',
-          parent_technique_id: null,
+          candidate_id: "candidate-mfa",
           mitigation_id: "M1032",
           mitigation_name: "Multi-factor Authentication",
           mitigation_description: "Use MFA.",
           mitigation_url: "https://attack.mitre.org/mitigations/M1032/",
-          effect: "prevent",
-          outcome_class: "technique-disruption",
+          relationship: "enables",
+          security_function: "protect",
           confidence: "high",
-          rationale: "MFA may prevent successful use of guessed credentials.",
-          bridge_evidence: '[{"kind":"bridge"}]',
-          direct_evidence: '[{"kind":"direct-candidate"}]',
-        },
-        {
-          ism_catalog_version: "ISM-OSCAL-2026.09.4",
-          attack_version: "19.2",
+          rationale: "The control requires MFA.",
+          evidence: '[{"kind":"control-basis"}]',
           technique_id: "T1110",
           technique_name: "Brute Force",
           technique_description: "Attempt credentials.",
@@ -386,16 +375,31 @@ describe("Rule1 query dispatcher", () => {
           tactics: '["credential-access"]',
           platforms: '["Windows"]',
           parent_technique_id: null,
+          relationship_stix_id: "relationship--mfa-brute-force",
+          relationship_description: "Use multi-factor authentication to reduce the risk of credential guessing.",
+        },
+        {
+          ism_catalog_version: "ISM-OSCAL-2026.09.4",
+          attack_version: "19.2",
+          candidate_id: "candidate-backup",
           mitigation_id: "M1053",
           mitigation_name: "Data Backup",
           mitigation_description: "Retain recoverable data.",
           mitigation_url: "https://attack.mitre.org/mitigations/M1053/",
-          effect: "recover",
-          outcome_class: "consequence-treatment",
+          relationship: "enables",
+          security_function: "recover",
           confidence: "high",
-          rationale: "Backups may support recovery after an impact.",
-          bridge_evidence: '[{"kind":"bridge-recovery"}]',
-          direct_evidence: '[{"kind":"direct-recovery"}]',
+          rationale: "The control requires recoverable backups.",
+          evidence: '[{"kind":"control-basis"}]',
+          technique_id: "T1110",
+          technique_name: "Brute Force",
+          technique_description: "Attempt credentials.",
+          technique_url: "https://attack.mitre.org/techniques/T1110/",
+          tactics: '["credential-access"]',
+          platforms: '["Windows"]',
+          parent_technique_id: null,
+          relationship_stix_id: "relationship--backup-brute-force",
+          relationship_description: "MITRE records this official mitigation relationship.",
         },
       ],
       "attack-procedures": [
@@ -442,16 +446,17 @@ describe("Rule1 query dispatcher", () => {
         {
           techniqueId: "T1110",
           mitigationId: "M1032",
-          outcomeClass: "technique-disruption",
+          relationship: "enables",
+          securityFunction: "protect",
+          relationshipDescription: "Use multi-factor authentication to reduce the risk of credential guessing.",
           tactics: ["credential-access"],
-          evidence: [{ kind: "bridge" }, { kind: "direct-candidate" }],
+          evidence: [{ kind: "control-basis" }],
         },
         {
           techniqueId: "T1110",
           mitigationId: "M1053",
-          effect: "recover",
-          outcomeClass: "consequence-treatment",
-          evidence: [{ kind: "bridge-recovery" }, { kind: "direct-recovery" }],
+          securityFunction: "recover",
+          evidence: [{ kind: "control-basis" }],
         },
       ],
       procedures: [
@@ -484,13 +489,17 @@ describe("Rule1 query dispatcher", () => {
     const attackCall = executor.calls.find((call) => call.name === "attack-mappings");
     expect(attackCall?.bind).toEqual(["ism-1173"]);
     expect(attackCall?.sql).toContain("m.status = 'reviewed'");
-    expect(attackCall?.sql).toContain("ORDER BY m.technique_id, m.mitigation_id, m.effect, m.bridge_id");
+    expect(attackCall?.sql).toContain("JOIN attack_mitigation_techniques r");
+    expect(attackCall?.sql).toContain("r.description AS relationship_description");
+    expect(attackCall?.sql).toContain("ORDER BY m.mitigation_id, r.technique_id, m.candidate_id");
     expect(attackCall?.sql).toContain("m.rationale");
-    expect(attackCall?.sql).toContain("THEN 'technique-disruption' ELSE 'consequence-treatment'");
-    expect(attackCall?.sql).not.toContain("candidate");
+    expect(attackCall?.sql).not.toContain("control_attack_mappings");
+    expect(attackCall?.sql).not.toContain("control_attack_bridges");
+    expect(attackCall?.sql).not.toContain("status = 'candidate'");
     const procedureCall = executor.calls.find((call) => call.name === "attack-procedures");
     expect(procedureCall?.bind).toEqual(["ism-1173", 5]);
     expect(procedureCall?.sql).toContain("m.status = 'reviewed'");
+    expect(procedureCall?.sql).toContain("JOIN attack_mitigation_techniques r");
     expect(procedureCall?.sql).toContain("ROW_NUMBER() OVER");
     expect(procedureCall?.sql).toContain("example_rank <= ?");
     expect(procedureCall?.sql).toContain("ORDER BY technique_id, example_rank");
@@ -558,13 +567,14 @@ describe("Rule1 query dispatcher", () => {
       CREATE TABLE attack_mitigations (
         attack_version TEXT, mitigation_id TEXT, name TEXT, description TEXT, url TEXT
       );
-      CREATE TABLE control_attack_bridges (
-        bridge_id TEXT, framework TEXT, ism_catalog_version TEXT, control_id TEXT,
-        attack_version TEXT, mitigation_id TEXT, evidence TEXT
+      CREATE TABLE attack_mitigation_techniques (
+        attack_version TEXT, mitigation_id TEXT, technique_id TEXT,
+        relationship_stix_id TEXT, description TEXT
       );
-      CREATE TABLE control_attack_mappings (
-        bridge_id TEXT, attack_version TEXT, mitigation_id TEXT, technique_id TEXT,
-        status TEXT, effect TEXT, confidence TEXT, rationale TEXT, evidence TEXT
+      CREATE TABLE control_attack_mitigation_mappings (
+        candidate_id TEXT, framework TEXT, ism_catalog_version TEXT, control_id TEXT,
+        attack_version TEXT, mitigation_id TEXT, relationship TEXT, security_function TEXT,
+        confidence TEXT, status TEXT, rationale TEXT, evidence TEXT
       );
       CREATE TABLE attack_procedure_entities (
         attack_version TEXT, entity_stix_id TEXT, entity_type TEXT, external_id TEXT,
@@ -583,11 +593,20 @@ describe("Rule1 query dispatcher", () => {
       INSERT INTO attack_mitigations VALUES (
         '19.2','M1032','Multi-factor Authentication','Use MFA.','https://attack.mitre.org/mitigations/M1032/'
       );
-      INSERT INTO control_attack_bridges VALUES (
-        'bridge','ism','ISM-OSCAL-2026.09.4','ism-1173','19.2','M1032','[]'
+      INSERT INTO attack_mitigation_techniques VALUES (
+        '19.2','M1032','T1110','relationship--mfa-brute-force','MITRE relationship description.'
       );
-      INSERT INTO control_attack_mappings VALUES (
-        'bridge','19.2','M1032','T1110','reviewed','prevent','high','Specific rationale','[]'
+      INSERT INTO control_attack_mitigation_mappings VALUES (
+        'candidate-reviewed','ism','ISM-OSCAL-2026.09.4','ism-1173','19.2','M1032',
+        'enables','protect','high','reviewed','Specific rationale','[{"kind":"control-basis"}]'
+      );
+      INSERT INTO control_attack_mitigation_mappings VALUES (
+        'candidate-other-control','ism','ISM-OSCAL-2026.09.4','ism-9999','19.2','M1032',
+        'enables','protect','high','reviewed','Other control rationale','[{"kind":"control-basis"}]'
+      );
+      INSERT INTO control_attack_mitigation_mappings VALUES (
+        'candidate-hidden','ism','ISM-OSCAL-2026.09.4','ism-1173','19.2','M1032',
+        'enables','protect','high','candidate','Unreviewed rationale','[{"kind":"control-basis"}]'
       );
     `);
     const entities = [
@@ -625,6 +644,16 @@ describe("Rule1 query dispatcher", () => {
       framework: "ism",
       id: "ism-1173",
     })) as AttackMappingResult;
+    expect(result.mappings).toHaveLength(1);
+    expect(result.mappings[0]).toMatchObject({
+      candidateId: "candidate-reviewed",
+      mitigationId: "M1032",
+      relationship: "enables",
+      securityFunction: "protect",
+      techniqueId: "T1110",
+      relationshipStixId: "relationship--mfa-brute-force",
+      relationshipDescription: "MITRE relationship description.",
+    });
     expect(result.procedures).toMatchObject([
       {
         techniqueId: "T1110",
@@ -643,13 +672,33 @@ describe("Rule1 query dispatcher", () => {
     database.close();
   });
 
-  it("returns an honest empty ATT&CK result when the retired legacy mapping table is absent", async () => {
+  it("returns an honest empty ATT&CK result when the production corpus has only candidates", async () => {
     const database = new DatabaseSync(":memory:");
     database.exec(`
       CREATE TABLE catalog_versions (framework TEXT, version TEXT, ordinal INTEGER);
       CREATE TABLE attack_releases (version TEXT, domain TEXT, ordinal INTEGER);
+      CREATE TABLE attack_mitigations (
+        attack_version TEXT, mitigation_id TEXT, name TEXT, description TEXT, url TEXT
+      );
+      CREATE TABLE attack_mitigation_techniques (
+        attack_version TEXT, mitigation_id TEXT, technique_id TEXT,
+        relationship_stix_id TEXT, description TEXT
+      );
+      CREATE TABLE attack_techniques (
+        attack_version TEXT, technique_id TEXT, name TEXT, description TEXT, url TEXT,
+        tactics TEXT, platforms TEXT, parent_technique_id TEXT
+      );
+      CREATE TABLE control_attack_mitigation_mappings (
+        candidate_id TEXT, framework TEXT, ism_catalog_version TEXT, control_id TEXT,
+        attack_version TEXT, mitigation_id TEXT, relationship TEXT, security_function TEXT,
+        confidence TEXT, status TEXT, rationale TEXT, evidence TEXT
+      );
       INSERT INTO catalog_versions VALUES ('ism','ISM-OSCAL-2026.09.4',0);
       INSERT INTO attack_releases VALUES ('19.2','enterprise-attack',0);
+      INSERT INTO control_attack_mitigation_mappings VALUES (
+        'candidate-only','ism','ISM-OSCAL-2026.09.4','ism-1173','19.2','M1032',
+        'enables','protect','high','candidate','Awaiting review','[{"kind":"control-basis"}]'
+      );
     `);
     const executor = new SqliteExecutor(database);
     await expect(dispatchRule1Query(executor, "attackMappings", { framework: "ism", id: "ism-1173" })).resolves.toEqual(
@@ -661,10 +710,7 @@ describe("Rule1 query dispatcher", () => {
       },
     );
 
-    database.exec("CREATE TABLE control_attack_mappings (bridge_id TEXT)");
-    await expect(dispatchRule1Query(executor, "attackMappings", { framework: "ism", id: "ism-1173" })).rejects.toThrow(
-      /control_attack_bridges/,
-    );
+    expect(executor.calls.some((call) => call.name === "attack-procedures")).toBe(false);
     database.close();
   });
 

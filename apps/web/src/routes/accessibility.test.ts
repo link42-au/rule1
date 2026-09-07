@@ -111,9 +111,11 @@ describe("WCAG interaction and presentation repairs", () => {
     expect(explorer).toContain(
       'const availableTabs = DETAIL_TABS.filter((item) => !item.ismOnly || framework === "ism")',
     );
-    expect(attack).toContain('<section class="outcome-section" aria-labelledby={`attack-');
-    expect(attack).toContain("aria-label={`This control supports ");
-    expect(attack).toContain('<details class="procedure-disclosure">');
+    expect(attack).toContain('<div class="mapping-meta" aria-label="Reviewed mapping classification">');
+    expect(attack).toContain('<details class="technique-disclosure" data-mitigation-id={mitigation.mitigationId}>');
+    expect(attack).toContain("aria-label={`Official ATT&CK techniques (showing ");
+    expect(attack).toContain("aria-expanded={expandedMitigations[");
+    expect(attack).toContain('<details class="procedure-disclosure" data-technique-id={technique.techniqueId}>');
     expect(attack).toContain("aria-label={`Reported procedure examples (");
     expect(attack).not.toContain('<details class="procedure-disclosure" open');
     expect(attack).toContain('role="region" aria-label="Mapped ATT&CK tactics" tabindex="0"');

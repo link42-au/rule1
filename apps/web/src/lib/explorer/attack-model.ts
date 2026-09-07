@@ -1,8 +1,6 @@
 import type {
-  AttackEffect,
   AttackMapping,
   AttackMappingResult,
-  AttackOutcomeClass,
   AttackProcedureReference,
   AttackTechniqueProcedures,
 } from "$lib/db/contracts";
@@ -24,18 +22,12 @@ export const ATTACK_TACTICS = [
   "impact",
 ] as const;
 
-export interface AttackTechniqueMapping {
-  mitigationId: string;
-  mitigationName: string;
-  mitigationUrl: string | null;
-  effect: AttackMapping["effect"];
-  outcomeClass: AttackOutcomeClass;
-  confidence: AttackMapping["confidence"];
-  rationale: string;
-  evidenceNotes: string[];
+export interface AttackMitigationTechniqueRelationship {
+  relationshipStixId: string;
+  description: string | null;
 }
 
-export interface AttackTechniqueGroup {
+export interface AttackMitigationTechnique {
   techniqueId: string;
   techniqueName: string;
   techniqueDescription: string | null;
@@ -43,55 +35,28 @@ export interface AttackTechniqueGroup {
   parentTechniqueId: string | null;
   tactics: string[];
   platforms: string[];
-  effects: AttackMapping["effect"][];
-  mappings: AttackTechniqueMapping[];
+  relationships: AttackMitigationTechniqueRelationship[];
   procedures: AttackTechniqueProcedures;
+}
+
+export interface AttackMitigationGroup {
+  candidateId: string;
+  mitigationId: string;
+  mitigationName: string;
+  mitigationDescription: string | null;
+  mitigationUrl: string | null;
+  relationship: AttackMapping["relationship"];
+  securityFunction: AttackMapping["securityFunction"];
+  confidence: AttackMapping["confidence"];
+  rationale: string;
+  evidenceNotes: string[];
+  techniques: AttackMitigationTechnique[];
 }
 
 export interface AttackTacticSummary {
   id: string;
   label: string;
   count: number;
-}
-
-export interface AttackOutcomeSection {
-  outcomeClass: AttackOutcomeClass;
-  title: string;
-  description: string;
-  techniques: AttackTechniqueGroup[];
-}
-
-export interface AttackTechniqueOutcomeSection extends Omit<AttackOutcomeSection, "techniques"> {
-  mappings: AttackTechniqueMapping[];
-}
-
-const EFFECT_ORDER: AttackMapping["effect"][] = ["prevent", "constrain", "detect", "contain", "recover"];
-const OUTCOME_SECTIONS: ReadonlyArray<Omit<AttackOutcomeSection, "techniques">> = [
-  {
-    outcomeClass: "technique-disruption",
-    title: "Technique disruption",
-    description: "Controls that may prevent, constrain, or detect technique execution.",
-  },
-  {
-    outcomeClass: "consequence-treatment",
-    title: "Consequence treatment",
-    description: "Controls that may contain consequences or support recovery after technique execution.",
-  },
-];
-
-export function effectRelationshipPhrase(effect: AttackEffect): string {
-  const phrases: Record<AttackEffect, string> = {
-    prevent: "prevents",
-    constrain: "constrains",
-    detect: "detects",
-    contain: "contains",
-    recover: "recovers from",
-  };
-  return phrases[effect];
-}
-
-export function effectInfinitive(effect: AttackEffect): string {
-  return effect === "recover" ? "recover from" : effect;
 }
 
 export function formatAttackLabel(value: string): string {
@@ -104,7 +69,13 @@ export function formatAttackLabel(value: string): string {
 export function safeMitreUrl(value: string): string | null {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && url.hostname === "attack.mitre.org" ? url.href : null;
+    return url.protocol === "https:" &&
+      url.hostname === "attack.mitre.org" &&
+      url.port === "" &&
+      !url.username &&
+      !url.password
+      ? url.href
+      : null;
   } catch {
     return null;
   }
@@ -128,20 +99,47 @@ function evidenceNotes(evidence: readonly Record<string, unknown>[]): string[] {
   return [
     ...new Set(
       evidence
-        .map((item) => item.note)
+        .flatMap((item) => [item.note, item.matched_text])
         .filter((note): note is string => typeof note === "string" && note.trim() !== ""),
     ),
   ];
 }
 
-export function groupAttackMappings(
+function emptyProcedures(techniqueId: string): AttackTechniqueProcedures {
+  return { techniqueId, total: 0, returned: 0, examples: [] };
+}
+
+export function groupAttackMitigations(
   rows: readonly AttackMapping[],
   procedures: readonly AttackTechniqueProcedures[] = [],
-): AttackTechniqueGroup[] {
-  const grouped = new Map<string, AttackTechniqueGroup>();
+): AttackMitigationGroup[] {
+  const mitigations = new Map<string, AttackMitigationGroup>();
+  const techniquesByMitigation = new Map<string, Map<string, AttackMitigationTechnique>>();
   const proceduresByTechnique = new Map(procedures.map((item) => [item.techniqueId, item]));
+
   for (const row of rows) {
-    let technique = grouped.get(row.techniqueId);
+    const mitigationKey = `${row.candidateId}:${row.mitigationId}`;
+    let mitigation = mitigations.get(mitigationKey);
+    if (!mitigation) {
+      mitigation = {
+        candidateId: row.candidateId,
+        mitigationId: row.mitigationId,
+        mitigationName: row.mitigationName,
+        mitigationDescription: row.mitigationDescription,
+        mitigationUrl: safeMitreUrl(row.mitigationUrl),
+        relationship: row.relationship,
+        securityFunction: row.securityFunction,
+        confidence: row.confidence,
+        rationale: row.rationale,
+        evidenceNotes: evidenceNotes(row.evidence),
+        techniques: [],
+      };
+      mitigations.set(mitigationKey, mitigation);
+      techniquesByMitigation.set(mitigationKey, new Map());
+    }
+
+    const techniqueMap = techniquesByMitigation.get(mitigationKey)!;
+    let technique = techniqueMap.get(row.techniqueId);
     if (!technique) {
       technique = {
         techniqueId: row.techniqueId,
@@ -151,60 +149,60 @@ export function groupAttackMappings(
         parentTechniqueId: row.parentTechniqueId,
         tactics: [],
         platforms: [],
-        effects: [],
-        mappings: [],
-        procedures: proceduresByTechnique.get(row.techniqueId) ?? {
-          techniqueId: row.techniqueId,
-          total: 0,
-          returned: 0,
-          examples: [],
-        },
+        relationships: [],
+        procedures: proceduresByTechnique.get(row.techniqueId) ?? emptyProcedures(row.techniqueId),
       };
-      grouped.set(row.techniqueId, technique);
+      techniqueMap.set(row.techniqueId, technique);
+      mitigation.techniques.push(technique);
     }
+
     technique.tactics = [...new Set([...technique.tactics, ...row.tactics])];
     technique.platforms = [...new Set([...technique.platforms, ...row.platforms])];
-    technique.effects = [...new Set([...technique.effects, row.effect])].sort(
-      (left, right) => EFFECT_ORDER.indexOf(left) - EFFECT_ORDER.indexOf(right),
-    );
-    technique.mappings.push({
-      mitigationId: row.mitigationId,
-      mitigationName: row.mitigationName,
-      mitigationUrl: safeMitreUrl(row.mitigationUrl),
-      effect: row.effect,
-      outcomeClass: row.outcomeClass,
-      confidence: row.confidence,
-      rationale: row.rationale,
-      evidenceNotes: evidenceNotes(row.evidence),
-    });
+    if (!technique.relationships.some((relationship) => relationship.relationshipStixId === row.relationshipStixId)) {
+      technique.relationships.push({
+        relationshipStixId: row.relationshipStixId,
+        description: row.relationshipDescription,
+      });
+    }
   }
-  return [...grouped.values()].sort((left, right) => left.techniqueId.localeCompare(right.techniqueId));
+
+  for (const mitigation of mitigations.values()) {
+    mitigation.techniques.sort((left, right) => left.techniqueId.localeCompare(right.techniqueId));
+  }
+  return [...mitigations.values()].sort((left, right) => left.mitigationId.localeCompare(right.mitigationId));
 }
 
-export function attackTechniqueOutcomeSections(technique: AttackTechniqueGroup): AttackTechniqueOutcomeSection[] {
-  return OUTCOME_SECTIONS.map((section) => ({
-    ...section,
-    mappings: technique.mappings.filter((mapping) => mapping.outcomeClass === section.outcomeClass),
-  })).filter((section) => section.mappings.length > 0);
+export function uniqueAttackTechniques(groups: readonly AttackMitigationGroup[]): AttackMitigationTechnique[] {
+  const techniques = new Map<string, AttackMitigationTechnique>();
+  for (const group of groups) {
+    for (const technique of group.techniques) {
+      const existing = techniques.get(technique.techniqueId);
+      if (!existing) {
+        techniques.set(technique.techniqueId, {
+          ...technique,
+          tactics: [...technique.tactics],
+          platforms: [...technique.platforms],
+        });
+        continue;
+      }
+      existing.tactics = [...new Set([...existing.tactics, ...technique.tactics])];
+      existing.platforms = [...new Set([...existing.platforms, ...technique.platforms])];
+    }
+  }
+  return [...techniques.values()].sort((left, right) => left.techniqueId.localeCompare(right.techniqueId));
 }
 
-export function attackOutcomeSections(rows: readonly AttackMapping[]): AttackOutcomeSection[] {
-  return OUTCOME_SECTIONS.map((section) => ({
-    ...section,
-    techniques: groupAttackMappings(rows.filter((row) => row.outcomeClass === section.outcomeClass)),
-  })).filter((section) => section.techniques.length > 0);
-}
-
-export function attackTacticSummary(groups: readonly AttackTechniqueGroup[]): AttackTacticSummary[] {
+export function attackTacticSummary(groups: readonly AttackMitigationGroup[]): AttackTacticSummary[] {
+  const techniques = uniqueAttackTechniques(groups);
   const known = new Set<string>(ATTACK_TACTICS);
   const tactics = [
     ...ATTACK_TACTICS,
-    ...[...new Set(groups.flatMap((group) => group.tactics))].filter((tactic) => !known.has(tactic)).sort(),
+    ...[...new Set(techniques.flatMap((technique) => technique.tactics))].filter((tactic) => !known.has(tactic)).sort(),
   ];
   return tactics.map((id) => ({
     id,
     label: formatAttackLabel(id),
-    count: groups.filter((group) => group.tactics.includes(id)).length,
+    count: techniques.filter((technique) => technique.tactics.includes(id)).length,
   }));
 }
 

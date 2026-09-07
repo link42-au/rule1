@@ -87,15 +87,18 @@ describe("reviewed Rule1 explorer", () => {
     expect(explorerSource).toContain('{:else if activeTab === "attack" && isISM}');
   });
 
-  it("presents mapping limits, pinned versions, grouped techniques, and safe MITRE links", () => {
-    expect(attackSource).toContain("groupAttackMappings(result.mappings, result.procedures)");
+  it("presents reviewed mitigations before bounded official technique expansion", () => {
+    expect(attackSource).toContain("groupAttackMitigations(result.mappings, result.procedures)");
     expect(attackSource).toContain("ISM {result.ismCatalogVersion}");
     expect(attackSource).toContain("ATT&amp;CK {result.attackVersion}");
-    expect(attackSource).toContain("may prevent, constrain, detect, contain, or support recovery");
-    expect(attackSource).toContain("Confidence describes confidence in the mapping, not control effectiveness.");
-    expect(attackSource).toContain("This control supports");
-    expect(attackModelSource).toContain('title: "Technique disruption"');
-    expect(attackModelSource).toContain('title: "Consequence treatment"');
+    expect(attackSource).toContain("this control enables an ATT&amp;CK mitigation");
+    expect(attackSource).toContain("Confidence applies to the control-to-mitigation mapping");
+    expect(attackSource).toContain("This control <strong>{mitigation.relationship}</strong>");
+    expect(attackSource).toContain("MITRE mitigation guidance");
+    expect(attackSource).toContain("INITIAL_TECHNIQUE_LIMIT = 12");
+    expect(attackSource).toMatch(/Show all \$\{mitigation\.techniques\.length\} techniques/);
+    expect(attackModelSource).toContain("relationshipDescription");
+    expect(attackModelSource).not.toContain("outcomeClass");
     expect(attackSource).toContain('target="_blank" rel="noopener noreferrer"');
     expect(attackSource).toContain("do not mean this mapped ISM control defeats or covers");
     expect(attackSource).toContain("Reported procedure examples");
@@ -106,7 +109,7 @@ describe("reviewed Rule1 explorer", () => {
   it("keeps ATT&CK loading, failure, and no-reviewed-mapping states truthful", () => {
     expect(attackSource).toContain("Loading reviewed mappings");
     expect(attackSource).toContain("ATT&amp;CK mappings unavailable");
-    expect(attackSource).toContain("No reviewed ATT&amp;CK mappings");
+    expect(attackSource).toContain("No reviewed ATT&amp;CK mappings to mitigations");
     expect(attackSource).toContain(
       "Candidate relationships stay hidden until an exact human review decision is committed.",
     );

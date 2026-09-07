@@ -57,8 +57,7 @@ export interface E8Mapping {
   strategy: string;
 }
 
-export type AttackEffect = "prevent" | "constrain" | "detect" | "contain" | "recover";
-export type AttackOutcomeClass = "technique-disruption" | "consequence-treatment";
+export type AttackSecurityFunction = "protect" | "detect" | "recover";
 export type AttackProcedureEntityType = "intrusion-set" | "campaign" | "malware" | "tool";
 
 export interface AttackProcedureReference {
@@ -90,6 +89,16 @@ export interface AttackTechniqueProcedures {
 export interface AttackMapping {
   attackVersion: string;
   ismCatalogVersion: string;
+  candidateId: string;
+  mitigationId: string;
+  mitigationName: string;
+  mitigationDescription: string | null;
+  mitigationUrl: string;
+  relationship: "enables";
+  securityFunction: AttackSecurityFunction;
+  confidence: "low" | "medium" | "high";
+  rationale: string;
+  evidence: Record<string, unknown>[];
   techniqueId: string;
   techniqueName: string;
   techniqueDescription: string | null;
@@ -97,15 +106,8 @@ export interface AttackMapping {
   tactics: string[];
   platforms: string[];
   parentTechniqueId: string | null;
-  mitigationId: string;
-  mitigationName: string;
-  mitigationDescription: string | null;
-  mitigationUrl: string;
-  effect: AttackEffect;
-  outcomeClass: AttackOutcomeClass;
-  confidence: "low" | "medium" | "high";
-  rationale: string;
-  evidence: Record<string, unknown>[];
+  relationshipStixId: string;
+  relationshipDescription: string | null;
 }
 
 export interface AttackMappingResult {

@@ -1,21 +1,31 @@
 import { describe, expect, it } from "vitest";
 import type { AttackMapping, AttackTechniqueProcedures } from "$lib/db/contracts";
 import {
-  attackOutcomeSections,
   attackTacticSummary,
-  attackTechniqueOutcomeSections,
-  effectInfinitive,
-  effectRelationshipPhrase,
   formatAttackLabel,
-  groupAttackMappings,
+  groupAttackMitigations,
   procedureReferenceLabel,
   safeMitreUrl,
   safeSourceUrl,
+  uniqueAttackTechniques,
 } from "./attack-model";
 
 const row = (overrides: Partial<AttackMapping> = {}): AttackMapping => ({
   attackVersion: "19.2",
   ismCatalogVersion: "ISM-OSCAL-2026.09.4",
+  candidateId: "candidate-1",
+  mitigationId: "M1032",
+  mitigationName: "Multi-factor Authentication",
+  mitigationDescription: "Require more than one authentication factor.",
+  mitigationUrl: "https://attack.mitre.org/mitigations/M1032/",
+  relationship: "enables",
+  securityFunction: "protect",
+  confidence: "high",
+  rationale: "The control directly requires multi-factor authentication.",
+  evidence: [
+    { kind: "ism-control", matched_text: "Multi-factor authentication is required." },
+    { kind: "attack-mitigation", matched_text: "Require more than one authentication factor." },
+  ],
   techniqueId: "T1110",
   techniqueName: "Brute Force",
   techniqueDescription: "Attempt to gain access by guessing credentials.",
@@ -23,54 +33,63 @@ const row = (overrides: Partial<AttackMapping> = {}): AttackMapping => ({
   tactics: ["credential-access"],
   platforms: ["Windows"],
   parentTechniqueId: null,
-  mitigationId: "M1032",
-  mitigationName: "Multi-factor Authentication",
-  mitigationDescription: "Use MFA.",
-  mitigationUrl: "https://attack.mitre.org/mitigations/M1032/",
-  effect: "prevent",
-  outcomeClass: "technique-disruption",
-  confidence: "high",
-  rationale: "MFA may prevent successful use of guessed credentials.",
-  evidence: [{ kind: "curator-note", note: "The result depends on implementation and authentication path." }],
+  relationshipStixId: "relationship--mfa-brute-force",
+  relationshipDescription: "Use multi-factor authentication to reduce the impact of guessed credentials.",
   ...overrides,
 });
 
-describe("ATT&CK mapping presentation", () => {
-  it("groups a technique without removing its independent outcome edges", () => {
-    const groups = groupAttackMappings([
+describe("ATT&CK mitigation-first presentation", () => {
+  it("groups by reviewed mitigation, deduplicates transport rows, and retains official relationship edges", () => {
+    const groups = groupAttackMitigations([
       row(),
-      row({ mitigationId: "M1027", mitigationName: "Password Policies", effect: "constrain", confidence: "medium" }),
-      row(),
+      row({ tactics: ["credential-access", "initial-access"], platforms: ["Linux"] }),
+      row({
+        relationshipStixId: "relationship--mfa-brute-force-2",
+        relationshipDescription: "Require phishing-resistant factors where possible.",
+      }),
     ]);
 
     expect(groups).toHaveLength(1);
-    expect(groups[0]).toMatchObject({ techniqueId: "T1110", effects: ["prevent", "constrain"] });
-    expect(groups[0].mappings).toHaveLength(3);
-    expect(groups[0].mappings[0].evidenceNotes).toEqual([
-      "The result depends on implementation and authentication path.",
+    expect(groups[0]).toMatchObject({
+      mitigationId: "M1032",
+      relationship: "enables",
+      securityFunction: "protect",
+      evidenceNotes: ["Multi-factor authentication is required.", "Require more than one authentication factor."],
+    });
+    expect(groups[0].techniques).toHaveLength(1);
+    expect(groups[0].techniques[0].tactics).toEqual(["credential-access", "initial-access"]);
+    expect(groups[0].techniques[0].platforms).toEqual(["Windows", "Linux"]);
+    expect(groups[0].techniques[0].relationships).toEqual([
+      {
+        relationshipStixId: "relationship--mfa-brute-force",
+        description: "Use multi-factor authentication to reduce the impact of guessed credentials.",
+      },
+      {
+        relationshipStixId: "relationship--mfa-brute-force-2",
+        description: "Require phishing-resistant factors where possible.",
+      },
     ]);
   });
 
-  it("separates technique disruption from consequence treatment for the same technique", () => {
-    const sections = attackOutcomeSections([
-      row({ effect: "detect", outcomeClass: "technique-disruption" }),
+  it("retains the same official technique beneath each distinct reviewed mitigation", () => {
+    const groups = groupAttackMitigations([
+      row(),
       row({
-        mitigationId: "M1053",
-        mitigationName: "Data Backup",
-        effect: "recover",
-        outcomeClass: "consequence-treatment",
+        candidateId: "candidate-2",
+        mitigationId: "M1027",
+        mitigationName: "Password Policies",
+        mitigationUrl: "https://attack.mitre.org/mitigations/M1027/",
+        securityFunction: "detect",
+        rationale: "The control establishes account password policy.",
       }),
     ]);
-    expect(sections.map((section) => [section.outcomeClass, section.techniques[0].mappings[0].effect])).toEqual([
-      ["technique-disruption", "detect"],
-      ["consequence-treatment", "recover"],
-    ]);
-    expect(effectRelationshipPhrase("contain")).toBe("contains");
-    expect(effectRelationshipPhrase("recover")).toBe("recovers from");
-    expect(effectInfinitive("recover")).toBe("recover from");
+
+    expect(groups).toHaveLength(2);
+    expect(groups.map((group) => group.techniques[0].techniqueId)).toEqual(["T1110", "T1110"]);
+    expect(uniqueAttackTechniques(groups)).toHaveLength(1);
   });
 
-  it("attaches procedure examples once to a unique technique while retaining every outcome edge", () => {
+  it("attaches bounded procedure data to every mitigation-specific technique occurrence", () => {
     const procedures: AttackTechniqueProcedures[] = [
       {
         techniqueId: "T1110",
@@ -78,7 +97,7 @@ describe("ATT&CK mapping presentation", () => {
         returned: 1,
         examples: [
           {
-            relationshipStixId: "relationship--1",
+            relationshipStixId: "relationship--procedure-1",
             entityStixId: "intrusion-set--1",
             entityType: "intrusion-set",
             entityExternalId: "G0001",
@@ -91,22 +110,18 @@ describe("ATT&CK mapping presentation", () => {
         ],
       },
     ];
-    const groups = groupAttackMappings(
-      [
-        row({ effect: "detect", outcomeClass: "technique-disruption" }),
-        row({ mitigationId: "M1053", effect: "recover", outcomeClass: "consequence-treatment" }),
-      ],
+    const groups = groupAttackMitigations(
+      [row(), row({ candidateId: "candidate-2", mitigationId: "M1027", mitigationName: "Password Policies" })],
       procedures,
     );
 
-    expect(groups).toHaveLength(1);
-    expect(groups[0].procedures).toBe(procedures[0]);
-    expect(attackTechniqueOutcomeSections(groups[0]).map((section) => section.mappings.length)).toEqual([1, 1]);
+    expect(groups[0].techniques[0].procedures).toBe(procedures[0]);
+    expect(groups[1].techniques[0].procedures).toBe(procedures[0]);
   });
 
   it("summarises tactics by unique technique and retains zero-count Enterprise tactics", () => {
     const summary = attackTacticSummary(
-      groupAttackMappings([
+      groupAttackMitigations([
         row(),
         row({ techniqueId: "T1110.001", techniqueName: "Password Guessing", parentTechniqueId: "T1110" }),
       ]),
@@ -122,6 +137,8 @@ describe("ATT&CK mapping presentation", () => {
     );
     expect(safeMitreUrl("javascript:alert(1)")).toBeNull();
     expect(safeMitreUrl("https://example.com/techniques/T1110/")).toBeNull();
+    expect(safeMitreUrl("https://user:secret@attack.mitre.org/techniques/T1110/")).toBeNull();
+    expect(safeMitreUrl("https://attack.mitre.org:444/techniques/T1110/")).toBeNull();
     expect(safeSourceUrl("https://example.com/report?q=1")).toBe("https://example.com/report?q=1");
     expect(safeSourceUrl("http://example.com/report")).toBeNull();
     expect(safeSourceUrl("javascript:alert(1)")).toBeNull();

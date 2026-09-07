@@ -232,8 +232,8 @@ test("ATT&CK control mappings are ISM-only, local, and honestly empty at desktop
     const attackTab = page.getByRole("tab", { name: "ATT&CK" });
     await expect(attackTab).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("heading", { name: "MITRE ATT&CK mappings" })).toBeVisible();
-    await expect(page.getByText(/may prevent, constrain, detect, contain, or support recovery/)).toBeVisible();
-    await expect(page.getByText("No reviewed ATT&CK mappings", { exact: true })).toBeVisible();
+    await expect(page.getByText(/this control enables an ATT&CK mitigation/)).toBeVisible();
+    await expect(page.getByText("No reviewed ATT&CK mappings to mitigations", { exact: true })).toBeVisible();
     await expect(page.getByText("ATT&CK 19.2", { exact: true })).toBeVisible();
     await expect(page.getByText("ISM ISM-OSCAL-2026.09.4", { exact: true })).toBeVisible();
     await assertDocumentDoesNotOverflow(page);
@@ -254,38 +254,10 @@ test("ATT&CK procedure examples disclose once per technique with keyboard-safe d
   await copyFile("apps/web/static/data/rule1.sqlite3", fixturePath);
   const fixtureDatabase = new DatabaseSync(fixturePath);
   fixtureDatabase.exec(
-    `CREATE TABLE control_attack_bridges (
-       bridge_id TEXT PRIMARY KEY,
-       framework TEXT NOT NULL,
-       ism_catalog_version TEXT NOT NULL,
-       control_id TEXT NOT NULL,
-       attack_version TEXT NOT NULL,
-       mitigation_id TEXT NOT NULL,
-       evidence TEXT NOT NULL
-     );
-     CREATE TABLE control_attack_mappings (
-       candidate_id TEXT PRIMARY KEY,
-       bridge_id TEXT NOT NULL,
-       attack_version TEXT NOT NULL,
-       mitigation_id TEXT NOT NULL,
-       technique_id TEXT NOT NULL,
-       status TEXT NOT NULL,
-       effect TEXT NOT NULL,
-       confidence TEXT NOT NULL,
-       rationale TEXT NOT NULL,
-       evidence TEXT NOT NULL,
-       reviewed_by TEXT,
-       reviewed_at TEXT
-     );
-     INSERT INTO control_attack_bridges VALUES (
-       'playwright-bridge','ism','ISM-OSCAL-2026.09.4','ism-1504','19.2','M1032',
-       '[{"kind":"playwright-bridge"}]'
-     );
-     INSERT INTO control_attack_mappings VALUES (
-       'playwright-mapping','playwright-bridge','19.2','M1032','T1110','reviewed','prevent','high',
-       'The Playwright-only legacy fixture retains Feature 51 procedure rendering.',
-       '[{"kind":"playwright-direct"}]','playwright-fixture','2026-09-05T00:00:00Z'
-     );
+    `UPDATE control_attack_mitigation_mappings
+       SET status = 'reviewed', reviewed_by = 'playwright-fixture',
+           reviewed_at = '2026-09-07T00:00:00Z'
+       WHERE control_id = 'ism-1504' AND mitigation_id = 'M1032';
      PRAGMA foreign_keys = OFF;
      DELETE FROM control_history
        WHERE framework <> 'ism' OR catalog_version <> (
@@ -295,7 +267,7 @@ test("ATT&CK procedure examples disclose once per technique with keyboard-safe d
        WHERE framework <> 'ism' OR catalog_version <> (
          SELECT version FROM catalog_versions WHERE framework = 'ism' ORDER BY ordinal DESC LIMIT 1
        );
-     DELETE FROM attack_procedures WHERE technique_id <> 'T1110';
+     DELETE FROM attack_procedures WHERE technique_id <> 'T1021';
      VACUUM;`,
   );
   fixtureDatabase.close();
@@ -336,12 +308,24 @@ test("ATT&CK procedure examples disclose once per technique with keyboard-safe d
     await page.setViewportSize(viewport);
     await page.goto(`/explorer/?framework=ism&id=ism-1504&tab=attack&fixture=${viewport.label}`);
     await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
-    const disclosure = page.locator(
-      'details.procedure-disclosure:has(summary[aria-label^="Reported procedure examples ("])',
-    );
+    const mitigation = page.locator('article.mitigation-card[data-mitigation-id="M1032"]');
+    await expect(mitigation).toContainText("This control enables");
+    await expect(mitigation).toContainText("Multi-factor Authentication (M1032)");
+    await expect(mitigation.locator('[data-function="protect"]')).toBeVisible();
+
+    const techniqueDisclosure = mitigation.locator('details.technique-disclosure[data-mitigation-id="M1032"]');
+    const techniqueSummary = techniqueDisclosure.locator(":scope > summary");
+    await expect(techniqueSummary).toHaveAttribute("aria-label", /^Official ATT&CK techniques \(showing 12 of 48\)$/);
+    await techniqueSummary.focus();
+    await page.keyboard.press(viewport.key);
+    await expect(techniqueDisclosure.locator("article.technique-card")).toHaveCount(12);
+
+    const technique = techniqueDisclosure.locator('article.technique-card[data-technique-id="T1021"]');
+    await expect(technique.getByText("MITRE mitigation guidance", { exact: true })).toBeVisible();
+    const disclosure = technique.locator('details.procedure-disclosure[data-technique-id="T1021"]');
     const summary = disclosure.locator("summary");
     await expect(disclosure).toHaveCount(1);
-    await expect(summary).toHaveAttribute("aria-label", /^Reported procedure examples \(5 of 25\)$/);
+    await expect(summary).toHaveAttribute("aria-label", /^Reported procedure examples \(5 of 7\)$/);
     await expect(disclosure).not.toHaveAttribute("open", "");
     await expect(disclosure.locator(".procedure-content")).toBeHidden();
 
