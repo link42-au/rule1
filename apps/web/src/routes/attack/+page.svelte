@@ -10,6 +10,7 @@
     writeAttackCatalogueUrl,
     type AttackCoverageFilter,
   } from "$lib/attack-catalogue-model";
+  import { parseAttackMitigationDescription } from "$lib/attack-mitigation-description";
   import type { AttackCatalogueResult, Rule1DataClient } from "$lib/db/contracts";
   import { openRule1DataClient } from "$lib/db/rpc";
   import { formatAttackLabel, safeMitreUrl } from "$lib/explorer/attack-model";
@@ -274,19 +275,40 @@
             {:else}
               <div class="mitigation-list">
                 {#each selectedTechnique.mitigations as mitigation}
+                  {@const guidanceBlocks = mitigation.description ? parseAttackMitigationDescription(mitigation.description) : []}
                   <section class="mitigation-card">
                     <div class="mitigation-title-row">
                       <h4>{mitigation.name} <span>{mitigation.mitigationId}</span></h4>
                       {#if safeMitreUrl(mitigation.url)}<a href={safeMitreUrl(mitigation.url) ?? undefined} target="_blank" rel="noopener noreferrer" aria-label={`View ${mitigation.name} at MITRE`}>↗</a>{/if}
                     </div>
-                    {#if mitigation.description}<p class="mitigation-copy"><strong>Mitigation guidance</strong>{mitigation.description}</p>{/if}
-                    {#if mitigation.relationshipDescription}<p class="relationship-copy"><strong>Relationship to this technique</strong>{mitigation.relationshipDescription}</p>
-                    {:else}<p class="relationship-copy muted"><strong>Relationship to this technique</strong>MITRE retains the relationship without a descriptive note.</p>{/if}
+                    {#if guidanceBlocks.length > 0}
+                      <section class="mitigation-guidance" aria-label={`${mitigation.name} mitigation guidance`}>
+                        <h5>Mitigation guidance</h5>
+                        <div class="guidance-blocks">
+                          {#each guidanceBlocks as block}
+                            {#if block.type === "heading"}
+                              <h6>{block.text}</h6>
+                            {:else if block.type === "list"}
+                              <ul>
+                                {#each block.items as item}<li>{item}</li>{/each}
+                              </ul>
+                            {:else}
+                              <p>{block.text}</p>
+                            {/if}
+                          {/each}
+                        </div>
+                      </section>
+                    {/if}
+                    <section class:muted={!mitigation.relationshipDescription} class="relationship-copy" aria-label={`${mitigation.name} relationship to ${selectedTechnique.name}`}>
+                      <h5>Relationship to this technique</h5>
+                      {#if mitigation.relationshipDescription}<p>{mitigation.relationshipDescription}</p>
+                      {:else}<p>MITRE retains the relationship without a descriptive note.</p>{/if}
+                    </section>
                     {#if mitigation.controls.length === 0}
                       <p class="control-empty">No reviewed ISM controls currently enable this mitigation.</p>
                     {:else}
-                      <div class="control-list">
-                        <p class="control-list-label">Reviewed ISM controls enabling this mitigation</p>
+                      <section class="control-list" aria-label={`Reviewed ISM controls enabling ${mitigation.name}`}>
+                        <h5 class="control-list-label">Reviewed ISM controls enabling this mitigation</h5>
                         {#each mitigation.controls as control}
                           <a class="control-card" href={controlHref(control.controlId)}>
                             <span class="control-title"><strong>{control.displayId}</strong>{#if control.title} · {control.title}{/if}</span>
@@ -294,7 +316,7 @@
                             <span class="control-meta"><span class={`function ${control.securityFunction}`}>{control.securityFunction}</span><span>{control.confidence} confidence</span><span aria-hidden="true">Open in Explorer →</span></span>
                           </a>
                         {/each}
-                      </div>
+                      </section>
                     {/if}
                   </section>
                 {/each}
@@ -312,7 +334,7 @@
 <style>
   .attack-page { width: min(1480px, 100%); min-width: 0; margin: 0 auto; padding: 36px 24px 64px; }
   .page-heading, .filter-title-row, .filter-footer, .detail-title-row, .mitigation-title-row, .relationship-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
-  h1, h2, h3, h4, p { margin-top: 0; }
+  h1, h2, h3, h4, h5, h6, p { margin-top: 0; }
   .page-heading h1 { margin-bottom: 6px; color: var(--text); font-size: clamp(30px, 4vw, 46px); letter-spacing: -0.04em; }
   .page-heading > div > p:last-child { max-width: 690px; margin: 0; color: var(--text-mid); line-height: 1.55; }
   .eyebrow { margin-bottom: 5px; color: var(--accent-text); font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
@@ -353,6 +375,7 @@
   .technique-name { min-width: 0; color: var(--text); font-size: 12px; font-weight: 600; }
   .coverage-badges { display: flex; gap: 4px; }
   .coverage-badges span { padding: 2px 5px; border: 1px solid var(--border); border-radius: 99px; color: var(--text-dim); font-family: var(--font-mono); font-size: 8px; }
+  .technique-row.selected .coverage-badges span:not(.reviewed) { color: var(--text-mid); }
   .coverage-badges .reviewed { border-color: var(--accent-border); background: var(--accent-bg); color: var(--accent-text); }
   .empty-state, .relationship-empty { padding: 26px 18px; color: var(--text-dim); font-size: 12px; line-height: 1.5; }
   .technique-detail { position: sticky; top: 16px; min-width: 0; max-height: calc(100vh - 32px); overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card); }
@@ -374,12 +397,21 @@
   .mitigation-title-row h4 { margin: 0; color: var(--text); font-size: 13px; }
   .mitigation-title-row h4 span { margin-left: 4px; color: var(--accent-text); font-family: var(--font-mono); font-size: 10px; }
   .mitigation-title-row a { color: var(--accent-text); text-decoration: none; }
-  .mitigation-copy, .relationship-copy { margin: 9px 0 0; color: var(--text-mid); font-size: 11px; line-height: 1.55; }
-  .mitigation-copy strong, .relationship-copy strong { display: block; margin-bottom: 2px; color: var(--text-dim); font-size: 9px; letter-spacing: .03em; text-transform: uppercase; }
+  .mitigation-guidance, .relationship-copy { margin-top: 12px; }
+  .mitigation-guidance > h5, .relationship-copy > h5, .control-list-label { margin: 0; color: var(--text-dim); font-size: 9px; letter-spacing: .04em; text-transform: uppercase; }
+  .guidance-blocks { display: grid; gap: 7px; margin-top: 7px; padding: 10px 11px; border-left: 2px solid var(--accent-border); border-radius: 0 6px 6px 0; background: var(--bg-card); color: var(--text-mid); font-size: 11px; line-height: 1.55; }
+  .guidance-blocks h6 { margin: 4px 0 -1px; color: var(--text); font-size: 11px; font-weight: 700; line-height: 1.4; }
+  .guidance-blocks p, .guidance-blocks ul { margin: 0; }
+  .guidance-blocks p { white-space: pre-line; }
+  .guidance-blocks ul { display: grid; gap: 4px; padding-left: 18px; }
+  .guidance-blocks li { padding-left: 1px; }
+  .guidance-blocks li::marker { color: var(--accent-text); }
+  .relationship-copy { padding-top: 10px; border-top: 1px solid var(--border); color: var(--text-mid); font-size: 11px; line-height: 1.55; }
+  .relationship-copy p { margin: 5px 0 0; }
   .relationship-copy.muted, .control-empty { color: var(--text-dim); }
   .control-empty { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: 10px; }
   .control-list { display: grid; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
-  .control-list-label { margin: 0 0 2px; color: var(--text-dim); font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .control-list-label { margin-bottom: 2px; font-weight: 700; }
   .control-card { display: grid; gap: 5px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: inherit; text-decoration: none; }
   .control-card:hover { border-color: var(--accent-border); }
   .control-title { color: var(--text); font-size: 11px; }
