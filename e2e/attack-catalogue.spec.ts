@@ -25,7 +25,8 @@ async function routeReviewedFixture(page: Page, testInfo: TestInfo): Promise<voi
     SET status = 'candidate', reviewed_by = NULL, reviewed_at = NULL;
     UPDATE control_attack_mitigation_mappings
     SET status = 'reviewed', reviewed_by = 'playwright-fixture', reviewed_at = '2026-09-07T00:00:00Z'
-    WHERE control_id = 'ism-1504' AND mitigation_id = 'M1032';
+    WHERE (control_id = 'ism-1504' AND mitigation_id = 'M1032')
+      OR (control_id = 'ism-1511' AND mitigation_id = 'M1053');
     PRAGMA foreign_keys = OFF;
     DELETE FROM control_history
       WHERE framework <> 'ism' OR catalog_version <> (
@@ -116,5 +117,38 @@ test("ATT&CK catalogue searches and filters mapped and unmapped techniques at de
     await page.getByRole("link", { name: /ISM-1504/ }).click();
     await expect(page).toHaveURL(/explorer\/\?framework=ism&id=ism-1504&tab=attack/);
     await expect(page.locator("[data-control-heading]")).toBeVisible();
+  }
+});
+
+test("ATT&CK mitigation guidance has readable semantic structure at desktop and phone widths", async ({
+  page,
+}, testInfo) => {
+  await routeReviewedFixture(page, testInfo);
+
+  for (const viewport of [
+    { width: 1280, height: 900, label: "desktop" },
+    { width: 390, height: 844, label: "phone" },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(`/attack/?technique=T1485&guidance=${viewport.label}`);
+    await expect(page.getByRole("heading", { name: "Data Destruction", level: 2 })).toBeVisible({ timeout: 90_000 });
+
+    const mitigation = page.locator(".mitigation-card", { hasText: "Data Backup M1053" });
+    await expect(mitigation).toBeVisible();
+    const guidance = mitigation.getByRole("region", { name: "Data Backup mitigation guidance" });
+    await expect(guidance.getByRole("heading", { name: "Mitigation guidance", level: 5 })).toBeVisible();
+    await expect(guidance.getByRole("heading", { name: "Regular Backup Scheduling:", level: 6 })).toBeVisible();
+    await expect(guidance.getByRole("list").first().getByRole("listitem")).toHaveCount(2);
+    await expect(guidance.getByText("Use Case: Ensure timely and consistent backups of critical data.")).toBeVisible();
+
+    const relationship = mitigation.getByRole("region", { name: "Data Backup relationship to Data Destruction" });
+    await expect(relationship.getByRole("heading", { name: "Relationship to this technique", level: 5 })).toBeVisible();
+    await expect(relationship).toContainText("regular data backups that can be used to restore organizational data");
+    await expect(mitigation.getByText("Reviewed ISM controls enabling this mitigation")).toBeVisible();
+    await expect(mitigation.getByRole("link", { name: /ISM-1511/ })).toBeVisible();
+
+    await assertNoDocumentOverflow(page);
+    await assertNoSeriousAxeViolations(page);
+    await mitigation.screenshot({ path: testInfo.outputPath(`t1485-m1053-${viewport.label}.png`) });
   }
 });

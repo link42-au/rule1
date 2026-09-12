@@ -40,6 +40,19 @@ describe("Enterprise ATT&CK catalogue route", () => {
     expect(source).not.toContain("{@html");
   });
 
+  it("formats source mitigation guidance into safe semantic sections", () => {
+    expect(source).toContain('import { parseAttackMitigationDescription } from "$lib/attack-mitigation-description"');
+    expect(source).toContain("parseAttackMitigationDescription(mitigation.description)");
+    expect(source).toContain('<section class="mitigation-guidance"');
+    expect(source).toContain(">Mitigation guidance</h5>");
+    expect(source).toContain("<h6>{block.text}</h6>");
+    expect(source).toContain("{#each block.items as item}<li>{item}</li>{/each}");
+    expect(source).toContain('<section class:muted={!mitigation.relationshipDescription} class="relationship-copy"');
+    expect(source).toContain('<section class="control-list"');
+    expect(source).not.toContain("mitigation-copy");
+    expect(source).not.toContain("{@html");
+  });
+
   it("keeps the full technique description in a collapsed native disclosure", () => {
     expect(source).toContain('<details class="description-disclosure">');
     expect(source).toContain("Technique description (${wordCount(selectedTechnique.description)} words)");
