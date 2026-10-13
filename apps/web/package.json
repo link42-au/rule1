@@ -25,6 +25,6 @@
     "@sveltejs/vite-plugin-svelte": "5.1.1",
     "svelte-check": "4.3.4",
     "vite": "6.4.3",
-    "vitest": "4.1.5"
+    "vitest": "4.1.11"
   }
 }
