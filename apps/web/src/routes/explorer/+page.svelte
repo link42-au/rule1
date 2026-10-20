@@ -683,7 +683,7 @@
 
       {#if isEssentials}
         <label class="essentials-domain">Domain
-          <select aria-label="Essentials domain" bind:value={domain} onchange={() => clearSelection()}>
+          <select aria-label="Essentials domain" bind:value={domain} onchange={() => { clearSelection(); syncUrl(); }}>
             <option value="">All domains</option>
             {#each domainOptions as value}<option value={value}>{sourceLabel(value)}</option>{/each}
           </select>

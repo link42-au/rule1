@@ -35,11 +35,12 @@ test("Essentials retains domains, phases, principles and ordered indicators at d
 });
 
 test("Essentials search, domain filters and single-version Compare work without ISM mappings", async ({ page }) => {
-  await page.goto(`/explorer/?framework=${framework}`);
+  await page.goto(`/explorer/?framework=${framework}&id=IT.GOV-01.1`);
   const domain = page.getByRole("combobox", { name: "Essentials domain" });
   await expect(domain).toBeVisible();
   await expect(page.locator(".sidebar-section-label")).toHaveText(/Actions list.*58/);
   await domain.selectOption("identity-services");
+  await expect(page).not.toHaveURL(/(?:[?&])id=/);
   await expect(page.locator(".sidebar-section-label")).not.toHaveText(/58/);
   await page.goto(`/explorer/?framework=${framework}&search=IT.GOV-01.1`);
   await expect(page.locator("[data-control-heading]")).toHaveText("IT.GOV-01.1");
