@@ -18,6 +18,7 @@ from .attack import parse_attack_bundle
 from .mitigation_mappings import load_assessments, load_inputs
 
 FRAMEWORKS = (
+    ("asd-essentials-enterprise-it", "ASD Essentials for Enterprise IT", "ASD Essentials", "Australian Signals Directorate", "https://www.cyber.gov.au/essentials/essentials-for-enterprise-it", "Australia", "#2563eb"),
     ("cyber-essentials", "Cyber Essentials", "CE", "UK National Cyber Security Centre", "https://www.ncsc.gov.uk/cyberessentials/overview", "United Kingdom", "#2563eb"),
     ("ism", "Information Security Manual", "ISM", "Australian Signals Directorate", "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/ism", "Australia", "#2563eb"),
     ("nist-800-53", "NIST SP 800-53", "NIST 800-53", "National Institute of Standards and Technology", "https://csrc.nist.gov/pubs/sp/800/53/r5/upd1/final", "United States", "#2563eb"),

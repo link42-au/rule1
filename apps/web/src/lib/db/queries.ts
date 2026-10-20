@@ -87,9 +87,11 @@ const frameworkParams = (params: unknown): FrameworkParams => {
 
 const controlParams = (params: unknown): ControlParams => {
   const input = objectParams(params);
+  const framework = canonicalFrameworkId(requiredString(input, "framework"));
+  const id = requiredString(input, "id");
   return {
-    framework: canonicalFrameworkId(requiredString(input, "framework")),
-    id: requiredString(input, "id").toLowerCase(),
+    framework,
+    id: framework === "asd-essentials-enterprise-it" ? id : id.toLowerCase(),
   };
 };
 
@@ -273,7 +275,7 @@ async function sections(executor: QueryExecutor, params: FrameworkParams): Promi
   }));
 }
 
-function groupTree(groupRows: readonly Row[], countRows: readonly Row[]): Group[] {
+function groupTree(groupRows: readonly Row[], countRows: readonly Row[], preserveOrder = false): Group[] {
   const directCounts = new Map(countRows.map((row) => [text(row.section_id), numberValue(row.control_count)]));
   const nodes = new Map<string, Group>();
   for (const row of groupRows) {
@@ -296,11 +298,11 @@ function groupTree(groupRows: readonly Row[], countRows: readonly Row[]): Group[
     if (path.has(node.id)) return node.control_count;
     const next = new Set(path).add(node.id);
     node.children = node.children.filter((child) => !next.has(child.id));
-    node.children.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
+    if (!preserveOrder) node.children.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
     node.control_count += node.children.reduce((total, child) => total + sumAndSort(child, next), 0);
     return node.control_count;
   };
-  roots.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
+  if (!preserveOrder) roots.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
   for (const root of roots) sumAndSort(root, new Set());
   return roots;
 }
@@ -323,7 +325,7 @@ async function groups(executor: QueryExecutor, params: FrameworkParams): Promise
       [framework, framework, framework],
     ),
   ]);
-  return groupTree(groupRows, countRows);
+  return groupTree(groupRows, countRows, framework === "asd-essentials-enterprise-it");
 }
 
 async function controls(executor: QueryExecutor, params: FrameworkParams): Promise<ControlsResult> {
@@ -607,7 +609,6 @@ async function attackCatalogue(executor: QueryExecutor): Promise<AttackCatalogue
 
 async function control(executor: QueryExecutor, params: ControlParams): Promise<ControlDetail | null> {
   const framework = canonicalFrameworkId(params.framework);
-  const id = params.id.toLowerCase();
   const latestRows = await executor.all<Row>(
     `/* rule1:control */
     SELECT h.*, g.overview AS section_overview
@@ -615,11 +616,12 @@ async function control(executor: QueryExecutor, params: ControlParams): Promise<
     JOIN catalog_versions v ON v.framework = h.framework AND v.version = h.catalog_version
     LEFT JOIN control_groups g ON g.framework = h.framework
       AND g.catalog_version = h.catalog_version AND g.id = h.section_id
-    WHERE h.framework = ? AND h.control_id = ? ORDER BY v.ordinal DESC LIMIT 1`,
-    [framework, id],
+    WHERE h.framework = ? AND h.control_id = ?${framework === "asd-essentials-enterprise-it" ? " COLLATE NOCASE" : ""} ORDER BY v.ordinal DESC LIMIT 1`,
+    [framework, params.id],
   );
   const latestRow = latestRows[0];
   if (!latestRow) return null;
+  const id = text(latestRow.control_id, params.id);
 
   const [historyRows, mappings, annotationRows] = await Promise.all([
     executor.all<Row>(
@@ -663,26 +665,26 @@ async function controlHistory(executor: QueryExecutor, params: ControlParams): P
     `/* rule1:control-history */
     SELECT ${HISTORY_COLUMNS} FROM control_history h
     JOIN catalog_versions v ON v.framework = h.framework AND v.version = h.catalog_version
-    WHERE h.framework = ? AND h.control_id = ? ORDER BY v.ordinal DESC`,
-    [framework, params.id.toLowerCase()],
+    WHERE h.framework = ? AND h.control_id = ?${framework === "asd-essentials-enterprise-it" ? " COLLATE NOCASE" : ""} ORDER BY v.ordinal DESC`,
+    [framework, params.id],
   );
   return rows.map((row) => decodeRevision(row, true));
 }
 
 async function graph(executor: QueryExecutor, params: ControlParams): Promise<GraphData> {
   const framework = canonicalFrameworkId(params.framework);
-  const id = params.id.toLowerCase();
   const centerRows = await executor.all<Row>(
     `/* rule1:graph-center */
     SELECT h.control_id, COALESCE(h.display_id, h.control_id) AS display_id,
       h.label, h.statement, h.section_id, h.section_title, h.catalog_version
     FROM control_history h
     JOIN catalog_versions v ON v.framework = h.framework AND v.version = h.catalog_version
-    WHERE h.framework = ? AND h.control_id = ? ORDER BY v.ordinal DESC LIMIT 1`,
-    [framework, id],
+    WHERE h.framework = ? AND h.control_id = ?${framework === "asd-essentials-enterprise-it" ? " COLLATE NOCASE" : ""} ORDER BY v.ordinal DESC LIMIT 1`,
+    [framework, params.id],
   );
   const center = centerRows[0];
   if (!center?.section_id) return { nodes: [], edges: [], group: null };
+  const id = text(center.control_id, params.id);
 
   const peers = await executor.all<Row>(
     `/* rule1:graph-peers */

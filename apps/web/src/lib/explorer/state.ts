@@ -1,3 +1,4 @@
+import { essentialsSearchText } from "$lib/explorer/essentials-model";
 import type { Control, GlossaryTerm, Group, Revision } from "@rule1/shared";
 import { canonicalFrameworkId, type FrameworkId } from "$lib/db/contracts";
 
@@ -111,7 +112,14 @@ export function filterControls(
   const query = search.trim().toLowerCase();
   if (!query) return result;
   return result.filter((control) =>
-    [control.id, control.display_id, control.title, control.label, control.statement]
+    [
+      control.id,
+      control.display_id,
+      control.title,
+      control.label,
+      control.statement,
+      essentialsSearchText(control.metadata),
+    ]
       .filter(Boolean)
       .some((value) => value!.toLowerCase().includes(query)),
   );

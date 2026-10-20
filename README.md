@@ -1,6 +1,6 @@
 # Rule1
 
-Rule1 is a public, standalone security-controls catalogue. It lets people browse, search, compare, and inspect the retained history of the Australian ISM, New Zealand ISM, Cyber Essentials, NIST Cybersecurity Framework, and NIST SP 800-53.
+Rule1 is a public, standalone security-controls catalogue. It lets people browse, search, compare, and inspect the retained history of ASD Essentials for Enterprise IT, the Australian ISM, New Zealand ISM, UK Cyber Essentials, NIST Cybersecurity Framework, and NIST SP 800-53.
 
 The canonical site is [rule1.link42.app](https://rule1.link42.app/).
 

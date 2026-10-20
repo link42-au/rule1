@@ -32,9 +32,9 @@ class ParserTests(unittest.TestCase):
         }
 
     def test_all_retained_versions_have_stable_unique_controls(self) -> None:
-        expected = {"cyber-essentials": 3, "ism": 63, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
+        expected = {"asd-essentials-enterprise-it": 1, "cyber-essentials": 3, "ism": 63, "nist-800-53": 4, "nist-csf": 2, "nzism": 8}
         self.assertEqual({key: len(value) for key, value in self.by_framework.items()}, expected)
-        self.assertEqual(len(self.snapshots), 80)
+        self.assertEqual(len(self.snapshots), 81)
         for snapshot in self.snapshots:
             controls = snapshot["controls"]
             self.assertTrue(controls, snapshot["catalog_version"])
@@ -44,6 +44,7 @@ class ParserTests(unittest.TestCase):
 
     def test_representative_record_for_each_framework(self) -> None:
         prefixes = {
+            "asd-essentials-enterprise-it": "IT.",
             "cyber-essentials": "ce-", "ism": "ism-", "nist-800-53": "nist-800-53-",
             "nist-csf": "nist-csf-", "nzism": "nzism-",
         }
@@ -387,8 +388,8 @@ class DatabaseTests(unittest.TestCase):
                 dict(connection.execute("SELECT key, value FROM build_metadata"))["sqlite_version"],
                 sqlite3.sqlite_version,
             )
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 80)
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 82)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM catalog_versions").fetchone()[0], 81)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM source_files").fetchone()[0], 83)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_source_files").fetchone()[0], 1)
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM attack_techniques").fetchone()[0], 697)
             self.assertEqual(

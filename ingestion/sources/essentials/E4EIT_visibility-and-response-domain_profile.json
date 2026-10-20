@@ -1,0 +1,188 @@
+{
+  "profile": {
+    "uuid": "880b28cf-9bca-57b6-8cc0-c967e61f7cb3",
+    "metadata": {
+      "title": "Assessment evidence guide for enterprise IT - Visibility and response OSCAL Profile",
+      "published": "2026-10-15T00:30:23Z",
+      "last-modified": "2026-10-15T00:30:23Z",
+      "version": "2026.10.15",
+      "oscal-version": "1.2.3",
+      "props": [ {
+        "name": "domain",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "visibility-and-response"
+      }, {
+        "name": "domain-description",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "Procedures and capabilities for detecting, analysing and responding to cyber security events and incidents."
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-1"
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-2"
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-3"
+      } ],
+      "links": [ {
+        "href": "#8e0d09de-e42a-57de-be50-2f5fe77bb184",
+        "rel": "canonical"
+      }, {
+        "href": "#7eb046b8-28d5-59cf-9785-da76fe6a3ac3",
+        "rel": "latest-version"
+      }, {
+        "href": "#fb8a28b6-60f8-56bf-9307-404a1ba89a45",
+        "rel": "predecessor-version"
+      }, {
+        "href": "#e7db9ba2-aac9-5755-aca9-64726d271665",
+        "rel": "successor-version"
+      }, {
+        "href": "#517e8871-7c0d-531e-9c4b-47b4aec18c14",
+        "rel": "alternate"
+      } ],
+      "roles": [ {
+        "id": "prepared-by",
+        "title": "Document creator"
+      } ],
+      "parties": [ {
+        "uuid": "fb179d7e-bfd5-5daf-af3d-8e4001afedb2",
+        "type": "organization",
+        "name": "Australian Cyber Security Centre",
+        "short-name": "ACSC",
+        "links": [ {
+          "href": "https://www.cyber.gov.au",
+          "rel": "website"
+        } ],
+        "email-addresses": [ "asd.assist@defence.gov.au" ],
+        "addresses": [ {
+          "type": "work",
+          "addr-lines": [ "Australian Cyber Security Centre", "General enquiries", "PO Box 5076" ],
+          "city": "Kingston",
+          "state": "ACT",
+          "postal-code": "2604",
+          "country": "AU"
+        } ]
+      } ],
+      "responsible-parties": [ {
+        "role-id": "prepared-by",
+        "party-uuids": [ "fb179d7e-bfd5-5daf-af3d-8e4001afedb2" ]
+      } ],
+      "remarks": "Consumers of this file should refer to the [Essentials OSCAL NS 1.0](#cf0094a0-0807-5896-86d0-22c7cfc33657) page for information regarding the Essentials specific representation used in this OSCAL file."
+    },
+    "imports": [ {
+      "href": "#d38bc9c9-8458-5017-9f24-d398717562e1",
+      "include-controls": [ {
+        "with-ids": [ "IT.IDE-01.1", "IT.IDE-04.1", "IT.PRO-13.3", "IT.DET-01.3", "IT.DET-02.2", "IT.DET-03.1", "IT.DET-03.2", "IT.DET-05.1", "IT.RES-05.1", "IT.RES-03.1", "IT.RES-04.1", "IT.RES-04.2" ]
+      } ]
+    } ],
+    "merge": {
+      "as-is": true
+    },
+    "back-matter": {
+      "resources": [ {
+        "uuid": "8e0d09de-e42a-57de-be50-2f5fe77bb184",
+        "title": "Assessment evidence guide for enterprise IT - Visibility and response OSCAL Profile v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_visibility-and-response-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_visibility-and-response-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_visibility-and-response-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "7eb046b8-28d5-59cf-9785-da76fe6a3ac3",
+        "title": "Assessment evidence guide for enterprise IT - Visibility and response OSCAL Profile - latest version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_visibility-and-response-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_visibility-and-response-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_visibility-and-response-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "fb8a28b6-60f8-56bf-9307-404a1ba89a45",
+        "title": "Assessment evidence guide for enterprise IT - Visibility and response OSCAL Profile v2026.10.15 - predecessor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_visibility-and-response-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_visibility-and-response-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_visibility-and-response-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "e7db9ba2-aac9-5755-aca9-64726d271665",
+        "title": "Assessment evidence guide for enterprise IT - Visibility and response OSCAL Profile v2026.10.15 - successor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_visibility-and-response-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_visibility-and-response-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_visibility-and-response-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "d38bc9c9-8458-5017-9f24-d398717562e1",
+        "title": "Assessment evidence guide for enterprise IT OSCAL catalog v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "E4EIT_catalog.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "E4EIT_catalog.json",
+          "media-type": "application/json"
+        }, {
+          "href": "E4EIT_catalog.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "517e8871-7c0d-531e-9c4b-47b4aec18c14",
+        "title": "Assessment evidence guide for enterprise IT",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:00:00+11:00"
+        }, {
+          "name": "version",
+          "value": "2026-10-15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/pdf/v2026.10.15-pdf",
+          "media-type": "application/pdf"
+        } ]
+      }, {
+        "uuid": "cf0094a0-0807-5896-86d0-22c7cfc33657",
+        "title": "Essentials OSCAL NS 1.0",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/ns/essentials/oscal/1.0"
+        } ]
+      } ]
+    }
+  }
+}

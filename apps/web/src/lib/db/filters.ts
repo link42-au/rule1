@@ -1,3 +1,4 @@
+import { essentialsSearchText } from "$lib/explorer/essentials-model";
 import type { Control } from "@rule1/shared";
 import type { FrameworkId } from "./contracts";
 
@@ -46,6 +47,8 @@ export function filterControls(
   }
   return result.filter(
     (control) =>
-      control.display_id.toLowerCase().includes(query) || (control.statement ?? "").toLowerCase().includes(query),
+      control.display_id.toLowerCase().includes(query) ||
+      (control.statement ?? "").toLowerCase().includes(query) ||
+      essentialsSearchText(control.metadata).includes(query),
   );
 }

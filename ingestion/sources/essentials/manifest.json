@@ -1,0 +1,56 @@
+{
+  "release": "2026.10.15",
+  "namespace": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+  "artifacts": [
+    {
+      "path": "E4EIT_boundary-services-domain_profile.json",
+      "origin": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_boundary-services-domain_profile.json",
+      "sha256": "a23e96b90ddb47d0e5655d36d73ba658d1f612ccf3c2bbf4fba994608c17079c"
+    },
+    {
+      "path": "E4EIT_business-systems-domain_profile.json",
+      "origin": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_business-systems-domain_profile.json",
+      "sha256": "245b89bd828d6d200b55294790cc3b3e6f3b8cdd2f20762b2856733a0c35486a"
+    },
+    {
+      "path": "E4EIT_critical-processes-and-services-domain_profile.json",
+      "origin": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_critical-processes-and-services-domain_profile.json",
+      "sha256": "713d01985b4ab147cd318971f5ab0e41c5d063fa17b9d07d92cbf7c49bf9943d"
+    },
+    {
+      "path": "E4EIT_governance-and-culture-domain_profile.json",
+      "origin": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_governance-and-culture-domain_profile.json",
+      "sha256": "1f59d12babaa9b75c140b3714962b099d9b0c01ba03b36ee274b90c079b7a9ae"
+    },
+    {
+      "path": "E4EIT_identity-services-domain_profile.json",
+      "origin": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_identity-services-domain_profile.json",
+      "sha256": "553bb66e84997812992cbca61a8ad70f73243f9aeb964d4651273575058ac063"
+    },
+    {
+      "path": "E4EIT_privileged-environments-domain_profile.json",
+      "origin": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_privileged-environments-domain_profile.json",
+      "sha256": "fc633ca94a5e47203a23fa08aed1eec319e42dc385c48c1bee951270691e5f85"
+    },
+    {
+      "path": "E4EIT_user-devices-domain_profile.json",
+      "origin": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_user-devices-domain_profile.json",
+      "sha256": "192a27cf4dacfede1a87b0a4ebee4533bdbe3dcfb72ed06cabdc83fced6b2c38"
+    },
+    {
+      "path": "E4EIT_visibility-and-response-domain_profile.json",
+      "origin": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_visibility-and-response-domain_profile.json",
+      "sha256": "4d139fc4194f398a6d194aeccd62d348b61b927f7049ab8796369b41ed930034"
+    },
+    {
+      "path": "namespace-1.0.html",
+      "origin": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+      "sha256": "52eee472f2b815499ee352762713618d6b77b0897b86424eb5452e41c22c4fa1"
+    },
+    {
+      "path": "README.publisher.md",
+      "origin": "https://raw.githubusercontent.com/AustralianCyberSecurityCentre/e4eit-oscal/v2026.10.15/README.md",
+      "sha256": "c01002a58063f3f6c94adba129ae044e3374b990c57d1866ce3090a39967b0d5"
+    }
+  ]
+}

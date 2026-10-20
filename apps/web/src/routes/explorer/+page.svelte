@@ -6,6 +6,8 @@
   import { onMount } from "svelte";
   import type { AttackMappingResult, E8Mapping, Rule1DataClient } from "$lib/db/contracts";
   import { openRule1DataClient } from "$lib/db/rpc";
+  import EssentialsOverview from "$lib/explorer/EssentialsOverview.svelte";
+  import { ESSENTIALS_FRAMEWORK, essentialsInfo, sourceLabel } from "$lib/explorer/essentials-model";
   import ControlTree from "$lib/explorer/ControlTree.svelte";
   import GlossaryText from "$lib/explorer/GlossaryText.svelte";
   import ContextPanel from "$lib/explorer/ContextPanel.svelte";
@@ -97,7 +99,11 @@
   const mappingRequests = new LatestRequest();
   const attackRequests = new LatestRequest();
   const navigationRequests = new LatestRequest();
-  let filtered = $derived(filterControls(controls, filter, applicability, search, favourites));
+  let domain = $state("");
+  let isEssentials = $derived(framework === ESSENTIALS_FRAMEWORK);
+  let domainOptions = $derived([...new Set(controls.flatMap((c) => essentialsInfo(c.metadata).domains.map((d) => d.id)))]);
+  let filtered = $derived(filterControls(controls, filter, applicability, search, favourites).filter((c) =>
+    !isEssentials || !domain || essentialsInfo(c.metadata).domains.some((d) => d.id === domain)));
   let bySection = $derived(controlsBySection(filtered));
   let isISM = $derived(framework === "ism");
   let changeCount = $derived(detail?.history.filter((revision) => revision.change_type === "modified").length ?? 0);
@@ -494,6 +500,7 @@
     if (!client) return;
     const request = listRequests.begin();
     framework = nextFramework;
+    domain = "";
     controls = [];
     groups = [];
     glossaryTerms = [];
@@ -553,7 +560,7 @@
   }
 
   async function selectSearchResult(updateUrl = true): Promise<void> {
-    const matches = filterControls(controls, filter, applicability, search, favourites);
+    const matches = filtered;
     const match = searchSelection(matches, search);
     if (match) await selectControl(match, false, false);
     else clearSelection();
@@ -651,7 +658,7 @@
 
 <svelte:head>
   <title>Explorer — rule1</title>
-  <meta name="description" content="Browse and search security controls across five retained frameworks." />
+  <meta name="description" content="Browse and search security controls across six retained frameworks, including ASD Essentials for Enterprise IT." />
   <link rel="canonical" href="https://rule1.link42.app/explorer/" />
 </svelte:head>
 
@@ -674,7 +681,15 @@
         {/each}
       </div>
 
-      <div class="filter-group-label">Control filters</div>
+      {#if isEssentials}
+        <label class="essentials-domain">Domain
+          <select aria-label="Essentials domain" bind:value={domain} onchange={() => { clearSelection(); syncUrl(); }}>
+            <option value="">All domains</option>
+            {#each domainOptions as value}<option value={value}>{sourceLabel(value)}</option>{/each}
+          </select>
+        </label>
+      {/if}
+      <div class="filter-group-label">{isEssentials ? "Action filters" : "Control filters"}</div>
       <div class="filter-row" role="group" aria-label="Control filters">
         {#each [
           { value: "all", label: "All" },
@@ -737,7 +752,7 @@
     </div>
 
     <div class="sidebar-section-row">
-      <div class="sidebar-section-label">Controls list <span>({filtered.length})</span></div>
+      <div class="sidebar-section-label">{isEssentials ? "Actions list" : "Controls list"} <span>({filtered.length})</span></div>
       <button
         type="button"
         class="hierarchy-toggle"
@@ -892,6 +907,7 @@
 
         <div id="control-tabpanel" class="tab-panel" role="tabpanel" aria-labelledby={`control-tab-${activeTab}`}>
           {#if activeTab === "overview"}
+            {#if isEssentials}<EssentialsOverview {detail} />{:else}
             <section class="description-card">
               <div class="section-label">
                 <span>Description</span><span>{detail.latest.catalog_version ?? "Latest"}</span>
@@ -947,6 +963,7 @@
                 currentVersion={detail.latest.catalog_version ?? null}
                 status={mappingStatus}
               />
+            {/if}
             {/if}
             {#if latestChange}
               <section class="latest-change-section">
@@ -1017,6 +1034,9 @@
 </div>
 
 <style>
+  .essentials-domain { display: grid; gap: 6px; margin: 12px 0; color: var(--text-mid); font-size: 12px; }
+  .essentials-domain select { min-width: 0; width: 100%; padding: 8px; background: var(--bg-card); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
+
   :global(main#main-content) {
     min-height: 0;
   }

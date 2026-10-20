@@ -663,6 +663,14 @@
       "path": "data/nzism/NZISM-V.-3.7-February-2024.csv",
       "origin": "https://raw.githubusercontent.com/jlaundry/nzism/7b908e7ddbbf0bb4dd6ed6eeba776ad7c22dbdcc/nzism-data/NZISM-V.-3.7-February-2024.csv",
       "sha256": "2d97beb505579bffc1cbc1a8882a7192954eaa6f5dfdd6248fe03d1c3f3475b3"
+    },
+    {
+      "framework": "asd-essentials-enterprise-it",
+      "version": "2026.10.15",
+      "date": "2026-10-15",
+      "path": "data/essentials/E4EIT_catalog-2026.10.15.json",
+      "origin": "https://github.com/AustralianCyberSecurityCentre/e4eit-oscal/blob/v2026.10.15/E4EIT_catalog.json",
+      "sha256": "29b602fbbce89d83f9dffd6e6f99d32d1929b563a967f62b2c1cb52891fdb7d2"
     }
   ]
 }
