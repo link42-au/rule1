@@ -1,0 +1,180 @@
+{
+  "profile": {
+    "uuid": "4ecd696f-44bb-5844-9630-e6c1b2eb5efc",
+    "metadata": {
+      "title": "Assessment evidence guide for enterprise IT - Identity services OSCAL Profile",
+      "published": "2026-10-15T00:30:23Z",
+      "last-modified": "2026-10-15T00:30:23Z",
+      "version": "2026.10.15",
+      "oscal-version": "1.2.3",
+      "props": [ {
+        "name": "domain",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "identity-services"
+      }, {
+        "name": "domain-description",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "Enterprise-wide identity, credential and access management services such as directories, authentication and authorisation services or credential stores."
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-1"
+      } ],
+      "links": [ {
+        "href": "#96f3852f-1aea-56a0-b4ad-da7f0611fd11",
+        "rel": "canonical"
+      }, {
+        "href": "#f8d9e699-bae5-594e-8661-e44091ad71b5",
+        "rel": "latest-version"
+      }, {
+        "href": "#209aeef5-ee5b-5003-bcff-7c6d315cec64",
+        "rel": "predecessor-version"
+      }, {
+        "href": "#de45623d-a608-5d7f-a266-fe1208873ede",
+        "rel": "successor-version"
+      }, {
+        "href": "#7218d461-64c3-5e2d-8529-67b05b25bd67",
+        "rel": "alternate"
+      } ],
+      "roles": [ {
+        "id": "prepared-by",
+        "title": "Document creator"
+      } ],
+      "parties": [ {
+        "uuid": "d84e92a9-9bab-52c7-bb86-5a4c630a29fa",
+        "type": "organization",
+        "name": "Australian Cyber Security Centre",
+        "short-name": "ACSC",
+        "links": [ {
+          "href": "https://www.cyber.gov.au",
+          "rel": "website"
+        } ],
+        "email-addresses": [ "asd.assist@defence.gov.au" ],
+        "addresses": [ {
+          "type": "work",
+          "addr-lines": [ "Australian Cyber Security Centre", "General enquiries", "PO Box 5076" ],
+          "city": "Kingston",
+          "state": "ACT",
+          "postal-code": "2604",
+          "country": "AU"
+        } ]
+      } ],
+      "responsible-parties": [ {
+        "role-id": "prepared-by",
+        "party-uuids": [ "d84e92a9-9bab-52c7-bb86-5a4c630a29fa" ]
+      } ],
+      "remarks": "Consumers of this file should refer to the [Essentials OSCAL NS 1.0](#9ee078a3-48bb-504f-b4d9-21ce5e3dff3e) page for information regarding the Essentials specific representation used in this OSCAL file."
+    },
+    "imports": [ {
+      "href": "#e17fb6f5-b1a5-5923-ad37-9f551dced7db",
+      "include-controls": [ {
+        "with-ids": [ "IT.IDE-01.2", "IT.PRO-01.1", "IT.PRO-01.2", "IT.PRO-16.1", "IT.PRO-16.2", "IT.PRO-13.1", "IT.PRO-13.2", "IT.PRO-13.4", "IT.PRO-13.5", "IT.PRO-13.6", "IT.PRO-12.1", "IT.PRO-12.2", "IT.PRO-12.3", "IT.PRO-05.1", "IT.PRO-05.2", "IT.PRO-05.3", "IT.PRO-04.1", "IT.PRO-04.2", "IT.PRO-04.3", "IT.PRO-06.1", "IT.PRO-06.2", "IT.PRO-06.3", "IT.PRO-07.1", "IT.PRO-07.2", "IT.PRO-10.1", "IT.PRO-10.2", "IT.PRO-10.3", "IT.PRO-18.1", "IT.PRO-18.2", "IT.PRO-09.1", "IT.PRO-14.1", "IT.DET-01.1", "IT.DET-01.2", "IT.DET-04.1", "IT.DET-02.1" ]
+      } ]
+    } ],
+    "merge": {
+      "as-is": true
+    },
+    "back-matter": {
+      "resources": [ {
+        "uuid": "96f3852f-1aea-56a0-b4ad-da7f0611fd11",
+        "title": "Assessment evidence guide for enterprise IT - Identity services OSCAL Profile v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_identity-services-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_identity-services-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_identity-services-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "f8d9e699-bae5-594e-8661-e44091ad71b5",
+        "title": "Assessment evidence guide for enterprise IT - Identity services OSCAL Profile - latest version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_identity-services-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_identity-services-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_identity-services-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "209aeef5-ee5b-5003-bcff-7c6d315cec64",
+        "title": "Assessment evidence guide for enterprise IT - Identity services OSCAL Profile v2026.10.15 - predecessor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_identity-services-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_identity-services-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_identity-services-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "de45623d-a608-5d7f-a266-fe1208873ede",
+        "title": "Assessment evidence guide for enterprise IT - Identity services OSCAL Profile v2026.10.15 - successor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_identity-services-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_identity-services-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_identity-services-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "e17fb6f5-b1a5-5923-ad37-9f551dced7db",
+        "title": "Assessment evidence guide for enterprise IT OSCAL catalog v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "E4EIT_catalog.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "E4EIT_catalog.json",
+          "media-type": "application/json"
+        }, {
+          "href": "E4EIT_catalog.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "7218d461-64c3-5e2d-8529-67b05b25bd67",
+        "title": "Assessment evidence guide for enterprise IT",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:00:00+11:00"
+        }, {
+          "name": "version",
+          "value": "2026-10-15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/pdf/v2026.10.15-pdf",
+          "media-type": "application/pdf"
+        } ]
+      }, {
+        "uuid": "9ee078a3-48bb-504f-b4d9-21ce5e3dff3e",
+        "title": "Essentials OSCAL NS 1.0",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/ns/essentials/oscal/1.0"
+        } ]
+      } ]
+    }
+  }
+}

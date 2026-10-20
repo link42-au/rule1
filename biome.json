@@ -38,6 +38,7 @@
       "!annotations",
       "!data",
       "!ingestion/validation-contract.json",
+      "!ingestion/sources",
       "!**/*.svelte"
     ]
   },

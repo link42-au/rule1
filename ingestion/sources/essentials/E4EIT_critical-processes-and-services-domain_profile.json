@@ -1,0 +1,180 @@
+{
+  "profile": {
+    "uuid": "df9164d3-20c6-5570-bfb7-cfc1ce0dbe6c",
+    "metadata": {
+      "title": "Assessment evidence guide for enterprise IT - Critical processes and services OSCAL Profile",
+      "published": "2026-10-15T00:30:23Z",
+      "last-modified": "2026-10-15T00:30:23Z",
+      "version": "2026.10.15",
+      "oscal-version": "1.2.3",
+      "props": [ {
+        "name": "domain",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "critical-processes-and-services"
+      }, {
+        "name": "domain-description",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "Core processes and services that are critical to delivering primary organisational outcomes."
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-2"
+      } ],
+      "links": [ {
+        "href": "#cb13e6fc-647d-5c9d-81d1-c8c490595922",
+        "rel": "canonical"
+      }, {
+        "href": "#6f48084c-d9d0-5359-885a-2db6c9a797f8",
+        "rel": "latest-version"
+      }, {
+        "href": "#c3fc9125-ae5e-5945-9c99-84974c7b347e",
+        "rel": "predecessor-version"
+      }, {
+        "href": "#e5721ecb-c3ae-5a6d-97e9-81d0668ced9f",
+        "rel": "successor-version"
+      }, {
+        "href": "#749a4f98-ab3d-5c34-a269-635125a18aab",
+        "rel": "alternate"
+      } ],
+      "roles": [ {
+        "id": "prepared-by",
+        "title": "Document creator"
+      } ],
+      "parties": [ {
+        "uuid": "abf7d7c0-829f-51f4-9824-87d4373f6edf",
+        "type": "organization",
+        "name": "Australian Cyber Security Centre",
+        "short-name": "ACSC",
+        "links": [ {
+          "href": "https://www.cyber.gov.au",
+          "rel": "website"
+        } ],
+        "email-addresses": [ "asd.assist@defence.gov.au" ],
+        "addresses": [ {
+          "type": "work",
+          "addr-lines": [ "Australian Cyber Security Centre", "General enquiries", "PO Box 5076" ],
+          "city": "Kingston",
+          "state": "ACT",
+          "postal-code": "2604",
+          "country": "AU"
+        } ]
+      } ],
+      "responsible-parties": [ {
+        "role-id": "prepared-by",
+        "party-uuids": [ "abf7d7c0-829f-51f4-9824-87d4373f6edf" ]
+      } ],
+      "remarks": "Consumers of this file should refer to the [Essentials OSCAL NS 1.0](#c1350084-c4c2-5447-affd-185f1ef2f6c2) page for information regarding the Essentials specific representation used in this OSCAL file."
+    },
+    "imports": [ {
+      "href": "#01a007e8-258b-54d3-a3bc-a96f0531f3b4",
+      "include-controls": [ {
+        "with-ids": [ "IT.IDE-01.2", "IT.PRO-01.1", "IT.PRO-01.2", "IT.PRO-16.1", "IT.PRO-16.2", "IT.PRO-13.1", "IT.PRO-13.2", "IT.PRO-13.4", "IT.PRO-13.5", "IT.PRO-13.6", "IT.PRO-12.1", "IT.PRO-12.2", "IT.PRO-12.3", "IT.PRO-05.1", "IT.PRO-05.2", "IT.PRO-05.3", "IT.PRO-04.1", "IT.PRO-04.2", "IT.PRO-04.3", "IT.PRO-06.1", "IT.PRO-06.2", "IT.PRO-06.3", "IT.PRO-07.1", "IT.PRO-07.2", "IT.PRO-10.1", "IT.PRO-10.2", "IT.PRO-10.3", "IT.PRO-18.1", "IT.PRO-18.2", "IT.PRO-09.1", "IT.PRO-09.2", "IT.PRO-09.3", "IT.PRO-14.1", "IT.DET-01.1", "IT.DET-01.2", "IT.DET-04.1", "IT.DET-02.1" ]
+      } ]
+    } ],
+    "merge": {
+      "as-is": true
+    },
+    "back-matter": {
+      "resources": [ {
+        "uuid": "cb13e6fc-647d-5c9d-81d1-c8c490595922",
+        "title": "Assessment evidence guide for enterprise IT - Critical processes and services OSCAL Profile v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_critical-processes-and-services-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_critical-processes-and-services-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_critical-processes-and-services-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "6f48084c-d9d0-5359-885a-2db6c9a797f8",
+        "title": "Assessment evidence guide for enterprise IT - Critical processes and services OSCAL Profile - latest version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "c3fc9125-ae5e-5945-9c99-84974c7b347e",
+        "title": "Assessment evidence guide for enterprise IT - Critical processes and services OSCAL Profile v2026.10.15 - predecessor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "e5721ecb-c3ae-5a6d-97e9-81d0668ced9f",
+        "title": "Assessment evidence guide for enterprise IT - Critical processes and services OSCAL Profile v2026.10.15 - successor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_critical-processes-and-services-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "01a007e8-258b-54d3-a3bc-a96f0531f3b4",
+        "title": "Assessment evidence guide for enterprise IT OSCAL catalog v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "E4EIT_catalog.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "E4EIT_catalog.json",
+          "media-type": "application/json"
+        }, {
+          "href": "E4EIT_catalog.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "749a4f98-ab3d-5c34-a269-635125a18aab",
+        "title": "Assessment evidence guide for enterprise IT",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:00:00+11:00"
+        }, {
+          "name": "version",
+          "value": "2026-10-15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/pdf/v2026.10.15-pdf",
+          "media-type": "application/pdf"
+        } ]
+      }, {
+        "uuid": "c1350084-c4c2-5447-affd-185f1ef2f6c2",
+        "title": "Essentials OSCAL NS 1.0",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/ns/essentials/oscal/1.0"
+        } ]
+      } ]
+    }
+  }
+}

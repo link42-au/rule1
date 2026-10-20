@@ -1,0 +1,180 @@
+{
+  "profile": {
+    "uuid": "53c541cc-e523-5b92-bf9e-1080235ff750",
+    "metadata": {
+      "title": "Assessment evidence guide for enterprise IT - Business systems OSCAL Profile",
+      "published": "2026-10-15T00:30:23Z",
+      "last-modified": "2026-10-15T00:30:23Z",
+      "version": "2026.10.15",
+      "oscal-version": "1.2.3",
+      "props": [ {
+        "name": "domain",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "business-systems"
+      }, {
+        "name": "domain-description",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "Supporting enterprise functions that collectively enable organisational operations."
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-3"
+      } ],
+      "links": [ {
+        "href": "#563490ac-709b-56a2-a1f5-e577d170f29c",
+        "rel": "canonical"
+      }, {
+        "href": "#37fc6fff-5996-58bf-a416-26bd63cf30fb",
+        "rel": "latest-version"
+      }, {
+        "href": "#185dee67-d441-56c6-b035-a5fd5f82827e",
+        "rel": "predecessor-version"
+      }, {
+        "href": "#8d430ed9-38bb-5ff6-b2fa-f06e727d4b07",
+        "rel": "successor-version"
+      }, {
+        "href": "#2b2706f4-c3ed-562a-a98b-78c55c0cc335",
+        "rel": "alternate"
+      } ],
+      "roles": [ {
+        "id": "prepared-by",
+        "title": "Document creator"
+      } ],
+      "parties": [ {
+        "uuid": "74026bf1-dc78-5449-9c72-aa23782b15f0",
+        "type": "organization",
+        "name": "Australian Cyber Security Centre",
+        "short-name": "ACSC",
+        "links": [ {
+          "href": "https://www.cyber.gov.au",
+          "rel": "website"
+        } ],
+        "email-addresses": [ "asd.assist@defence.gov.au" ],
+        "addresses": [ {
+          "type": "work",
+          "addr-lines": [ "Australian Cyber Security Centre", "General enquiries", "PO Box 5076" ],
+          "city": "Kingston",
+          "state": "ACT",
+          "postal-code": "2604",
+          "country": "AU"
+        } ]
+      } ],
+      "responsible-parties": [ {
+        "role-id": "prepared-by",
+        "party-uuids": [ "74026bf1-dc78-5449-9c72-aa23782b15f0" ]
+      } ],
+      "remarks": "Consumers of this file should refer to the [Essentials OSCAL NS 1.0](#01422798-1d17-5304-a5b1-5bcb98dd036b) page for information regarding the Essentials specific representation used in this OSCAL file."
+    },
+    "imports": [ {
+      "href": "#98b4d115-df59-52c8-a878-3830c414d32c",
+      "include-controls": [ {
+        "with-ids": [ "IT.IDE-01.2", "IT.PRO-01.1", "IT.PRO-01.2", "IT.PRO-16.1", "IT.PRO-13.1", "IT.PRO-13.2", "IT.PRO-13.4", "IT.PRO-13.5", "IT.PRO-13.6", "IT.PRO-12.1", "IT.PRO-04.1", "IT.PRO-04.2", "IT.PRO-04.3", "IT.PRO-06.1", "IT.PRO-06.2", "IT.PRO-06.3", "IT.PRO-07.1", "IT.PRO-07.2", "IT.PRO-10.1", "IT.PRO-10.2", "IT.PRO-10.3", "IT.PRO-18.1", "IT.PRO-18.2", "IT.PRO-09.1", "IT.DET-01.1", "IT.DET-01.2", "IT.DET-02.1" ]
+      } ]
+    } ],
+    "merge": {
+      "as-is": true
+    },
+    "back-matter": {
+      "resources": [ {
+        "uuid": "563490ac-709b-56a2-a1f5-e577d170f29c",
+        "title": "Assessment evidence guide for enterprise IT - Business systems OSCAL Profile v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_business-systems-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_business-systems-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_business-systems-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "37fc6fff-5996-58bf-a416-26bd63cf30fb",
+        "title": "Assessment evidence guide for enterprise IT - Business systems OSCAL Profile - latest version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_business-systems-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_business-systems-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_business-systems-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "185dee67-d441-56c6-b035-a5fd5f82827e",
+        "title": "Assessment evidence guide for enterprise IT - Business systems OSCAL Profile v2026.10.15 - predecessor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_business-systems-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_business-systems-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_business-systems-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "8d430ed9-38bb-5ff6-b2fa-f06e727d4b07",
+        "title": "Assessment evidence guide for enterprise IT - Business systems OSCAL Profile v2026.10.15 - successor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_business-systems-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_business-systems-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_business-systems-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "98b4d115-df59-52c8-a878-3830c414d32c",
+        "title": "Assessment evidence guide for enterprise IT OSCAL catalog v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "E4EIT_catalog.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "E4EIT_catalog.json",
+          "media-type": "application/json"
+        }, {
+          "href": "E4EIT_catalog.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "2b2706f4-c3ed-562a-a98b-78c55c0cc335",
+        "title": "Assessment evidence guide for enterprise IT",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:00:00+11:00"
+        }, {
+          "name": "version",
+          "value": "2026-10-15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/pdf/v2026.10.15-pdf",
+          "media-type": "application/pdf"
+        } ]
+      }, {
+        "uuid": "01422798-1d17-5304-a5b1-5bcb98dd036b",
+        "title": "Essentials OSCAL NS 1.0",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/ns/essentials/oscal/1.0"
+        } ]
+      } ]
+    }
+  }
+}

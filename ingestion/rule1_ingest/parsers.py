@@ -548,7 +548,7 @@ def build_all_histories(root: Path) -> list[Snapshot]:
     from .essentials import parse_essentials_snapshot
 
     parsers: dict[str, Callable[[Path], Snapshot]] = {
-        "asd-essentials-enterprise-it": parse_essentials_snapshot,
+        "asd-essentials-enterprise-it": lambda path: parse_essentials_snapshot(path, root / "ingestion/sources/essentials"),
         "cyber-essentials": _parse_ce, "ism": _parse_ism, "nzism": _parse_nzism,
         "nist-csf": lambda path: _parse_nist(path, "nist-csf"),
         "nist-800-53": lambda path: _parse_nist(path, "nist-800-53"),

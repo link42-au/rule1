@@ -1,38 +1,29 @@
-# ASD Essentials for Enterprise IT — integration design
+# ASD Essentials for Enterprise IT
 
-Status: implementation in progress. This document records the first reviewable increment; no ingestion or UI behaviour is changed by this commit.
+ASD Essentials for Enterprise IT is a separate framework in Rule1. It does not replace Australian ISM, Essential Eight, UK Cyber Essentials, or any historical source. Its actions and assessment indicators are presented using ASD's terminology; no ISM equivalence is inferred.
 
-## Scope
+## Publisher evidence
 
-Add ASD Essentials for Enterprise IT as a **new** framework in Rule1. Do not replace Australian ISM, UK Cyber Essentials, or any existing historical sources.
+The retained 2026.10.15 catalogue at `data/essentials/E4EIT_catalog-2026.10.15.json` is byte-identical to the [authoritative ASD release artifact](https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_catalog.json), checked on 20 October 2026. Its SHA-256 is `29b602fbbce89d83f9dffd6e6f99d32d1929b563a967f62b2c1cb52891fdb7d2`; the source ledger also retains the ASD GitHub release mirror URL originally used for acquisition.
 
-## Source and provenance
+`ingestion/sources/essentials/` retains the eight exact publisher domain profiles, the [Essentials namespace definitions](https://www.cyber.gov.au/ns/essentials/oscal/1.0), and the release-tagged publisher README with the copyright, disclaimer and CC BY 4.0 notice. Its manifest records each URL and byte checksum. These are supporting evidence, not additional framework versions. Their complete file set and checksums are verified before ingestion; they are excluded from formatting to preserve publisher bytes. The publisher defines extensions on the namespace page, rather than providing a separate extension JSON schema.
 
-- Obtain the authoritative ASD OSCAL catalog and accompanying extension definitions from ASD's published source.
-- Archive the exact released bytes under a dedicated `data/essentials/` directory, subject to publisher terms.
-- Record the publisher, version, release date, source URL, and SHA-256 in `data/source-ledger.json`.
-- Reject missing files, checksum mismatches, invalid OSCAL structures, and unsupported extension formats. Never silently discard unfamiliar properties.
+The source archive remains independent of network availability. Tests and builds never fetch changing upstream material.
 
-## Data model
+## Retained semantics
 
-Preserve OSCAL identifiers, titles, prose, grouping, links, properties, parts, and metadata. Specifically retain ASD's domains, priority phases, principles, actions, and indicators of good practice, including their original namespace and ordering. Prefer a lossless representation of extension properties alongside normalized fields needed for search and navigation. Keep cross-framework mappings explicitly attributed; do not infer equivalence to ISM controls.
+The catalogue contains 28 principles, 58 actions and 33 hierarchical groups. All action properties, links and nested parts remain intact in `metadata.oscal`; ancestor group metadata, catalogue metadata, and domain profile documents remain available in `metadata.essentials`. Unknown extensions are retained and available in the source metadata disclosure. Malformed arrays, nested parts, properties, links, duplicate IDs, missing profiles, checksum mismatches and unresolved publisher references fail closed.
 
-## Application
+Domain descriptions and priority phases come from the domain profiles for the same release. Phases belong to domains; Rule1 does not infer an action's maturity level or turn them into Essential Eight mappings. Domain order, phase order, principle hierarchy and indicator order follow the source. ATT&CK references are labelled as publisher-supplied references and kept separate from reviewed ISM mappings.
 
-- Register Essentials separately in framework/version selectors, Explorer, search, and Compare.
-- Display ASD's hierarchy and extension fields without flattening distinct concepts into generic controls.
-- Preserve existing ISM annotations, history, and existing UI behaviour.
-- Label the framework clearly to avoid confusion with UK Cyber Essentials and Essential Eight.
+## Browser behaviour
 
-## Acceptance
+Explorer provides the ASD Essentials framework selector, domain filtering, action navigation, principle prose, actions, applicable domains, priority phases and the ordered effectiveness indicator groups. Search includes identifiers, action prose, principles, domains and indicator statements. Nested prose is rendered as text, without executing publisher HTML. All retained metadata is inspectable.
 
-1. Authoritative source and extension schemas are retained with validated provenance.
-2. Parser tests cover representative nested entries, namespaces, unknown properties, ordering, and missing values.
-3. SQLite builds are deterministic and pass integrity, counts, and referential checks.
-4. Explorer, search, Compare, and responsive browser tests exercise Essentials and existing frameworks.
-5. `pnpm verify` passes before marking implementation complete.
-6. Submit a draft PR from `wan0net:feature/asd-essentials-oscal` to `link42-au:main` for review; do not merge automatically.
+Compare identifies that only one version is retained and requires a second genuine release before comparison. It does not manufacture a historical baseline. Other framework histories and annotations remain unchanged.
 
-## Open verification
+## Verification and publication
 
-Confirm the exact ASD release artifact URL, its licensing and extension schema before importing bytes. Do not fabricate an OSCAL catalog or checksum.
+`pnpm verify` covers source/archive checks, parser regression tests, database validation, web unit tests, static build and browser tests. Essentials browser tests exercise search, domain filters, Compare, desktop/phone reflow and automated accessibility. CI additionally requires a second byte-identical database build and a container smoke test. No checks are disabled for this framework.
+
+The production target is `link42-au/rule1` and `https://rule1.link42.app/`. Merge and deployment are explicitly authorised by the user for this implementation; the earlier draft-only boundary is superseded. Production publication uses the existing verified `main` workflow, including complete annotation checks and a live deployment canary. Passing PR checks alone is not deployment evidence.

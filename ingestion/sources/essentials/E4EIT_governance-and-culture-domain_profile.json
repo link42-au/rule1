@@ -1,0 +1,188 @@
+{
+  "profile": {
+    "uuid": "17add7e0-8848-564d-a70a-670a6f876708",
+    "metadata": {
+      "title": "Assessment evidence guide for enterprise IT - Governance and culture OSCAL Profile",
+      "published": "2026-10-15T00:30:23Z",
+      "last-modified": "2026-10-15T00:30:23Z",
+      "version": "2026.10.15",
+      "oscal-version": "1.2.3",
+      "props": [ {
+        "name": "domain",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "governance-and-culture"
+      }, {
+        "name": "domain-description",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "Policies, risk management processes, roles and security culture that underpin the cyber security program."
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-1"
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-2"
+      }, {
+        "name": "domain-priority-phase",
+        "ns": "https://www.cyber.gov.au/ns/essentials/oscal/1.0",
+        "value": "phase-3"
+      } ],
+      "links": [ {
+        "href": "#d1c97d9d-457b-5655-bbca-d92ac2bdf617",
+        "rel": "canonical"
+      }, {
+        "href": "#d51b50ff-a01f-5c21-948e-d4e74f21a597",
+        "rel": "latest-version"
+      }, {
+        "href": "#ed3e9e66-e902-57fc-b1f6-9354548edb9a",
+        "rel": "predecessor-version"
+      }, {
+        "href": "#32431263-f6df-5eeb-9693-f57c00023c38",
+        "rel": "successor-version"
+      }, {
+        "href": "#211ff658-86c9-50e9-bacf-ee7f932ac402",
+        "rel": "alternate"
+      } ],
+      "roles": [ {
+        "id": "prepared-by",
+        "title": "Document creator"
+      } ],
+      "parties": [ {
+        "uuid": "aa1aa1b7-e49e-526e-8649-02711a826b8a",
+        "type": "organization",
+        "name": "Australian Cyber Security Centre",
+        "short-name": "ACSC",
+        "links": [ {
+          "href": "https://www.cyber.gov.au",
+          "rel": "website"
+        } ],
+        "email-addresses": [ "asd.assist@defence.gov.au" ],
+        "addresses": [ {
+          "type": "work",
+          "addr-lines": [ "Australian Cyber Security Centre", "General enquiries", "PO Box 5076" ],
+          "city": "Kingston",
+          "state": "ACT",
+          "postal-code": "2604",
+          "country": "AU"
+        } ]
+      } ],
+      "responsible-parties": [ {
+        "role-id": "prepared-by",
+        "party-uuids": [ "aa1aa1b7-e49e-526e-8649-02711a826b8a" ]
+      } ],
+      "remarks": "Consumers of this file should refer to the [Essentials OSCAL NS 1.0](#def78f32-7cf5-50bc-890e-20875010bc73) page for information regarding the Essentials specific representation used in this OSCAL file."
+    },
+    "imports": [ {
+      "href": "#0ffc941f-9304-5641-b737-f8463a0a1aa6",
+      "include-controls": [ {
+        "with-ids": [ "IT.GOV-01.1", "IT.GOV-08.1", "IT.GOV-04.1", "IT.GOV-04.2", "IT.GOV-03.1", "IT.GOV-11.1", "IT.GOV-11.2", "IT.GOV-14.1", "IT.PRO-14.2" ]
+      } ]
+    } ],
+    "merge": {
+      "as-is": true
+    },
+    "back-matter": {
+      "resources": [ {
+        "uuid": "d1c97d9d-457b-5655-bbca-d92ac2bdf617",
+        "title": "Assessment evidence guide for enterprise IT - Governance and culture OSCAL Profile v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_governance-and-culture-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_governance-and-culture-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/artifacts/E4EIT_governance-and-culture-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "d51b50ff-a01f-5c21-948e-d4e74f21a597",
+        "title": "Assessment evidence guide for enterprise IT - Governance and culture OSCAL Profile - latest version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_governance-and-culture-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_governance-and-culture-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/latest-version/artifacts/E4EIT_governance-and-culture-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "ed3e9e66-e902-57fc-b1f6-9354548edb9a",
+        "title": "Assessment evidence guide for enterprise IT - Governance and culture OSCAL Profile v2026.10.15 - predecessor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_governance-and-culture-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_governance-and-culture-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/predecessor-version/artifacts/E4EIT_governance-and-culture-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "32431263-f6df-5eeb-9693-f57c00023c38",
+        "title": "Assessment evidence guide for enterprise IT - Governance and culture OSCAL Profile v2026.10.15 - successor version",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_governance-and-culture-domain_profile.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_governance-and-culture-domain_profile.json",
+          "media-type": "application/json"
+        }, {
+          "href": "https://www.cyber.gov.au/e4eit/oscal/v2026.10.15/successor-version/artifacts/E4EIT_governance-and-culture-domain_profile.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "0ffc941f-9304-5641-b737-f8463a0a1aa6",
+        "title": "Assessment evidence guide for enterprise IT OSCAL catalog v2026.10.15",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:30:23Z"
+        }, {
+          "name": "version",
+          "value": "v2026.10.15"
+        } ],
+        "rlinks": [ {
+          "href": "E4EIT_catalog.xml",
+          "media-type": "application/xml"
+        }, {
+          "href": "E4EIT_catalog.json",
+          "media-type": "application/json"
+        }, {
+          "href": "E4EIT_catalog.yaml",
+          "media-type": "application/oscal+yaml"
+        } ]
+      }, {
+        "uuid": "211ff658-86c9-50e9-bacf-ee7f932ac402",
+        "title": "Assessment evidence guide for enterprise IT",
+        "props": [ {
+          "name": "published",
+          "value": "2026-10-15T00:00:00+11:00"
+        }, {
+          "name": "version",
+          "value": "2026-10-15"
+        } ],
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/e4eit/pdf/v2026.10.15-pdf",
+          "media-type": "application/pdf"
+        } ]
+      }, {
+        "uuid": "def78f32-7cf5-50bc-890e-20875010bc73",
+        "title": "Essentials OSCAL NS 1.0",
+        "rlinks": [ {
+          "href": "https://www.cyber.gov.au/ns/essentials/oscal/1.0"
+        } ]
+      } ]
+    }
+  }
+}

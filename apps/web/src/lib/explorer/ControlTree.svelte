@@ -74,7 +74,7 @@
                   {control.display_id}
                   {#if control.change_type === "withdrawn"}<span class="withdrawn-badge">Withdrawn</span>{/if}
                 </span>
-                {#if control.title && !control.title.startsWith("Control: ")}
+                {#if control.title && control.title !== control.display_id && !control.title.startsWith("Control: ")}
                   <span class="ctrl-row-title">{control.title}</span>
                 {/if}
                 <span class="ctrl-row-name">{control.statement ?? control.label ?? "No description available."}</span>
@@ -230,6 +230,11 @@
     font-size: 11px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .ctrl-row.active .ctrl-row-id,
+  .ctrl-row.active .ctrl-row-title {
+    color: var(--text);
   }
 
   .ctrl-row-name {

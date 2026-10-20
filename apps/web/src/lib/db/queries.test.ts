@@ -36,6 +36,43 @@ class SqliteExecutor implements QueryExecutor {
 }
 
 describe("Rule1 domain helpers", () => {
+  it("retains publisher action identifier case in detail, history and graph queries", async () => {
+    const id = "IT.GOV-01.1";
+    const executor = new FixtureExecutor({
+      control: [{ control_id: id, display_id: id, catalog_version: "2026.10.15", metadata: "{}" }],
+      "control-history-summary": [],
+      "control-history": [],
+      "graph-center": [{ control_id: id, display_id: id, section_id: "GOV-01", catalog_version: "2026.10.15" }],
+      "graph-peers": [{ control_id: id, display_id: id }],
+    });
+    const params = { framework: "asd-essentials-enterprise-it", id };
+    await expect(dispatchRule1Query(executor, "control", params)).resolves.toMatchObject({ id });
+    await dispatchRule1Query(executor, "controlHistory", params);
+    await expect(dispatchRule1Query(executor, "graph", params)).resolves.toMatchObject({
+      nodes: [{ data: { id } }],
+      edges: [],
+    });
+    for (const name of ["control", "control-history", "graph-center"]) {
+      expect(executor.calls.find((call) => call.name === name)?.bind).toEqual([params.framework, id]);
+    }
+  });
+
+  it("preserves ASD publisher group ordering while retaining the existing sort for other frameworks", async () => {
+    const executor = new FixtureExecutor({
+      groups: [
+        { id: "z", title: "Z first in source", parent_id: null },
+        { id: "a", title: "A second in source", parent_id: null },
+      ],
+      "group-counts": [],
+    });
+    const groups = (await dispatchRule1Query(executor, "groups", { framework: "asd-essentials-enterprise-it" })) as {
+      id: string;
+    }[];
+    expect(groups.map((group) => group.id)).toEqual(["z", "a"]);
+    const existing = (await dispatchRule1Query(executor, "groups", { framework: "ism" })) as { id: string }[];
+    expect(existing.map((group) => group.id)).toEqual(["a", "z"]);
+  });
+
   it("accepts the CE URL alias but rejects unknown frameworks", () => {
     expect(canonicalFrameworkId("ce")).toBe("cyber-essentials");
     expect(canonicalFrameworkId("nist-csf")).toBe("nist-csf");
