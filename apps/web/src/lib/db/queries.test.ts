@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
 import { compareSnapshots, type ComparisonRecord } from "./compare";
 import { canonicalFrameworkId, type AttackCatalogueResult, type AttackMappingResult } from "./contracts";
 import { filterControls } from "./filters";
@@ -36,6 +37,23 @@ class SqliteExecutor implements QueryExecutor {
 }
 
 describe("Rule1 domain helpers", () => {
+  it("keeps indexed identifier lookups for existing frameworks", async () => {
+    const database = new DatabaseSync(":memory:");
+    database.exec(readFileSync(new URL("../../../../../ingestion/schema.sql", import.meta.url), "utf8"));
+    try {
+      for (const framework of ["ism", "cyber-essentials", "nist-csf", "nist-800-53", "nzism"]) {
+        const executor = new SqliteExecutor(database);
+        await dispatchRule1Query(executor, "control", { framework, id: "example" });
+        const query = executor.calls.find((call) => call.name === "control");
+        if (!query) throw new Error("Control lookup was not executed");
+        const plan = database.prepare(`EXPLAIN QUERY PLAN ${query.sql}`).all(...query.bind);
+        expect(plan.some((row) => String(row.detail).includes("framework=? AND control_id=?"))).toBe(true);
+      }
+    } finally {
+      database.close();
+    }
+  });
+
   it("retains publisher action identifier case in detail, history and graph queries", async () => {
     const id = "IT.GOV-01.1";
     const executor = new FixtureExecutor({

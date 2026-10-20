@@ -616,7 +616,7 @@ async function control(executor: QueryExecutor, params: ControlParams): Promise<
     JOIN catalog_versions v ON v.framework = h.framework AND v.version = h.catalog_version
     LEFT JOIN control_groups g ON g.framework = h.framework
       AND g.catalog_version = h.catalog_version AND g.id = h.section_id
-    WHERE h.framework = ? AND h.control_id = ? COLLATE NOCASE ORDER BY v.ordinal DESC LIMIT 1`,
+    WHERE h.framework = ? AND h.control_id = ?${framework === "asd-essentials-enterprise-it" ? " COLLATE NOCASE" : ""} ORDER BY v.ordinal DESC LIMIT 1`,
     [framework, params.id],
   );
   const latestRow = latestRows[0];
@@ -665,7 +665,7 @@ async function controlHistory(executor: QueryExecutor, params: ControlParams): P
     `/* rule1:control-history */
     SELECT ${HISTORY_COLUMNS} FROM control_history h
     JOIN catalog_versions v ON v.framework = h.framework AND v.version = h.catalog_version
-    WHERE h.framework = ? AND h.control_id = ? COLLATE NOCASE ORDER BY v.ordinal DESC`,
+    WHERE h.framework = ? AND h.control_id = ?${framework === "asd-essentials-enterprise-it" ? " COLLATE NOCASE" : ""} ORDER BY v.ordinal DESC`,
     [framework, params.id],
   );
   return rows.map((row) => decodeRevision(row, true));
@@ -679,7 +679,7 @@ async function graph(executor: QueryExecutor, params: ControlParams): Promise<Gr
       h.label, h.statement, h.section_id, h.section_title, h.catalog_version
     FROM control_history h
     JOIN catalog_versions v ON v.framework = h.framework AND v.version = h.catalog_version
-    WHERE h.framework = ? AND h.control_id = ? COLLATE NOCASE ORDER BY v.ordinal DESC LIMIT 1`,
+    WHERE h.framework = ? AND h.control_id = ?${framework === "asd-essentials-enterprise-it" ? " COLLATE NOCASE" : ""} ORDER BY v.ordinal DESC LIMIT 1`,
     [framework, params.id],
   );
   const center = centerRows[0];
