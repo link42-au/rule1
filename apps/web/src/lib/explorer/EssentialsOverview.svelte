@@ -7,7 +7,6 @@
 </script>
 
 <div class="essentials-overview">
-  <p class="attribution">ASD Essentials for Enterprise IT · {detail.latest.catalog_version}. Source: Australian Signals Directorate, © Commonwealth of Australia 2026, CC BY 4.0. This is a separate framework from ISM, Essential Eight and UK Cyber Essentials.</p>
   {#each info.principles as principle}
     <section>
       <h2>Principle · {principle.title ?? principle.id}</h2>
@@ -51,12 +50,6 @@
       <ul>{#each info.techniques as technique}<li><a href={technique.url}>{technique.title}</a></li>{/each}</ul>
     </section>
   {/if}
-  <footer>
-    <a href="https://www.cyber.gov.au/e4eit/oscal/v2026.10.15">Official release</a>
-    · <a href="https://www.cyber.gov.au/ns/essentials/oscal/1.0">Essentials namespace definitions</a>
-    · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
-  </footer>
-  <details><summary>Retained publisher metadata</summary><pre>{JSON.stringify(detail.latest.metadata, null, 2)}</pre></details>
 </div>
 
 <style>
@@ -65,7 +58,6 @@
   h2 { font-size: 16px; margin: 0 0 10px; }
   h3 { font-size: 14px; margin: 0 0 8px; }
   p { line-height: 1.65; }
-  .attribution, footer { color: var(--text-dim); font-size: 12px; line-height: 1.65; }
   .action { white-space: pre-wrap; }
   .domains { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
   article { padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-subtle); }
@@ -73,7 +65,4 @@
   .phases { display: flex; flex-wrap: wrap; gap: 6px; }
   .phases span { border: 1px solid var(--accent-border); border-radius: 12px; padding: 2px 8px; }
   a { color: var(--accent); }
-  details { margin-top: 18px; }
-  summary { cursor: pointer; }
-  pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; }
 </style>
