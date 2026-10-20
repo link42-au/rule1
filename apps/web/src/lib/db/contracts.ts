@@ -14,7 +14,7 @@ import type {
   VersionRow,
 } from "@rule1/shared";
 
-export const FRAMEWORK_IDS = ["cyber-essentials", "ism", "nist-800-53", "nist-csf", "nzism"] as const;
+export const FRAMEWORK_IDS = ["asd-essentials-enterprise-it", "cyber-essentials", "ism", "nist-800-53", "nist-csf", "nzism"] as const;
 
 export type FrameworkId = (typeof FRAMEWORK_IDS)[number];
 export type FrameworkInput = FrameworkId | "ce";

@@ -545,7 +545,10 @@ def build_all_histories(root: Path) -> list[Snapshot]:
     by_framework: dict[str, list[dict[str, str]]] = {}
     for source in chosen.values():
         by_framework.setdefault(source["framework"], []).append(source)
+    from .essentials import parse_essentials_snapshot
+
     parsers: dict[str, Callable[[Path], Snapshot]] = {
+        "asd-essentials-enterprise-it": parse_essentials_snapshot,
         "cyber-essentials": _parse_ce, "ism": _parse_ism, "nzism": _parse_nzism,
         "nist-csf": lambda path: _parse_nist(path, "nist-csf"),
         "nist-800-53": lambda path: _parse_nist(path, "nist-800-53"),
