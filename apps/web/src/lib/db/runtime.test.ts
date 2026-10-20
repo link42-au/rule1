@@ -296,7 +296,13 @@ describe("browser SQLite runtime", () => {
     runtime.close();
   });
 
-  it("reports streamed download bytes, verification, and opening without a timer", async () => {
+  it.each([
+    { label: "matching Content-Length", headers: { "content-length": "3" } },
+    { label: "compressed Content-Length", headers: { "content-length": "1", "content-encoding": "gzip" } },
+    { label: "missing Content-Length", headers: {} },
+    { label: "invalid Content-Length", headers: { "content-length": "invalid" } },
+    { label: "oversized Content-Length", headers: { "content-length": "100" } },
+  ])("reports decoded database progress against the manifest with $label", async ({ headers }) => {
     const bytes = new Uint8Array([1, 2, 3]);
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
@@ -311,7 +317,7 @@ describe("browser SQLite runtime", () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(response(manifest))
-      .mockResolvedValueOnce(new Response(stream, { headers: { "content-length": "3" } }));
+      .mockResolvedValueOnce(new Response(stream, { headers }));
     const progress: DatabaseLoadProgress[] = [];
 
     await initializeRule1Database(
@@ -333,7 +339,7 @@ describe("browser SQLite runtime", () => {
     ]);
   });
 
-  it("reports an unknown total when Content-Length is absent", async () => {
+  it("uses the manifest total when Content-Length is absent", async () => {
     const bytes = new Uint8Array([1, 2, 3]);
     const { sqlite } = sqliteMock(async () => {
       throw new Error("OPFS unavailable");
@@ -351,7 +357,7 @@ describe("browser SQLite runtime", () => {
       (event) => progress.push(event),
     );
 
-    expect(progress[0]).toEqual({ stage: "downloading", receivedBytes: 0, totalBytes: null });
-    expect(progress).toContainEqual({ stage: "downloading", receivedBytes: 3, totalBytes: null });
+    expect(progress[0]).toEqual({ stage: "downloading", receivedBytes: 0, totalBytes: 3 });
+    expect(progress).toContainEqual({ stage: "downloading", receivedBytes: 3, totalBytes: 3 });
   });
 });
