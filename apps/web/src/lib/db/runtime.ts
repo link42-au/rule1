@@ -133,9 +133,9 @@ const fetchDatabase = async (
     throw new Error(`Unable to load the Rule1 database (${response.status}).`);
   }
 
-  const contentLength = response.headers.get("content-length");
-  const parsedContentLength = contentLength === null ? Number.NaN : Number(contentLength);
-  const totalBytes = Number.isSafeInteger(parsedContentLength) && parsedContentLength > 0 ? parsedContentLength : null;
+  // Fetch streams decoded bytes; Content-Length may describe the compressed transfer.
+  // Use the manifest's database size so progress and integrity checks measure the same bytes.
+  const totalBytes = manifest.database.size_bytes;
   let receivedBytes = 0;
   onProgress({ stage: "downloading", receivedBytes, totalBytes });
 
