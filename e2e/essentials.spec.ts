@@ -1,7 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const framework = "asd-essentials-enterprise-it";
+
+async function waitForCatalogue(page: Page): Promise<void> {
+  // Frameworks are available only after the checked local database has opened.
+  // Match the existing startup allowance without extending content assertions or test limits.
+  await expect(page.getByRole("button", { name: "ASD Essentials", exact: true })).toBeVisible({ timeout: 90_000 });
+}
 
 test("Essentials retains domains, phases, principles and ordered indicators at desktop and phone widths", async ({
   page,
@@ -13,6 +19,7 @@ test("Essentials retains domains, phases, principles and ordered indicators at d
     await page.setViewportSize(viewport);
     await page.goto(`/explorer/?framework=${framework}&id=IT.GOV-01.1`);
     const overview = page.locator(".essentials-overview");
+    await waitForCatalogue(page);
     await expect(overview).toBeVisible();
     await expect(overview.getByRole("heading", { name: /Principle.*GOV-01/ })).toBeVisible();
     await expect(overview.getByRole("heading", { name: "Action · IT.GOV-01.1" })).toBeVisible();
@@ -37,6 +44,7 @@ test("Essentials retains domains, phases, principles and ordered indicators at d
 test("Essentials search, domain filters and single-version Compare work without ISM mappings", async ({ page }) => {
   await page.goto(`/explorer/?framework=${framework}&id=IT.GOV-01.1`);
   const domain = page.getByRole("combobox", { name: "Essentials domain" });
+  await waitForCatalogue(page);
   await expect(domain).toBeVisible();
   await expect(page.locator(".sidebar-section-label")).toHaveText(/Actions list.*58/);
   await domain.selectOption("identity-services");
