@@ -4,9 +4,9 @@ import { expect, test, type Page } from "@playwright/test";
 const framework = "asd-essentials-enterprise-it";
 
 async function waitForCatalogue(page: Page): Promise<void> {
-  // Frameworks are available only after the checked local database has opened.
+  // A detail heading appears only after the checked database and selected action have loaded.
   // Match the existing startup allowance without extending content assertions or test limits.
-  await expect(page.getByRole("button", { name: "ASD Essentials", exact: true })).toBeVisible({ timeout: 90_000 });
+  await expect(page.locator("[data-control-heading]")).toBeVisible({ timeout: 90_000 });
 }
 
 test("Essentials retains domains, phases, principles and ordered indicators at desktop and phone widths", async ({
