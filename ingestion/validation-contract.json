@@ -12,6 +12,9 @@
   ],
   "format_version": 1,
   "framework_versions": {
+    "asd-essentials-enterprise-it": [
+      "2026.10.15"
+    ],
     "cyber-essentials": [
       "CE-3.1",
       "CE-3.2",
@@ -113,18 +116,18 @@
     "attack_releases": 1,
     "attack_source_files": 1,
     "attack_techniques": 697,
-    "catalog_versions": 80,
+    "catalog_versions": 81,
     "control_attack_assessments": 1143,
     "control_attack_mitigation_mappings": 599,
-    "control_groups": 12473,
-    "control_history": 69887,
+    "control_groups": 12506,
+    "control_history": 69945,
     "e8_mappings": 4213,
-    "frameworks": 5,
-    "source_files": 82,
+    "frameworks": 6,
+    "source_files": 83,
     "term_history": 4063
   },
   "schema_sha256": "0114ef8fcb758e6046e723dd35ad3c645eb9215682c3f897044f22743a35fc9e",
-  "source_ledger_sha256": "61ea7e9a3a4f6d20cc420b9f46f0ca70b58d6182c9cd8a4b92350306ff10f99e",
+  "source_ledger_sha256": "c397dcba6eff0b54b241c3252abe5f856be6cd1c991b7df196fb137f15e31f3e",
   "tables": [
     "annotations",
     "attack_mitigation_techniques",
@@ -148,6 +151,13 @@
   ],
   "user_version": 6,
   "version_row_counts": {
+    "asd-essentials-enterprise-it": {
+      "2026.10.15": {
+        "control_groups": 33,
+        "control_history": 58,
+        "term_history": 0
+      }
+    },
     "cyber-essentials": {
       "CE-3.1": {
         "control_groups": 13,
