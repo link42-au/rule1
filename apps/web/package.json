@@ -17,7 +17,7 @@
     "@link42/ui": "workspace:*",
     "@rule1/shared": "workspace:*",
     "@sqlite.org/sqlite-wasm": "3.53.0-build1",
-    "@sveltejs/kit": "2.70.3",
+    "@sveltejs/kit": "3.0.0",
     "svelte": "5.56.10"
   },
   "devDependencies": {
